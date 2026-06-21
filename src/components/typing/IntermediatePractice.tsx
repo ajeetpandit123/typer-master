@@ -2,10 +2,10 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { useApp } from '@/context/AppContext';
-import { saveSession, unlockAchievement } from '@/lib/services/db';
+import { saveSession, unlockAchievement, incrementPracticeTime } from '@/lib/services/db';
 import { 
   Zap, Play, Pause, RotateCcw, Target, AlertTriangle, ArrowRight,
-  TrendingUp, Award, BarChart2
+  TrendingUp, Award, BarChart2, Sparkles
 } from 'lucide-react';
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
 
@@ -37,6 +37,7 @@ export const IntermediatePractice: React.FC = () => {
   // Game state
   const [isPlaying, setIsPlaying] = useState(false);
   const [isPaused, setIsPaused] = useState(false);
+  const [isStarted, setIsStarted] = useState(false);
   const [targetText, setTargetText] = useState('');
   const [rawTypedText, setRawTypedText] = useState('');
   
@@ -44,8 +45,19 @@ export const IntermediatePractice: React.FC = () => {
   const [timeLeft, setTimeLeft] = useState(30);
   const [elapsedTime, setElapsedTime] = useState(0);
   const [wpmHistory, setWpmHistory] = useState<{ time: number; wpm: number }[]>([]);
-  const [mistakesList, setMistakesList] = useState<number[]>([]); // index of errors
   const [showResults, setShowResults] = useState(false);
+
+  // Refs for tracking practice time on unmount/exits
+  const elapsedTimeRef = useRef(0);
+  const isPlayingRef = useRef(false);
+
+  useEffect(() => {
+    elapsedTimeRef.current = elapsedTime;
+  }, [elapsedTime]);
+
+  useEffect(() => {
+    isPlayingRef.current = isPlaying;
+  }, [isPlaying]);
   
   // Refs
   const timerRef = useRef<NodeJS.Timeout | null>(null);
@@ -65,25 +77,32 @@ export const IntermediatePractice: React.FC = () => {
   useEffect(() => {
     generateText();
   }, [testMode, duration, wordCount]);
-
-  // Clean timer on unmount
+  // Clean timer on unmount and save practice time
   useEffect(() => {
     return () => {
       if (timerRef.current) clearInterval(timerRef.current);
+      if (isPlayingRef.current && elapsedTimeRef.current > 0 && user) {
+        incrementPracticeTime(user.id, elapsedTimeRef.current);
+      }
     };
-  }, []);
+  }, [user]);
 
   // Timer Tick handler
   const handleStart = () => {
+    // If they were already playing, save elapsed practice time first
+    if (isPlaying && elapsedTime > 0 && user) {
+      incrementPracticeTime(user.id, elapsedTime);
+    }
+
     generateText();
     setRawTypedText('');
     setInputIndex(0);
     setWpmHistory([]);
-    setMistakesList([]);
     setElapsedTime(0);
     setTimeLeft(testMode === 'time' ? duration : 0);
     setIsPlaying(true);
     setIsPaused(false);
+    setIsStarted(false);
     setShowResults(false);
 
     // Focus input
@@ -91,11 +110,11 @@ export const IntermediatePractice: React.FC = () => {
       if (textInputRef.current) textInputRef.current.focus();
     }, 50);
 
-    // Start timer interval
-    if (timerRef.current) clearInterval(timerRef.current);
-    timerRef.current = setInterval(() => {
-      tick();
-    }, 1000);
+    // Clear timer, but do NOT start it yet
+    if (timerRef.current) {
+      clearInterval(timerRef.current);
+      timerRef.current = null;
+    }
   };
 
   const tick = () => {
@@ -157,6 +176,15 @@ export const IntermediatePractice: React.FC = () => {
     // Clean string from numbers, uppercase, special characters
     const cleanVal = val.replace(/[^a-z\s]/g, '');
     
+    // Start timer on first keystroke
+    if (!isStarted && cleanVal.length === 1) {
+      setIsStarted(true);
+      if (timerRef.current) clearInterval(timerRef.current);
+      timerRef.current = setInterval(() => {
+        tick();
+      }, 1000);
+    }
+
     setRawTypedText(cleanVal);
 
     // Check if word mode and reached end of text
@@ -268,8 +296,9 @@ export const IntermediatePractice: React.FC = () => {
   };
 
   const [inputIndex, setInputIndex] = useState(0);
+  const currentErrors = rawTypedText.split('').filter((c, i) => c !== targetText[i]).length;
   const accuracy = rawTypedText.length > 0
-    ? Math.max(0, Math.round(((rawTypedText.length - mistakesList.length) / rawTypedText.length) * 100))
+    ? Math.max(0, Math.round(((rawTypedText.length - currentErrors) / rawTypedText.length) * 100))
     : 100;
 
   const currentWpm = calculateLiveWpm(rawTypedText.length, elapsedTime);
@@ -476,9 +505,16 @@ export const IntermediatePractice: React.FC = () => {
 
               <div 
                 onClick={() => { if (textInputRef.current) textInputRef.current.focus(); }}
-                className="w-full border border-white/10 rounded-2xl bg-slate-950/50 p-8 min-h-36 text-lg leading-relaxed select-none cursor-text overflow-hidden max-h-56 overflow-y-auto"
+                className="w-full border border-white/10 rounded-2xl bg-slate-950/50 p-8 min-h-36 text-lg leading-relaxed select-none cursor-text overflow-hidden max-h-56 overflow-y-auto relative"
               >
                 {renderTextHighlights()}
+
+                {!isStarted && (
+                  <div className="absolute right-3 bottom-3 flex items-center gap-1.5 text-[10px] text-slate-400 bg-slate-900 border border-white/5 px-2.5 py-1.5 rounded-lg animate-pulse select-none pointer-events-none">
+                    <Sparkles size={12} className="text-yellow-400 animate-spin" style={{ animationDuration: '3s' }} />
+                    Type the first letter to begin timer
+                  </div>
+                )}
               </div>
             </div>
 
@@ -509,7 +545,8 @@ export const IntermediatePractice: React.FC = () => {
                 ) : (
                   <button
                     onClick={handlePause}
-                    className="px-4 py-2 bg-white/5 border border-white/10 hover:bg-white/10 text-white rounded-lg text-xs font-bold transition flex items-center gap-1.5"
+                    disabled={!isStarted}
+                    className="px-4 py-2 bg-white/5 border border-white/10 hover:bg-white/10 text-white rounded-lg text-xs font-bold transition flex items-center gap-1.5 disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     <Pause size={12} fill="white" />
                     Pause
@@ -526,6 +563,9 @@ export const IntermediatePractice: React.FC = () => {
 
               <button
                 onClick={() => {
+                  if (isPlaying && elapsedTime > 0 && user) {
+                    incrementPracticeTime(user.id, elapsedTime);
+                  }
                   setIsPlaying(false);
                   setShowResults(false);
                   if (timerRef.current) clearInterval(timerRef.current);

@@ -2,10 +2,10 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { useApp } from '@/context/AppContext';
-import { saveSession } from '@/lib/services/db';
+import { saveSession, incrementPracticeTime } from '@/lib/services/db';
 import { 
   ShieldAlert, Play, RotateCcw, Target, AlertTriangle, ArrowRight,
-  TrendingUp, BarChart3, AlertCircle, Clock, Zap
+  TrendingUp, BarChart3, AlertCircle, Clock, Zap, Sparkles
 } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
 
@@ -34,6 +34,7 @@ export const AdvancedPractice: React.FC = () => {
 
   const [currentTextIdx, setCurrentTextIdx] = useState(0);
   const [isPlaying, setIsPlaying] = useState(false);
+  const [isStarted, setIsStarted] = useState(false);
   const [rawTypedText, setRawTypedText] = useState('');
   const [timeLeft, setTimeLeft] = useState(60);
   const [elapsedTime, setElapsedTime] = useState(0);
@@ -47,15 +48,42 @@ export const AdvancedPractice: React.FC = () => {
   const lastKeyTimeRef = useRef<number>(0);
   const textInputRef = useRef<HTMLTextAreaElement | null>(null);
 
+  // Refs for tracking practice time on unmount/exits
+  const elapsedTimeRef = useRef(0);
+  const isPlayingRef = useRef(false);
+
+  useEffect(() => {
+    elapsedTimeRef.current = elapsedTime;
+  }, [elapsedTime]);
+
+  useEffect(() => {
+    isPlayingRef.current = isPlaying;
+  }, [isPlaying]);
+
   const targetText = ADVANCED_TEXTS[currentTextIdx];
+
+  // Clean timer on unmount and save practice time
+  useEffect(() => {
+    return () => {
+      if (timerRef.current) clearInterval(timerRef.current);
+      if (isPlayingRef.current && elapsedTimeRef.current > 0 && user) {
+        incrementPracticeTime(user.id, elapsedTimeRef.current);
+      }
+    };
+  }, [user]);
 
   // Initialize
   const handleStart = () => {
+    if (isPlaying && elapsedTime > 0 && user) {
+      incrementPracticeTime(user.id, elapsedTime);
+    }
+
     setRawTypedText('');
     setElapsedTime(0);
     setTimeLeft(60);
     setCharSpeeds({});
     setIsPlaying(true);
+    setIsStarted(false);
     setShowResults(false);
     lastKeyTimeRef.current = Date.now();
 
@@ -63,16 +91,10 @@ export const AdvancedPractice: React.FC = () => {
       if (textInputRef.current) textInputRef.current.focus();
     }, 50);
 
-    if (timerRef.current) clearInterval(timerRef.current);
-    timerRef.current = setInterval(() => {
-      setElapsedTime(prev => {
-        const nextTime = prev + 1;
-        if (nextTime >= 60) {
-          handleFinished(nextTime);
-        }
-        return nextTime;
-      });
-    }, 1000);
+    if (timerRef.current) {
+      clearInterval(timerRef.current);
+      timerRef.current = null;
+    }
   };
 
   const handleFinished = async (finalSeconds: number) => {
@@ -120,6 +142,23 @@ export const AdvancedPractice: React.FC = () => {
     if (!isPlaying) return;
 
     const val = e.target.value;
+    
+    // Start timer on first keystroke
+    if (!isStarted && val.length === 1) {
+      setIsStarted(true);
+      lastKeyTimeRef.current = Date.now();
+      if (timerRef.current) clearInterval(timerRef.current);
+      timerRef.current = setInterval(() => {
+        setElapsedTime(prev => {
+          const nextTime = prev + 1;
+          if (nextTime >= 60) {
+            handleFinished(nextTime);
+          }
+          return nextTime;
+        });
+      }, 1000);
+    }
+
     const now = Date.now();
     const latency = now - lastKeyTimeRef.current;
     lastKeyTimeRef.current = now;
@@ -375,9 +414,16 @@ export const AdvancedPractice: React.FC = () => {
             {/* Display Text Panel */}
             <div 
               onClick={() => { if (textInputRef.current) textInputRef.current.focus(); }}
-              className="w-full border border-white/10 rounded-2xl bg-slate-950/50 p-8 min-h-36 text-lg leading-relaxed select-none cursor-text overflow-hidden"
+              className="w-full border border-white/10 rounded-2xl bg-slate-950/50 p-8 min-h-36 text-lg leading-relaxed select-none cursor-text overflow-hidden relative"
             >
               {renderTextHighlights()}
+
+              {!isStarted && (
+                <div className="absolute right-3 bottom-3 flex items-center gap-1.5 text-[10px] text-slate-400 bg-slate-900 border border-white/5 px-2.5 py-1.5 rounded-lg animate-pulse select-none pointer-events-none">
+                  <Sparkles size={12} className="text-yellow-400 animate-spin" style={{ animationDuration: '3s' }} />
+                  Type the first letter to begin timer
+                </div>
+              )}
             </div>
 
             {/* Ghost input area */}
@@ -404,6 +450,9 @@ export const AdvancedPractice: React.FC = () => {
 
               <button
                 onClick={() => {
+                  if (isPlaying && elapsedTime > 0 && user) {
+                    incrementPracticeTime(user.id, elapsedTime);
+                  }
                   setIsPlaying(false);
                   setShowResults(false);
                   if (timerRef.current) clearInterval(timerRef.current);

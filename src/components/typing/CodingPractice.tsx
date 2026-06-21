@@ -2,11 +2,11 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { useApp } from '@/context/AppContext';
-import { saveSession } from '@/lib/services/db';
+import { saveSession, incrementPracticeTime } from '@/lib/services/db';
 import { CODING_LESSONS, CodingLesson } from '@/lib/services/mockData';
 import { 
   Code, Play, RotateCcw, Target, Hourglass, ArrowRight, CheckCircle, 
-  Terminal, ShieldCheck, Award
+  Terminal, ShieldCheck, Award, Sparkles
 } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell } from 'recharts';
 
@@ -19,6 +19,7 @@ export const CodingPractice: React.FC = () => {
 
   // Gameplay
   const [isPlaying, setIsPlaying] = useState(false);
+  const [isStarted, setIsStarted] = useState(false);
   const [rawTypedText, setRawTypedText] = useState('');
   const [elapsedTime, setElapsedTime] = useState(0);
   const [showResults, setShowResults] = useState(false);
@@ -29,6 +30,18 @@ export const CodingPractice: React.FC = () => {
 
   const timerRef = useRef<NodeJS.Timeout | null>(null);
   const textInputRef = useRef<HTMLTextAreaElement | null>(null);
+
+  // Refs for tracking practice time on unmount/exits
+  const elapsedTimeRef = useRef(0);
+  const isPlayingRef = useRef(false);
+
+  useEffect(() => {
+    elapsedTimeRef.current = elapsedTime;
+  }, [elapsedTime]);
+
+  useEffect(() => {
+    isPlayingRef.current = isPlaying;
+  }, [isPlaying]);
 
   // Filter lessons
   const filteredLessons = CODING_LESSONS.filter(l => l.language === selectedLang);
@@ -42,35 +55,53 @@ export const CodingPractice: React.FC = () => {
     setShowResults(false);
   }, [selectedLang]);
 
-  // Clean timer
+  // Clean timer on unmount and save practice time
   useEffect(() => {
     return () => {
       if (timerRef.current) clearInterval(timerRef.current);
+      if (isPlayingRef.current && elapsedTimeRef.current > 0 && user) {
+        incrementPracticeTime(user.id, elapsedTimeRef.current);
+      }
     };
-  }, []);
+  }, [user]);
 
   const handleStart = () => {
+    if (isPlaying && elapsedTime > 0 && user) {
+      incrementPracticeTime(user.id, elapsedTime);
+    }
+
     setRawTypedText('');
     setElapsedTime(0);
     setTotalSymbols(0);
     setSymbolErrors(0);
     setIsPlaying(true);
+    setIsStarted(false);
     setShowResults(false);
 
     setTimeout(() => {
       if (textInputRef.current) textInputRef.current.focus();
     }, 50);
 
-    if (timerRef.current) clearInterval(timerRef.current);
-    timerRef.current = setInterval(() => {
-      setElapsedTime(prev => prev + 1);
-    }, 1000);
+    if (timerRef.current) {
+      clearInterval(timerRef.current);
+      timerRef.current = null;
+    }
   };
 
   const handleTextChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     if (!isPlaying) return;
 
     const val = e.target.value;
+    
+    // Start timer on first keystroke
+    if (!isStarted && val.length === 1) {
+      setIsStarted(true);
+      if (timerRef.current) clearInterval(timerRef.current);
+      timerRef.current = setInterval(() => {
+        setElapsedTime(prev => prev + 1);
+      }, 1000);
+    }
+
     const expected = targetCode[val.length - 1];
     const typed = val[val.length - 1];
 
@@ -414,6 +445,12 @@ export const CodingPractice: React.FC = () => {
                     src/lessons/{lesson.id}.{selectedLang === 'javascript' ? 'js' : selectedLang === 'java' ? 'java' : 'cpp'}
                   </span>
                 </div>
+                {!isStarted && (
+                  <div className="flex items-center gap-1.5 text-[9px] text-slate-500 bg-[#0c1424] border border-white/5 px-2 py-0.5 rounded animate-pulse select-none">
+                    <Sparkles size={10} className="text-yellow-400 animate-spin" style={{ animationDuration: '3s' }} />
+                    Type the first letter to start coding timer
+                  </div>
+                )}
               </div>
 
               {/* Code lines container */}
@@ -445,6 +482,9 @@ export const CodingPractice: React.FC = () => {
               </button>
               <button
                 onClick={() => {
+                  if (isPlaying && elapsedTime > 0 && user) {
+                    incrementPracticeTime(user.id, elapsedTime);
+                  }
                   setIsPlaying(false);
                   setShowResults(false);
                   if (timerRef.current) clearInterval(timerRef.current);

@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { useApp } from '@/context/AppContext';
-import { saveSession } from '@/lib/services/db';
+import { saveSession, incrementPracticeTime } from '@/lib/services/db';
 import { QUOTES, Quote } from '@/lib/services/mockData';
 import { 
   FileText, Play, RotateCcw, Target, Hourglass, ArrowRight, BookOpen, Quote as QuoteIcon, Sparkles
@@ -28,6 +28,18 @@ export const QuotePractice: React.FC = () => {
   const timerRef = useRef<NodeJS.Timeout | null>(null);
   const textInputRef = useRef<HTMLTextAreaElement | null>(null);
 
+  // Refs for tracking practice time on unmount/exits
+  const elapsedTimeRef = useRef(0);
+  const isPlayingRef = useRef(false);
+
+  useEffect(() => {
+    elapsedTimeRef.current = elapsedTime;
+  }, [elapsedTime]);
+
+  useEffect(() => {
+    isPlayingRef.current = isPlaying;
+  }, [isPlaying]);
+
   // Load random quote based on filters
   const loadNewQuote = () => {
     let list = [...QUOTES];
@@ -41,6 +53,11 @@ export const QuotePractice: React.FC = () => {
     if (list.length === 0) {
       // Fallback if list is empty
       list = [...QUOTES];
+    }
+
+    // Save prior practice time if they were typing
+    if (isPlaying && elapsedTime > 0 && user) {
+      incrementPracticeTime(user.id, elapsedTime);
     }
 
     const randomIdx = Math.floor(Math.random() * list.length);
@@ -59,12 +76,15 @@ export const QuotePractice: React.FC = () => {
     loadNewQuote();
   }, [selectedCategory, selectedLength]);
 
-  // Clean timer
+  // Clean timer and save practice time on unmount
   useEffect(() => {
     return () => {
       if (timerRef.current) clearInterval(timerRef.current);
+      if (isPlayingRef.current && elapsedTimeRef.current > 0 && user) {
+        incrementPracticeTime(user.id, elapsedTimeRef.current);
+      }
     };
-  }, []);
+  }, [user]);
 
   const handleStartTyping = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     const val = e.target.value;

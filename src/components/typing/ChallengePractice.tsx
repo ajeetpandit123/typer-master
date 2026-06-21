@@ -2,11 +2,11 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { useApp } from '@/context/AppContext';
-import { getChallengeProgress, saveChallengeCompletion } from '@/lib/services/db';
+import { getChallengeProgress, saveChallengeCompletion, saveSession, incrementPracticeTime } from '@/lib/services/db';
 import { CHALLENGES, Challenge } from '@/lib/services/mockData';
 import { 
   Trophy, Lock, Play, RotateCcw, CheckCircle, XCircle, ArrowRight,
-  Target, Zap, Clock, ShieldAlert, Award
+  Target, Zap, Clock, ShieldAlert, Award, Sparkles
 } from 'lucide-react';
 
 export const ChallengePractice: React.FC = () => {
@@ -17,12 +17,25 @@ export const ChallengePractice: React.FC = () => {
   
   // Gameplay states
   const [isPlaying, setIsPlaying] = useState(false);
+  const [isStarted, setIsStarted] = useState(false);
   const [rawTypedText, setRawTypedText] = useState('');
   const [timeLeft, setTimeLeft] = useState(0);
   const [elapsedTime, setElapsedTime] = useState(0);
   const [showResults, setShowResults] = useState(false);
   const [passed, setPassed] = useState(false);
   const [failReason, setFailReason] = useState('');
+
+  // Refs for tracking practice time on unmount/exits
+  const elapsedTimeRef = useRef(0);
+  const isPlayingRef = useRef(false);
+
+  useEffect(() => {
+    elapsedTimeRef.current = elapsedTime;
+  }, [elapsedTime]);
+
+  useEffect(() => {
+    isPlayingRef.current = isPlaying;
+  }, [isPlaying]);
 
   const timerRef = useRef<NodeJS.Timeout | null>(null);
   const textInputRef = useRef<HTMLTextAreaElement | null>(null);
@@ -42,19 +55,27 @@ export const ChallengePractice: React.FC = () => {
     loadProgress();
   }, [user]);
 
-  // Clean timer
+  // Clean timer and save practice time
   useEffect(() => {
     return () => {
       if (timerRef.current) clearInterval(timerRef.current);
+      if (isPlayingRef.current && elapsedTimeRef.current > 0 && user) {
+        incrementPracticeTime(user.id, elapsedTimeRef.current);
+      }
     };
-  }, []);
+  }, [user]);
 
   const startChallenge = (challenge: Challenge) => {
+    if (isPlaying && elapsedTime > 0 && user) {
+      incrementPracticeTime(user.id, elapsedTime);
+    }
+
     setSelectedChallenge(challenge);
     setRawTypedText('');
     setElapsedTime(0);
     setTimeLeft(challenge.timeLimit);
     setIsPlaying(true);
+    setIsStarted(false);
     setShowResults(false);
     setPassed(false);
     setFailReason('');
@@ -86,7 +107,9 @@ export const ChallengePractice: React.FC = () => {
     const val = e.target.value;
 
     // Start timer on first keystroke
-    if (val.length === 1 && !timerRef.current) {
+    if (!isStarted && val.length === 1) {
+      setIsStarted(true);
+      if (timerRef.current) clearInterval(timerRef.current);
       timerRef.current = setInterval(() => {
         tick();
       }, 1000);
@@ -146,6 +169,14 @@ export const ChallengePractice: React.FC = () => {
     if (isPass && user) {
       try {
         await saveChallengeCompletion(user.id, selectedChallenge.level, finalWpm, accuracy);
+        await saveSession(user.id, {
+          wpm: finalWpm,
+          accuracy,
+          levelType: 'challenge' as any,
+          duration: finalSeconds,
+          errors,
+          charsTyped: cleanTyped.length
+        });
         addToast('Level Passed!', `Challenge Level ${selectedChallenge.level} unlocked the next card!`, 'success');
         refreshProfile();
         loadProgress(); // reload progress
@@ -309,6 +340,13 @@ export const ChallengePractice: React.FC = () => {
                 className="w-full border border-white/10 rounded-2xl bg-slate-950/50 p-8 min-h-32 text-lg leading-relaxed select-none cursor-text relative overflow-hidden"
               >
                 {renderTextHighlights()}
+
+                {!isStarted && (
+                  <div className="absolute right-3 bottom-3 flex items-center gap-1.5 text-[10px] text-slate-400 bg-slate-900 border border-white/5 px-2.5 py-1.5 rounded-lg animate-pulse select-none pointer-events-none">
+                    <Sparkles size={12} className="text-yellow-400 animate-spin" style={{ animationDuration: '3s' }} />
+                    Type the first letter to begin level timer
+                  </div>
+                )}
               </div>
 
               {/* Ghost input area */}
@@ -332,7 +370,12 @@ export const ChallengePractice: React.FC = () => {
                   Restart Level
                 </button>
                 <button
-                  onClick={() => setSelectedChallenge(null)}
+                  onClick={() => {
+                    if (isPlaying && elapsedTime > 0 && user) {
+                      incrementPracticeTime(user.id, elapsedTime);
+                    }
+                    setSelectedChallenge(null);
+                  }}
                   className="text-xs text-slate-500 hover:text-slate-300 font-semibold"
                 >
                   Exit Level

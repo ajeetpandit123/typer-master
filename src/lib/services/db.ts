@@ -160,6 +160,18 @@ export const updateProfile = async (userId: string, updates: Partial<UserProfile
   };
 };
 
+export const incrementPracticeTime = async (userId: string, seconds: number): Promise<void> => {
+  if (seconds <= 0) return;
+  try {
+    const profile = await getProfile(userId);
+    await updateProfile(userId, {
+      practiceTime: profile.practiceTime + seconds
+    });
+  } catch (err) {
+    console.error('Failed to increment practice time:', err);
+  }
+};
+
 export const grantXp = async (userId: string, xpAmount: number): Promise<{ levelUp: boolean, currentLevel: number, newXp: number }> => {
   const profile = await getProfile(userId);
   let newXp = profile.xp + xpAmount;

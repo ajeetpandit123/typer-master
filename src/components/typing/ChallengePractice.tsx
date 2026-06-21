@@ -1,0 +1,404 @@
+'use client';
+
+import React, { useState, useEffect, useRef } from 'react';
+import { useApp } from '@/context/AppContext';
+import { getChallengeProgress, saveChallengeCompletion } from '@/lib/services/db';
+import { CHALLENGES, Challenge } from '@/lib/services/mockData';
+import { 
+  Trophy, Lock, Play, RotateCcw, CheckCircle, XCircle, ArrowRight,
+  Target, Zap, Clock, ShieldAlert, Award
+} from 'lucide-react';
+
+export const ChallengePractice: React.FC = () => {
+  const { user, addToast, refreshProfile } = useApp();
+
+  const [progress, setProgress] = useState<Record<number, any>>({});
+  const [selectedChallenge, setSelectedChallenge] = useState<Challenge | null>(null);
+  
+  // Gameplay states
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [rawTypedText, setRawTypedText] = useState('');
+  const [timeLeft, setTimeLeft] = useState(0);
+  const [elapsedTime, setElapsedTime] = useState(0);
+  const [showResults, setShowResults] = useState(false);
+  const [passed, setPassed] = useState(false);
+  const [failReason, setFailReason] = useState('');
+
+  const timerRef = useRef<NodeJS.Timeout | null>(null);
+  const textInputRef = useRef<HTMLTextAreaElement | null>(null);
+
+  // Load user progress
+  const loadProgress = async () => {
+    if (!user) return;
+    try {
+      const prog = await getChallengeProgress(user.id);
+      setProgress(prog);
+    } catch (err) {
+      console.error('Failed to load challenge progress:', err);
+    }
+  };
+
+  useEffect(() => {
+    loadProgress();
+  }, [user]);
+
+  // Clean timer
+  useEffect(() => {
+    return () => {
+      if (timerRef.current) clearInterval(timerRef.current);
+    };
+  }, []);
+
+  const startChallenge = (challenge: Challenge) => {
+    setSelectedChallenge(challenge);
+    setRawTypedText('');
+    setElapsedTime(0);
+    setTimeLeft(challenge.timeLimit);
+    setIsPlaying(true);
+    setShowResults(false);
+    setPassed(false);
+    setFailReason('');
+
+    setTimeout(() => {
+      if (textInputRef.current) textInputRef.current.focus();
+    }, 50);
+
+    if (timerRef.current) {
+      clearInterval(timerRef.current);
+      timerRef.current = null;
+    }
+  };
+
+  const tick = () => {
+    setElapsedTime(prev => prev + 1);
+    setTimeLeft(prev => {
+      if (prev <= 1) {
+        handleFinished(true); // Forced timeout finish
+        return 0;
+      }
+      return prev - 1;
+    });
+  };
+
+  const handleTextChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    if (!isPlaying || !selectedChallenge) return;
+
+    const val = e.target.value;
+
+    // Start timer on first keystroke
+    if (val.length === 1 && !timerRef.current) {
+      timerRef.current = setInterval(() => {
+        tick();
+      }, 1000);
+    }
+
+    setRawTypedText(val);
+
+    // Completed all text
+    if (val.length >= selectedChallenge.text.length) {
+      handleFinished(false);
+    }
+  };
+
+  const handleFinished = async (isTimeout: boolean) => {
+    setIsPlaying(false);
+    if (timerRef.current) clearInterval(timerRef.current);
+    timerRef.current = null;
+    setShowResults(true);
+
+    if (!selectedChallenge) return;
+
+    const cleanTyped = rawTypedText.trim();
+    const cleanTarget = selectedChallenge.text.slice(0, cleanTyped.length);
+
+    let errors = 0;
+    for (let i = 0; i < cleanTyped.length; i++) {
+      if (cleanTyped[i] !== cleanTarget[i]) {
+        errors++;
+      }
+    }
+
+    const accuracy = cleanTyped.length > 0
+      ? Math.max(0, Math.round(((cleanTyped.length - errors) / cleanTyped.length) * 100))
+      : 0;
+
+    const finalSeconds = isTimeout ? selectedChallenge.timeLimit : elapsedTime;
+    const finalWpm = Math.round((cleanTyped.length / 5) / ((finalSeconds || 1) / 60));
+
+    // Validate metrics targets
+    let isPass = true;
+    let reason = '';
+
+    if (isTimeout && cleanTyped.length < selectedChallenge.text.length) {
+      isPass = false;
+      reason = 'Time ran out before you finished the challenge text.';
+    } else if (finalWpm < selectedChallenge.targetWpm) {
+      isPass = false;
+      reason = `Speed of ${finalWpm} WPM was below the target of ${selectedChallenge.targetWpm} WPM.`;
+    } else if (accuracy < selectedChallenge.targetAccuracy) {
+      isPass = false;
+      reason = `Accuracy of ${accuracy}% was below the requirement of ${selectedChallenge.targetAccuracy}%.`;
+    }
+
+    setPassed(isPass);
+    setFailReason(reason);
+
+    if (isPass && user) {
+      try {
+        await saveChallengeCompletion(user.id, selectedChallenge.level, finalWpm, accuracy);
+        addToast('Level Passed!', `Challenge Level ${selectedChallenge.level} unlocked the next card!`, 'success');
+        refreshProfile();
+        loadProgress(); // reload progress
+      } catch (err) {
+        console.error('Failed to unlock next level:', err);
+      }
+    } else if (!isPass) {
+      addToast('Challenge Failed', 'You did not meet the requirements.', 'error');
+    }
+  };
+
+  // Render highlights
+  const renderTextHighlights = () => {
+    if (!selectedChallenge) return null;
+    return selectedChallenge.text.split('').map((char, index) => {
+      const typedChar = rawTypedText[index];
+      let charClass = 'text-slate-500';
+      if (typedChar !== undefined) {
+        charClass = typedChar === char ? 'text-white' : 'bg-cyber-red/35 text-cyber-red border-b border-cyber-red';
+      }
+
+      const isActive = index === rawTypedText.length;
+      return (
+        <span key={index} className={`${charClass} ${isActive ? 'text-cyber-blue font-extrabold border-l-2 border-cyber-blue animate-caret bg-cyber-blue/15 px-0.5 rounded shadow-[0_0_8px_rgba(0,242,254,0.3)]' : ''} font-mono tracking-wide`}>
+          {char}
+        </span>
+      );
+    });
+  };
+
+  // Determine if a level is unlocked
+  // Level 1 is always unlocked. Other levels are unlocked if level - 1 is completed.
+  const isLevelUnlocked = (level: number) => {
+    if (level === 1) return true;
+    return !!progress[level - 1];
+  };
+
+  const accuracy = rawTypedText.length > 0 && selectedChallenge
+    ? Math.max(0, Math.round((selectedChallenge.text.split('').filter((c, i) => rawTypedText[i] === c).length / rawTypedText.length) * 100))
+    : 100;
+
+  const currentWpm = Math.round((rawTypedText.length / 5) / ((elapsedTime || 1) / 60));
+
+  return (
+    <div className="space-y-6 max-w-4xl mx-auto pb-10">
+      {/* 1. Header Navigation */}
+      <div className="glass-card p-5 rounded-2xl flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-center text-amber-400">
+            <Trophy size={20} />
+          </div>
+          <div>
+            <span className="text-[10px] text-amber-400 font-bold uppercase tracking-wider">Challenge Progression Mode</span>
+            <h2 className="text-lg font-bold text-white leading-tight">20 Progressive Levels of Speed & Precision</h2>
+          </div>
+        </div>
+      </div>
+
+      {/* 2. Content Sandbox */}
+      {selectedChallenge ? (
+        /* Active gameplay console */
+        <div className="glass-card p-6 rounded-2xl relative overflow-hidden flex flex-col">
+          {showResults ? (
+            /* Results Panel */
+            <div className="py-6 flex flex-col items-center text-center max-w-lg mx-auto space-y-6 w-full">
+              <div className={`w-16 h-16 rounded-full flex items-center justify-center border ${
+                passed 
+                  ? 'bg-cyber-green/10 border-cyber-green/30 text-cyber-green shadow-[0_0_15px_rgba(16,185,129,0.35)]' 
+                  : 'bg-cyber-red/10 border-cyber-red/30 text-cyber-red shadow-[0_0_15px_rgba(244,63,94,0.35)]'
+              }`}>
+                {passed ? <CheckCircle size={36} /> : <XCircle size={36} />}
+              </div>
+
+              <div>
+                <h3 className="text-xl font-bold text-white">
+                  {passed ? 'Level Completed successfully!' : 'Requirements Not Met'}
+                </h3>
+                <p className="text-sm text-slate-400 mt-1">
+                  Challenge Level {selectedChallenge.level}
+                </p>
+                {!passed && (
+                  <p className="text-xs text-cyber-red font-semibold bg-cyber-red/5 border border-cyber-red/20 px-3 py-2 rounded-lg mt-3">
+                    {failReason}
+                  </p>
+                )}
+              </div>
+
+              {/* Stats card */}
+              <div className="grid grid-cols-2 gap-4 w-full bg-slate-950/40 p-4 rounded-xl border border-white/5">
+                <div className="text-center p-2 border-r border-white/5">
+                  <span className="text-xs text-slate-400 font-semibold block">Speed achieved</span>
+                  <span className={`text-2xl font-extrabold mt-1 block ${passed ? 'text-cyber-blue text-glow-cyan' : 'text-slate-400'}`}>
+                    {currentWpm} WPM
+                  </span>
+                  <span className="text-[10px] text-slate-500">Target: {selectedChallenge.targetWpm} WPM</span>
+                </div>
+                <div className="text-center p-2">
+                  <span className="text-xs text-slate-400 font-semibold block">Accuracy achieved</span>
+                  <span className={`text-2xl font-extrabold mt-1 block ${passed ? 'text-cyber-green' : 'text-slate-400'}`}>
+                    {accuracy}%
+                  </span>
+                  <span className="text-[10px] text-slate-500">Target: {selectedChallenge.targetAccuracy}%</span>
+                </div>
+              </div>
+
+              <div className="flex gap-3 w-full">
+                <button
+                  onClick={() => startChallenge(selectedChallenge)}
+                  className="flex-1 py-3 border border-white/10 hover:border-white/20 text-white font-bold rounded-lg text-sm transition flex items-center justify-center gap-1.5"
+                >
+                  <RotateCcw size={14} />
+                  Retry Level
+                </button>
+                {passed && selectedChallenge.level < 20 ? (
+                  <button
+                    onClick={() => startChallenge(CHALLENGES[selectedChallenge.level])}
+                    className="flex-1 py-3 bg-gradient-to-r from-cyber-blue to-cyber-purple hover:opacity-95 text-white font-bold rounded-lg text-sm transition flex items-center justify-center gap-1.5 shadow-md"
+                  >
+                    Next Level
+                    <ArrowRight size={14} />
+                  </button>
+                ) : (
+                  <button
+                    onClick={() => setSelectedChallenge(null)}
+                    className="flex-1 py-3 bg-slate-900 hover:bg-slate-800 text-white font-bold rounded-lg text-sm transition"
+                  >
+                    Exit Level
+                  </button>
+                )}
+              </div>
+            </div>
+          ) : (
+            /* Active gameplay sandbox */
+            <div className="space-y-6">
+              {/* Stats headers */}
+              <div className="flex justify-between items-center bg-slate-950/30 px-4 py-2.5 border border-white/5 rounded-xl text-xs">
+                <div className="flex items-center gap-1.5">
+                  <Zap size={14} className="text-cyber-blue text-glow-cyan" />
+                  <span className="text-slate-400">Target:</span>
+                  <span className="font-bold text-white">{selectedChallenge.targetWpm} WPM</span>
+                  <span className="text-slate-500">({currentWpm} WPM)</span>
+                </div>
+                <div className="flex items-center gap-1.5">
+                  <Target size={14} className="text-cyber-green" />
+                  <span className="text-slate-400">Accuracy target:</span>
+                  <span className="font-bold text-white">{selectedChallenge.targetAccuracy}%</span>
+                  <span className="text-slate-500">({accuracy}%)</span>
+                </div>
+                <div className="flex items-center gap-1.5">
+                  <Clock size={14} className="text-cyber-red" />
+                  <span className="text-slate-400">Timer:</span>
+                  <span className={`font-bold ${timeLeft <= 10 ? 'text-cyber-red animate-pulse' : 'text-white'}`}>
+                    {timeLeft}s
+                  </span>
+                </div>
+              </div>
+
+              {/* Text Highlights Box */}
+              <div 
+                onClick={() => { if (textInputRef.current) textInputRef.current.focus(); }}
+                className="w-full border border-white/10 rounded-2xl bg-slate-950/50 p-8 min-h-32 text-lg leading-relaxed select-none cursor-text relative overflow-hidden"
+              >
+                {renderTextHighlights()}
+              </div>
+
+              {/* Ghost input area */}
+              <textarea
+                ref={textInputRef}
+                value={rawTypedText}
+                onChange={handleTextChange}
+                className="absolute w-0 h-0 opacity-0 pointer-events-none"
+                autoCapitalize="off"
+                autoComplete="off"
+                autoCorrect="off"
+                spellCheck="false"
+              />
+
+              <div className="flex justify-between items-center">
+                <button
+                  onClick={() => startChallenge(selectedChallenge)}
+                  className="px-4 py-2 bg-white/5 border border-white/10 hover:bg-white/10 text-white rounded-lg text-xs font-bold transition flex items-center gap-1.5"
+                >
+                  <RotateCcw size={12} />
+                  Restart Level
+                </button>
+                <button
+                  onClick={() => setSelectedChallenge(null)}
+                  className="text-xs text-slate-500 hover:text-slate-300 font-semibold"
+                >
+                  Exit Level
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
+      ) : (
+        /* Progress cards grid list */
+        <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-5 gap-4">
+          {CHALLENGES.map((chal) => {
+            const unlocked = isLevelUnlocked(chal.level);
+            const score = progress[chal.level];
+            
+            return (
+              <div
+                key={chal.id}
+                onClick={() => { if (unlocked) startChallenge(chal); }}
+                className={`glass-card p-5 rounded-2xl border flex flex-col justify-between h-40 transition-all ${
+                  unlocked 
+                    ? 'border-white/10 bg-slate-900/40 cursor-pointer hover:border-cyber-blue/40 hover:scale-[1.03]' 
+                    : 'border-white/5 bg-slate-950/30 opacity-40 cursor-not-allowed select-none'
+                }`}
+              >
+                <div className="flex justify-between items-start">
+                  <span className="text-xs font-bold text-slate-500">Lvl {chal.level}</span>
+                  {unlocked ? (
+                    score ? (
+                      <CheckCircle size={16} className="text-cyber-green" />
+                    ) : (
+                      <Award size={16} className="text-cyber-blue animate-pulse" />
+                    )
+                  ) : (
+                    <Lock size={14} className="text-slate-500" />
+                  )}
+                </div>
+
+                <div className="my-2">
+                  <h4 className={`text-sm font-extrabold ${unlocked ? 'text-white' : 'text-slate-500'}`}>
+                    Level {chal.level}
+                  </h4>
+                  <p className="text-[10px] text-slate-400 mt-1 truncate">
+                    Req: {chal.targetWpm} WPM
+                  </p>
+                </div>
+
+                {score ? (
+                  <div className="mt-2 text-[10px] text-cyber-green bg-cyber-green/5 border border-cyber-green/20 px-2 py-0.5 rounded-md flex justify-between">
+                    <span>Passed</span>
+                    <strong>{score.wpm} WPM</strong>
+                  </div>
+                ) : unlocked ? (
+                  <div className="mt-2 text-[10px] text-cyber-blue bg-cyber-blue/5 border border-cyber-blue/20 px-2 py-0.5 rounded-md text-center font-semibold">
+                    Play Challenge
+                  </div>
+                ) : (
+                  <div className="mt-2 text-[10px] text-slate-500 bg-slate-950/40 px-2 py-0.5 rounded-md text-center">
+                    Locked
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+};

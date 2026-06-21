@@ -28,6 +28,7 @@ export const ChallengePractice: React.FC = () => {
   // Refs for tracking practice time on unmount/exits
   const elapsedTimeRef = useRef(0);
   const isPlayingRef = useRef(false);
+  const rawTypedTextRef = useRef('');
 
   useEffect(() => {
     elapsedTimeRef.current = elapsedTime;
@@ -36,6 +37,10 @@ export const ChallengePractice: React.FC = () => {
   useEffect(() => {
     isPlayingRef.current = isPlaying;
   }, [isPlaying]);
+
+  useEffect(() => {
+    rawTypedTextRef.current = rawTypedText;
+  }, [rawTypedText]);
 
   const timerRef = useRef<NodeJS.Timeout | null>(null);
   const textInputRef = useRef<HTMLTextAreaElement | null>(null);
@@ -92,13 +97,7 @@ export const ChallengePractice: React.FC = () => {
 
   const tick = () => {
     setElapsedTime(prev => prev + 1);
-    setTimeLeft(prev => {
-      if (prev <= 1) {
-        handleFinished(true); // Forced timeout finish
-        return 0;
-      }
-      return prev - 1;
-    });
+    setTimeLeft(prev => Math.max(0, prev - 1));
   };
 
   const handleTextChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
@@ -187,6 +186,13 @@ export const ChallengePractice: React.FC = () => {
       addToast('Challenge Failed', 'You did not meet the requirements.', 'error');
     }
   };
+
+  // Effect to handle timer running out
+  useEffect(() => {
+    if (isPlaying && isStarted && timeLeft <= 0) {
+      handleFinished(true);
+    }
+  }, [timeLeft, isPlaying, isStarted]);
 
   // Render highlights
   const renderTextHighlights = () => {

@@ -51,6 +51,7 @@ export const AdvancedPractice: React.FC = () => {
   // Refs for tracking practice time on unmount/exits
   const elapsedTimeRef = useRef(0);
   const isPlayingRef = useRef(false);
+  const rawTypedTextRef = useRef('');
 
   useEffect(() => {
     elapsedTimeRef.current = elapsedTime;
@@ -59,6 +60,10 @@ export const AdvancedPractice: React.FC = () => {
   useEffect(() => {
     isPlayingRef.current = isPlaying;
   }, [isPlaying]);
+
+  useEffect(() => {
+    rawTypedTextRef.current = rawTypedText;
+  }, [rawTypedText]);
 
   const targetText = ADVANCED_TEXTS[currentTextIdx];
 
@@ -138,6 +143,13 @@ export const AdvancedPractice: React.FC = () => {
     }
   };
 
+  // Effect to handle timer running out (60 seconds)
+  useEffect(() => {
+    if (isPlaying && isStarted && elapsedTime >= 60) {
+      handleFinished(60);
+    }
+  }, [elapsedTime, isPlaying, isStarted]);
+
   const handleTextChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     if (!isPlaying) return;
 
@@ -149,13 +161,7 @@ export const AdvancedPractice: React.FC = () => {
       lastKeyTimeRef.current = Date.now();
       if (timerRef.current) clearInterval(timerRef.current);
       timerRef.current = setInterval(() => {
-        setElapsedTime(prev => {
-          const nextTime = prev + 1;
-          if (nextTime >= 60) {
-            handleFinished(nextTime);
-          }
-          return nextTime;
-        });
+        setElapsedTime(prev => prev + 1);
       }, 1000);
     }
 

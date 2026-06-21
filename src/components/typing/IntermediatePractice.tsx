@@ -50,6 +50,7 @@ export const IntermediatePractice: React.FC = () => {
   // Refs for tracking practice time on unmount/exits
   const elapsedTimeRef = useRef(0);
   const isPlayingRef = useRef(false);
+  const rawTypedTextRef = useRef('');
 
   useEffect(() => {
     elapsedTimeRef.current = elapsedTime;
@@ -58,6 +59,10 @@ export const IntermediatePractice: React.FC = () => {
   useEffect(() => {
     isPlayingRef.current = isPlaying;
   }, [isPlaying]);
+
+  useEffect(() => {
+    rawTypedTextRef.current = rawTypedText;
+  }, [rawTypedText]);
   
   // Refs
   const timerRef = useRef<NodeJS.Timeout | null>(null);
@@ -123,25 +128,16 @@ export const IntermediatePractice: React.FC = () => {
       
       // Calculate live WPM for history chart (every 3 seconds)
       if (nextTime % 3 === 0) {
-        setRawTypedText(currentTyped => {
-          const wpmVal = calculateLiveWpm(currentTyped.length, nextTime);
-          setWpmHistory(hist => [...hist, { time: nextTime, wpm: wpmVal }]);
-          return currentTyped;
-        });
-      }
-
-      if (testMode === 'time') {
-        setTimeLeft(t => {
-          if (t <= 1) {
-            handleFinished(nextTime);
-            return 0;
-          }
-          return t - 1;
-        });
+        const wpmVal = calculateLiveWpm(rawTypedTextRef.current.length, nextTime);
+        setWpmHistory(hist => [...hist, { time: nextTime, wpm: wpmVal }]);
       }
       
       return nextTime;
     });
+
+    if (testMode === 'time') {
+      setTimeLeft(t => Math.max(0, t - 1));
+    }
   };
 
   const handlePause = () => {
@@ -271,6 +267,13 @@ export const IntermediatePractice: React.FC = () => {
     }
   };
 
+  // Effect to handle timer running out
+  useEffect(() => {
+    if (isPlaying && isStarted && testMode === 'time' && timeLeft <= 0) {
+      handleFinished(duration);
+    }
+  }, [timeLeft, isPlaying, isStarted, testMode, duration]);
+
   // Text formatting highlight helpers
   const renderTextHighlights = () => {
     return targetText.split('').map((char, index) => {
@@ -289,7 +292,7 @@ export const IntermediatePractice: React.FC = () => {
 
       return (
         <span key={index} className={`${charClass} ${activeClass} transition-all duration-100 font-mono tracking-wide`}>
-          {char === ' ' ? '\u00A0' : char}
+          {char}
         </span>
       );
     });
@@ -505,7 +508,7 @@ export const IntermediatePractice: React.FC = () => {
 
               <div 
                 onClick={() => { if (textInputRef.current) textInputRef.current.focus(); }}
-                className="w-full border border-white/10 rounded-2xl bg-slate-950/50 p-8 min-h-36 text-lg leading-relaxed select-none cursor-text overflow-hidden max-h-56 overflow-y-auto relative"
+                className="w-full border border-white/10 rounded-2xl bg-slate-950/50 p-8 min-h-36 text-lg leading-relaxed select-none cursor-text overflow-hidden max-h-56 overflow-y-auto relative whitespace-pre-wrap"
               >
                 {renderTextHighlights()}
 

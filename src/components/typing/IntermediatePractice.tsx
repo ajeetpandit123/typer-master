@@ -31,8 +31,10 @@ export const IntermediatePractice: React.FC = () => {
 
   // Test setup
   const [testMode, setTestMode] = useState<'time' | 'words'>('time');
-  const [duration, setDuration] = useState<number>(30); // 30, 60, 120, 180
+  const [duration, setDuration] = useState<number>(30); // 30, 60, 120, 180, or custom
   const [wordCount, setWordCount] = useState<number>(25); // 25, 50, 100
+  const [isCustomDuration, setIsCustomDuration] = useState<boolean>(false);
+  const [customInputVal, setCustomInputVal] = useState<string>('300'); // default 5 minutes (300s)
 
   // Game state
   const [isPlaying, setIsPlaying] = useState(false);
@@ -69,9 +71,13 @@ export const IntermediatePractice: React.FC = () => {
   const textInputRef = useRef<HTMLTextAreaElement | null>(null);
 
   // Generate lowercase text
-  const generateText = () => {
+  const generateText = (currentDuration?: number) => {
     let words: string[] = [];
-    const targetLength = testMode === 'words' ? wordCount : 100; // Generate enough words
+    const activeDuration = currentDuration !== undefined ? currentDuration : duration;
+    // Scale target length for time mode based on duration, assuming ~200 WPM max speed to be safe
+    const targetLength = testMode === 'words' 
+      ? wordCount 
+      : Math.max(100, Math.ceil((activeDuration / 60) * 200));
     for (let i = 0; i < targetLength; i++) {
       const idx = Math.floor(Math.random() * INTERMEDIATE_WORDS.length);
       words.push(INTERMEDIATE_WORDS[idx]);
@@ -94,17 +100,36 @@ export const IntermediatePractice: React.FC = () => {
 
   // Timer Tick handler
   const handleStart = () => {
+    let finalDuration = duration;
+    
+    // Sanitize custom duration if enabled
+    if (isCustomDuration) {
+      const parsed = parseInt(customInputVal);
+      if (isNaN(parsed) || parsed < 10) {
+        finalDuration = 10;
+        setDuration(10);
+        setCustomInputVal('10');
+      } else if (parsed > 3600) {
+        finalDuration = 3600;
+        setDuration(3600);
+        setCustomInputVal('3600');
+      } else {
+        finalDuration = parsed;
+        setDuration(parsed);
+      }
+    }
+
     // If they were already playing, save elapsed practice time first
     if (isPlaying && elapsedTime > 0 && user) {
       incrementPracticeTime(user.id, elapsedTime);
     }
 
-    generateText();
+    generateText(finalDuration);
     setRawTypedText('');
     setInputIndex(0);
     setWpmHistory([]);
     setElapsedTime(0);
-    setTimeLeft(testMode === 'time' ? duration : 0);
+    setTimeLeft(testMode === 'time' ? finalDuration : 0);
     setIsPlaying(true);
     setIsPaused(false);
     setIsStarted(false);
@@ -287,7 +312,7 @@ export const IntermediatePractice: React.FC = () => {
       // Active letter highlight
       const isActive = index === rawTypedText.length;
       const activeClass = isActive 
-        ? 'text-cyber-blue font-extrabold border-l-2 border-cyber-blue animate-caret bg-cyber-blue/15 px-0.5 rounded shadow-[0_0_8px_rgba(0,242,254,0.3)]' 
+        ? 'typing-caret-active animate-caret' 
         : '';
 
       return (
@@ -343,18 +368,65 @@ export const IntermediatePractice: React.FC = () => {
             </div>
 
             {testMode === 'time' ? (
-              <div className="flex bg-slate-900 border border-white/5 p-1 rounded-lg">
+              <div className="flex bg-slate-900 border border-white/5 p-1 rounded-lg items-center gap-1.5">
                 {[30, 60, 120, 180].map((t) => (
                   <button
                     key={t}
-                    onClick={() => { setDuration(t); setTimeLeft(t); }}
+                    onClick={() => { 
+                      setDuration(t); 
+                      setTimeLeft(t); 
+                      setIsCustomDuration(false);
+                    }}
                     className={`px-2.5 py-1 rounded-md text-xs font-semibold transition ${
-                      duration === t ? 'bg-slate-800 text-cyber-blue font-bold' : 'text-slate-500 hover:text-slate-300'
+                      !isCustomDuration && duration === t 
+                        ? 'bg-slate-800 text-cyber-blue font-bold shadow-[0_0_8px_rgba(0,242,254,0.2)]' 
+                        : 'text-slate-500 hover:text-slate-300'
                     }`}
                   >
                     {t}s
                   </button>
                 ))}
+                
+                {/* Custom Duration Option */}
+                <div className="flex items-center gap-1.5 pl-1.5 border-l border-white/10">
+                  <button
+                    onClick={() => {
+                      setIsCustomDuration(true);
+                      const numericVal = parseInt(customInputVal) || 300;
+                      setDuration(numericVal);
+                      setTimeLeft(numericVal);
+                    }}
+                    className={`px-2.5 py-1 rounded-md text-xs font-semibold transition ${
+                      isCustomDuration 
+                        ? 'bg-slate-800 text-cyber-blue font-bold shadow-[0_0_8px_rgba(0,242,254,0.2)]' 
+                        : 'text-slate-500 hover:text-slate-300'
+                    }`}
+                  >
+                    Custom
+                  </button>
+                  {isCustomDuration && (
+                    <div className="flex items-center gap-1 bg-slate-950 px-2 py-0.5 rounded border border-white/10">
+                      <input
+                        type="number"
+                        min="10"
+                        max="3600"
+                        value={customInputVal}
+                        onChange={(e) => {
+                          const valStr = e.target.value;
+                          setCustomInputVal(valStr);
+                          const valNum = parseInt(valStr) || 0;
+                          if (valNum >= 10 && valNum <= 3600) {
+                            setDuration(valNum);
+                            setTimeLeft(valNum);
+                          }
+                        }}
+                        className="w-12 bg-transparent text-xs text-white focus:outline-none text-center font-bold [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                        placeholder="300"
+                      />
+                      <span className="text-[10px] text-slate-500">s</span>
+                    </div>
+                  )}
+                </div>
               </div>
             ) : (
               <div className="flex bg-slate-900 border border-white/5 p-1 rounded-lg">

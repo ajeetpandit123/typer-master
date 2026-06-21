@@ -95,14 +95,74 @@ body {
   box-shadow: 0 0 25px rgba(139, 92, 246, 0.35);
 }
 
-/* Caret Blinking Animation */
+/* Caret Blinking Animation (only animates border color so the text remains fully visible) */
 @keyframes blink {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0; }
+  0%, 100% { border-color: #00f2fe; }
+  50% { border-color: transparent; }
 }
 
 .animate-caret {
   animation: blink 1s infinite;
+}
+
+@keyframes pulse-caret {
+  0%, 100% { border-color: #00f2fe; }
+  50% { border-color: transparent; }
+}
+
+.animate-pulse-caret {
+  animation: pulse-caret 1.5s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+body.no-blink .animate-caret,
+body.no-blink .animate-pulse-caret {
+  animation: none !important;
+  border-color: #00f2fe !important;
+}
+
+/* Dynamic Caret Active Styles (Cyber vs Simple Cursor) */
+.typing-caret-active {
+  position: relative;
+  transition: all 0.1s ease;
+  border-left: 2px solid transparent;
+}
+
+.typing-caret-active-bottom {
+  position: relative;
+  transition: all 0.1s ease;
+  border-bottom: 2px solid transparent;
+}
+
+/* Cyber Cursor Style (glow, block, bold text, neon accent color) */
+body.cursor-cyber .typing-caret-active {
+  color: #00f2fe !important;
+  font-weight: 800 !important;
+  border-left: 2px solid #00f2fe !important;
+  background-color: rgba(0, 242, 254, 0.15) !important;
+  padding-left: 0.125rem !important;
+  padding-right: 0.125rem !important;
+  border-radius: 0.25rem !important;
+  box-shadow: 0 0 8px rgba(0, 242, 254, 0.3) !important;
+}
+
+body.cursor-cyber .typing-caret-active-bottom {
+  color: #00f2fe !important;
+  font-weight: 800 !important;
+  border-bottom: 2px solid #00f2fe !important;
+  background-color: rgba(0, 242, 254, 0.15) !important;
+  padding-left: 0.125rem !important;
+  padding-right: 0.125rem !important;
+  border-radius: 0.25rem !important;
+  box-shadow: 0 0 8px rgba(0, 242, 254, 0.3) !important;
+}
+
+/* Simple Cursor Style (clean left vertical border or bottom border line only; text, weight, bg and shadow are unchanged) */
+body.cursor-simple .typing-caret-active {
+  border-left: 2px solid #00f2fe !important;
+}
+
+body.cursor-simple .typing-caret-active-bottom {
+  border-bottom: 2px solid #00f2fe !important;
 }
 
 /* Coding IDE styling */

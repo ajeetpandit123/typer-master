@@ -257,7 +257,7 @@ export const BeginnerPractice: React.FC = () => {
                   if (index < inputIndex) {
                     charClass = 'text-slate-400 font-semibold';
                   } else if (index === inputIndex) {
-                    charClass = 'text-cyber-blue font-extrabold border-b-2 border-cyber-blue animate-pulse relative bg-cyber-blue/15 px-0.5 rounded shadow-[0_0_8px_rgba(0,242,254,0.3)]';
+                    charClass = 'typing-caret-active-bottom animate-pulse-caret relative';
                   }
                   
                   return (

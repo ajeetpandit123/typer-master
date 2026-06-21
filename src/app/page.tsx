@@ -21,7 +21,7 @@ import {
 } from 'lucide-react';
 
 export default function Home() {
-  const { user, profile, loading, localMode, logOut } = useApp();
+  const { user, profile, loading, localMode, logOut, caretBlinking, setCaretBlinking, cursorStyle, setCursorStyle } = useApp();
   const [activeTab, setActiveTab] = useState<string>('dashboard');
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
@@ -159,11 +159,39 @@ export default function Home() {
           </h1>
         </div>
 
-        {/* Database indicator */}
-        <span className="text-[10px] bg-slate-900 border border-white/5 px-2 py-0.5 rounded text-slate-400 flex items-center gap-1">
-          <Database size={10} className="text-cyber-blue" />
-          {localMode ? 'Local' : 'Supabase'}
-        </span>
+        <div className="flex items-center gap-1.5">
+          {/* Mobile Cursor Style Toggle */}
+          <button
+            onClick={() => setCursorStyle(cursorStyle === 'cyber' ? 'simple' : 'cyber')}
+            className={`flex items-center gap-1.5 px-2 py-1 rounded-full text-[9px] font-bold border transition-all ${
+              cursorStyle === 'cyber' 
+                ? 'border-cyber-blue/30 bg-cyber-blue/5 text-cyber-blue' 
+                : 'border-white/10 bg-slate-900 text-slate-400'
+            }`}
+            title="Toggle cursor theme style"
+          >
+            {cursorStyle === 'cyber' ? 'Cyber' : 'Simple'}
+          </button>
+
+          {/* Mobile Cursor Blink Toggle */}
+          <button
+            onClick={() => setCaretBlinking(!caretBlinking)}
+            className={`flex items-center gap-1.5 px-2 py-1 rounded-full text-[9px] font-bold border transition-all ${
+              caretBlinking 
+                ? 'border-cyber-blue/30 bg-cyber-blue/5 text-cyber-blue' 
+                : 'border-white/10 bg-slate-900 text-slate-400'
+            }`}
+            title="Toggle caret blinking"
+          >
+            {caretBlinking ? 'Blink' : 'Steady'}
+          </button>
+
+          {/* Database indicator */}
+          <span className="text-[10px] bg-slate-900 border border-white/5 px-2.5 py-1 rounded text-slate-400 flex items-center gap-1">
+            <Database size={10} className="text-cyber-blue" />
+            {localMode ? 'Local' : 'Supabase'}
+          </span>
+        </div>
       </div>
 
       {/* 3. Mobile Sidebar Overlay */}
@@ -222,7 +250,51 @@ export default function Home() {
             </span>
           </div>
 
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-3">
+            {/* Cursor Style Toggle */}
+            <button
+              onClick={() => setCursorStyle(cursorStyle === 'cyber' ? 'simple' : 'cyber')}
+              className={`flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-semibold border transition-all duration-300 cursor-pointer select-none ${
+                cursorStyle === 'cyber' 
+                  ? 'border-cyber-blue/30 bg-cyber-blue/5 text-cyber-blue shadow-[0_0_8px_rgba(0,242,254,0.15)]' 
+                  : 'border-white/10 bg-slate-900 text-slate-400'
+              }`}
+              title="Toggle glowing neon cursor vs simple vertical line cursor"
+            >
+              {cursorStyle === 'cyber' ? (
+                <>
+                  <span>Cyber Cursor</span>
+                </>
+              ) : (
+                <>
+                  <span>Simple Cursor</span>
+                </>
+              )}
+            </button>
+
+            {/* Cursor Blink Toggle */}
+            <button
+              onClick={() => setCaretBlinking(!caretBlinking)}
+              className={`flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-semibold border transition-all duration-300 cursor-pointer select-none ${
+                caretBlinking 
+                  ? 'border-cyber-blue/30 bg-cyber-blue/5 text-cyber-blue shadow-[0_0_8px_rgba(0,242,254,0.15)]' 
+                  : 'border-white/10 bg-slate-900 text-slate-400'
+              }`}
+              title="Toggle cursor blinking animation"
+            >
+              {caretBlinking ? (
+                <>
+                  <span className="w-1.5 h-1.5 rounded-full bg-cyber-blue animate-ping" />
+                  <span>Blinking</span>
+                </>
+              ) : (
+                <>
+                  <span className="w-1.5 h-1.5 rounded-full bg-slate-500" />
+                  <span>Steady</span>
+                </>
+              )}
+            </button>
+
             {/* Database indicator */}
             <span className="text-[10px] bg-slate-900 border border-white/5 px-2.5 py-1 rounded-full text-slate-400 flex items-center gap-1.5 shadow-sm">
               <span className={`w-1.5 h-1.5 rounded-full ${localMode ? 'bg-cyber-blue animate-pulse' : 'bg-cyber-green'}`} />

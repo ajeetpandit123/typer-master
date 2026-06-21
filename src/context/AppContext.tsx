@@ -22,6 +22,10 @@ interface AppContextType {
   loading: boolean;
   localMode: boolean;
   toasts: ToastMessage[];
+  caretBlinking: boolean;
+  setCaretBlinking: (val: boolean) => void;
+  cursorStyle: 'cyber' | 'simple';
+  setCursorStyle: (val: 'cyber' | 'simple') => void;
   addToast: (title: string, description: string, type?: ToastMessage['type']) => void;
   removeToast: (id: string) => void;
   logInLocal: (username: string, email: string) => Promise<void>;
@@ -38,6 +42,42 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [loading, setLoading] = useState<boolean>(true);
   const [localMode, setLocalMode] = useState<boolean>(true);
   const [toasts, setToasts] = useState<ToastMessage[]>([]);
+  const [caretBlinking, setCaretBlinking] = useState<boolean>(() => {
+    if (typeof window !== 'undefined') {
+      const stored = localStorage.getItem('typemaster_caret_blinking');
+      return stored !== null ? stored === 'true' : false;
+    }
+    return false;
+  });
+  const [cursorStyle, setCursorStyle] = useState<'cyber' | 'simple'>(() => {
+    if (typeof window !== 'undefined') {
+      const stored = localStorage.getItem('typemaster_cursor_style');
+      return (stored === 'cyber' || stored === 'simple') ? stored : 'simple';
+    }
+    return 'simple';
+  });
+
+  // Update body classes when caretBlinking or cursorStyle changes
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('typemaster_caret_blinking', String(caretBlinking));
+      localStorage.setItem('typemaster_cursor_style', cursorStyle);
+
+      if (caretBlinking) {
+        document.body.classList.remove('no-blink');
+      } else {
+        document.body.classList.add('no-blink');
+      }
+
+      if (cursorStyle === 'cyber') {
+        document.body.classList.remove('cursor-simple');
+        document.body.classList.add('cursor-cyber');
+      } else {
+        document.body.classList.remove('cursor-cyber');
+        document.body.classList.add('cursor-simple');
+      }
+    }
+  }, [caretBlinking, cursorStyle]);
 
   const addToast = (title: string, description: string, type: ToastMessage['type'] = 'info') => {
     const id = Math.random().toString(36).substring(7);
@@ -201,6 +241,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         loading,
         localMode,
         toasts,
+        caretBlinking,
+        setCaretBlinking,
+        cursorStyle,
+        setCursorStyle,
         addToast,
         removeToast,
         logInLocal,

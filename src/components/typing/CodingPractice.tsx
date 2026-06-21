@@ -224,7 +224,7 @@ export const CodingPractice: React.FC = () => {
 
         const isActive = absoluteIndex === rawTypedText.length;
         const activeClass = isActive 
-          ? 'text-cyber-blue font-extrabold border-l-2 border-cyber-blue animate-caret bg-cyber-blue/15 px-0.5 rounded shadow-[0_0_8px_rgba(0,242,254,0.3)]' 
+          ? 'typing-caret-active animate-caret' 
           : '';
 
         // Standard light color formatting helper (basic token coloring for wow-effect)

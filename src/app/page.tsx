@@ -13,11 +13,12 @@ import { CodingPractice } from '@/components/typing/CodingPractice';
 import { MultiplayerBattle } from '@/components/battle/MultiplayerBattle';
 import { LeaderboardView } from '@/components/dashboard/LeaderboardView';
 import { AdminView } from '@/components/dashboard/AdminView';
+import { ExamPractice } from '@/components/typing/ExamPractice';
 
 import { 
   Trophy, Zap, Target, Hourglass, ShieldAlert, Award, 
   BookOpen, MessageSquare, Code, Sword, LogOut, Settings, 
-  Menu, X, Sparkles, Database, DatabaseZap
+  Menu, X, Sparkles, Database, DatabaseZap, FileText
 } from 'lucide-react';
 
 export default function Home() {
@@ -58,6 +59,8 @@ export default function Home() {
         return <ChallengePractice />;
       case 'coding':
         return <CodingPractice />;
+      case 'exam':
+        return <ExamPractice />;
       case 'battle':
         return <MultiplayerBattle />;
       case 'leaderboard':
@@ -77,6 +80,7 @@ export default function Home() {
     { id: 'quote', label: 'Quote Mode', icon: <MessageSquare size={16} />, header: 'Typing Modes' },
     { id: 'challenge', label: 'Challenge Mode', icon: <Trophy size={16} /> },
     { id: 'coding', label: 'Coding Practice', icon: <Code size={16} /> },
+    { id: 'exam', label: 'Exam Simulator', icon: <FileText size={16} /> },
     { id: 'battle', label: 'Multiplayer Battle', icon: <Sword size={16} /> },
     { id: 'leaderboard', label: 'Leaderboard', icon: <Award size={16} />, header: 'Rankings' },
     { id: 'admin', label: 'Admin Dashboard', icon: <Settings size={16} /> },

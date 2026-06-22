@@ -18,7 +18,7 @@ export interface TypingSession {
   userId: string;
   wpm: number;
   accuracy: number;
-  levelType: 'beginner' | 'intermediate' | 'advanced' | 'quote' | 'coding' | 'battle';
+  levelType: 'beginner' | 'intermediate' | 'advanced' | 'quote' | 'coding' | 'battle' | 'exam';
   duration: number; // seconds
   errors: number;
   charsTyped: number;

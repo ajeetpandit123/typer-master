@@ -9,7 +9,7 @@ import {
 } from 'lucide-react';
 
 export const QuotePractice: React.FC = () => {
-  const { user, addToast, refreshProfile, isZenMode, setIsZenMode } = useApp();
+  const { user, addToast, refreshProfile, isZenMode, setIsZenMode, playClickSound } = useApp();
 
   // Settings
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
@@ -335,6 +335,7 @@ export const QuotePractice: React.FC = () => {
               ref={textInputRef}
               value={rawTypedText}
               onChange={handleStartTyping}
+              onKeyDown={(e) => playClickSound(e.key)}
               className="absolute w-0 h-0 opacity-0 pointer-events-none"
               autoCapitalize="off"
               autoComplete="off"

@@ -57,7 +57,7 @@ const EXAM_PARAGRAPHS = [
 ];
 
 export const ExamPractice: React.FC = () => {
-  const { user, addToast, refreshProfile, isZenMode, setIsZenMode } = useApp();
+  const { user, addToast, refreshProfile, isZenMode, setIsZenMode, playClickSound } = useApp();
 
   // Mode settings
   const [selectedPresetId, setSelectedPresetId] = useState<string>('support-agent');
@@ -583,6 +583,7 @@ export const ExamPractice: React.FC = () => {
               ref={textInputRef}
               value={rawTypedText}
               onChange={handleTextChange}
+              onKeyDown={(e) => playClickSound(e.key)}
               className="absolute w-0 h-0 opacity-0 pointer-events-none"
               autoCapitalize="off"
               autoComplete="off"

@@ -28,7 +28,7 @@ const BEGINNER_LESSONS: Lesson[] = [
 ];
 
 export const BeginnerPractice: React.FC = () => {
-  const { user, addToast, refreshProfile, isZenMode, setIsZenMode } = useApp();
+  const { user, addToast, refreshProfile, isZenMode, setIsZenMode, playClickSound } = useApp();
   
   const [currentLessonIdx, setCurrentLessonIdx] = useState(0);
   const [isPlaying, setIsPlaying] = useState(true);
@@ -76,7 +76,9 @@ export const BeginnerPractice: React.FC = () => {
       }
 
       // Ignore modifier keys
-      if (e.key.length > 1 && e.key !== 'Spacebar' && e.key !== ' ') return;
+      if (e.key.length > 1 && e.key !== 'Spacebar' && e.key !== ' ' && e.key !== 'Backspace') return;
+
+      playClickSound(e.key);
 
       const typed = e.key;
       const expected = targetText[inputIndex];

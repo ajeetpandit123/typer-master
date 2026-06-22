@@ -30,7 +30,7 @@ const BATTLE_TEXTS = [
 ];
 
 export const MultiplayerBattle: React.FC = () => {
-  const { user, profile, localMode, addToast, refreshProfile } = useApp();
+  const { user, profile, localMode, addToast, refreshProfile, playClickSound } = useApp();
 
   // Lobby States
   const [inRoom, setInRoom] = useState(false);
@@ -619,6 +619,7 @@ export const MultiplayerBattle: React.FC = () => {
                   ref={textInputRef}
                   value={rawTypedText}
                   onChange={handleTextChange}
+                  onKeyDown={(e) => playClickSound(e.key)}
                   className="absolute w-0 h-0 opacity-0 pointer-events-none"
                   autoCapitalize="off"
                   autoComplete="off"

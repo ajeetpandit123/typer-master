@@ -11,7 +11,7 @@ import {
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell } from 'recharts';
 
 export const CodingPractice: React.FC = () => {
-  const { user, addToast, refreshProfile, isZenMode, setIsZenMode } = useApp();
+  const { user, addToast, refreshProfile, isZenMode, setIsZenMode, playClickSound } = useApp();
 
   // Settings
   const [selectedLang, setSelectedLang] = useState<'javascript' | 'java' | 'cpp'>('javascript');
@@ -477,6 +477,7 @@ export const CodingPractice: React.FC = () => {
               ref={textInputRef}
               value={rawTypedText}
               onChange={handleTextChange}
+              onKeyDown={(e) => playClickSound(e.key)}
               className="absolute w-0 h-0 opacity-0 pointer-events-none"
               autoCapitalize="off"
               autoComplete="off"

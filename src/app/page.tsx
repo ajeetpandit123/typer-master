@@ -14,6 +14,7 @@ import { MultiplayerBattle } from '@/components/battle/MultiplayerBattle';
 import { LeaderboardView } from '@/components/dashboard/LeaderboardView';
 import { AdminView } from '@/components/dashboard/AdminView';
 import { ExamPractice } from '@/components/typing/ExamPractice';
+import { SettingsView } from '@/components/dashboard/SettingsView';
 
 import { 
   Trophy, Zap, Target, Hourglass, ShieldAlert, Award, 
@@ -67,6 +68,8 @@ export default function Home() {
         return <LeaderboardView />;
       case 'admin':
         return <AdminView />;
+      case 'settings':
+        return <SettingsView />;
       default:
         return <DashboardView onNavigate={(tab) => setActiveTab(tab)} />;
     }
@@ -83,7 +86,8 @@ export default function Home() {
     { id: 'exam', label: 'Exam Simulator', icon: <FileText size={16} /> },
     { id: 'battle', label: 'Multiplayer Battle', icon: <Sword size={16} /> },
     { id: 'leaderboard', label: 'Leaderboard', icon: <Award size={16} />, header: 'Rankings' },
-    { id: 'admin', label: 'Admin Dashboard', icon: <Settings size={16} /> },
+    { id: 'admin', label: 'Admin Dashboard', icon: <Database size={16} /> },
+    { id: 'settings', label: 'Settings', icon: <Settings size={16} /> },
   ];
 
   return (

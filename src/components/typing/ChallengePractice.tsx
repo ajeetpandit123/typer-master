@@ -10,7 +10,7 @@ import {
 } from 'lucide-react';
 
 export const ChallengePractice: React.FC = () => {
-  const { user, addToast, refreshProfile, isZenMode, setIsZenMode } = useApp();
+  const { user, addToast, refreshProfile, isZenMode, setIsZenMode, playClickSound } = useApp();
 
   const [progress, setProgress] = useState<Record<number, any>>({});
   const [selectedChallenge, setSelectedChallenge] = useState<Challenge | null>(null);
@@ -379,6 +379,7 @@ export const ChallengePractice: React.FC = () => {
                 ref={textInputRef}
                 value={rawTypedText}
                 onChange={handleTextChange}
+                onKeyDown={(e) => playClickSound(e.key)}
                 className="absolute w-0 h-0 opacity-0 pointer-events-none"
                 autoCapitalize="off"
                 autoComplete="off"

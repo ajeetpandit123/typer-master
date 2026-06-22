@@ -30,7 +30,7 @@ interface KeyStat {
 }
 
 export const AdvancedPractice: React.FC = () => {
-  const { user, addToast, refreshProfile, isZenMode, setIsZenMode } = useApp();
+  const { user, addToast, refreshProfile, isZenMode, setIsZenMode, playClickSound } = useApp();
 
   const [currentTextIdx, setCurrentTextIdx] = useState(0);
   const [isPlaying, setIsPlaying] = useState(false);
@@ -456,6 +456,7 @@ export const AdvancedPractice: React.FC = () => {
               ref={textInputRef}
               value={rawTypedText}
               onChange={handleTextChange}
+              onKeyDown={(e) => playClickSound(e.key)}
               className="absolute w-0 h-0 opacity-0 pointer-events-none"
               autoCapitalize="off"
               autoComplete="off"

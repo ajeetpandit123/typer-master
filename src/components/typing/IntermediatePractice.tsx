@@ -27,7 +27,7 @@ const INTERMEDIATE_WORDS = [
 ];
 
 export const IntermediatePractice: React.FC = () => {
-  const { user, addToast, refreshProfile, isZenMode, setIsZenMode } = useApp();
+  const { user, addToast, refreshProfile, isZenMode, setIsZenMode, playClickSound } = useApp();
 
   // Test setup
   const [testMode, setTestMode] = useState<'time' | 'words'>('time');
@@ -663,6 +663,7 @@ export const IntermediatePractice: React.FC = () => {
               ref={textInputRef}
               value={rawTypedText}
               onChange={handleTextChange}
+              onKeyDown={(e) => playClickSound(e.key)}
               disabled={isPaused}
               className="absolute w-0 h-0 opacity-0 pointer-events-none"
               autoCapitalize="off"

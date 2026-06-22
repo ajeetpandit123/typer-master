@@ -8,6 +8,7 @@ import {
   isLocalMode
 } from '@/lib/services/db';
 import { supabase, isSupabaseConfigured } from '@/lib/services/supabaseClient';
+import { playKeystrokeSound } from '@/lib/services/soundSynth';
 
 export interface ToastMessage {
   id: string;
@@ -28,6 +29,17 @@ interface AppContextType {
   setCursorStyle: (val: 'cyber' | 'simple') => void;
   isZenMode: boolean;
   setIsZenMode: (val: boolean) => void;
+  themeMode: 'dark' | 'light';
+  setThemeMode: (val: 'dark' | 'light') => void;
+  accentColor: string;
+  setAccentColor: (val: string) => void;
+  fontFamily: string;
+  setFontFamily: (val: string) => void;
+  soundName: string;
+  setSoundName: (val: string) => void;
+  soundVolume: number;
+  setSoundVolume: (val: number) => void;
+  playClickSound: (key: string) => void;
   addToast: (title: string, description: string, type?: ToastMessage['type']) => void;
   removeToast: (id: string) => void;
   logInLocal: (username: string, email: string) => Promise<void>;
@@ -60,6 +72,43 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     return 'simple';
   });
 
+  const [themeMode, setThemeMode] = useState<'dark' | 'light'>(() => {
+    if (typeof window !== 'undefined') {
+      const stored = localStorage.getItem('typemaster_theme_mode');
+      return stored === 'light' ? 'light' : 'dark';
+    }
+    return 'dark';
+  });
+  
+  const [accentColor, setAccentColor] = useState<string>(() => {
+    if (typeof window !== 'undefined') {
+      return localStorage.getItem('typemaster_accent_color') || '#00f2fe';
+    }
+    return '#00f2fe';
+  });
+  
+  const [fontFamily, setFontFamily] = useState<string>(() => {
+    if (typeof window !== 'undefined') {
+      return localStorage.getItem('typemaster_font_family') || 'Outfit';
+    }
+    return 'Outfit';
+  });
+
+  const [soundName, setSoundName] = useState<string>(() => {
+    if (typeof window !== 'undefined') {
+      return localStorage.getItem('typemaster_sound_name') || 'off';
+    }
+    return 'off';
+  });
+
+  const [soundVolume, setSoundVolume] = useState<number>(() => {
+    if (typeof window !== 'undefined') {
+      const stored = localStorage.getItem('typemaster_sound_volume');
+      return stored !== null ? Number(stored) : 0.5;
+    }
+    return 0.5;
+  });
+
   // Update body classes when caretBlinking or cursorStyle changes
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -81,6 +130,44 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       }
     }
   }, [caretBlinking, cursorStyle]);
+
+  // Synchronize dynamic styles: themeMode, accentColor, fontFamily, sound settings
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('typemaster_theme_mode', themeMode);
+      localStorage.setItem('typemaster_accent_color', accentColor);
+      localStorage.setItem('typemaster_font_family', fontFamily);
+      localStorage.setItem('typemaster_sound_name', soundName);
+      localStorage.setItem('typemaster_sound_volume', String(soundVolume));
+
+      if (themeMode === 'light') {
+        document.body.classList.remove('theme-dark');
+        document.body.classList.add('theme-light');
+      } else {
+        document.body.classList.remove('theme-light');
+        document.body.classList.add('theme-dark');
+      }
+
+      document.documentElement.style.setProperty('--accent-color', accentColor);
+      document.documentElement.style.setProperty('--font-current', `'${fontFamily}', sans-serif`);
+      
+      const isMono = [
+        'Fira Code', 'JetBrains Mono', 'Inconsolata', 'Source Code Pro', 
+        'Ubuntu Mono', 'Courier Prime', 'Anonymous Pro', 'IBM Plex Mono', 
+        'Space Mono', 'DM Mono'
+      ].includes(fontFamily);
+      
+      if (isMono) {
+        document.documentElement.style.setProperty('--font-current-mono', `'${fontFamily}', monospace`);
+      } else {
+        document.documentElement.style.setProperty('--font-current-mono', `'Fira Code', 'JetBrains Mono', monospace`);
+      }
+    }
+  }, [themeMode, accentColor, fontFamily, soundName, soundVolume]);
+
+  const playClickSound = (key: string) => {
+    playKeystrokeSound(soundName, key, soundVolume);
+  };
 
   const addToast = (title: string, description: string, type: ToastMessage['type'] = 'info') => {
     const id = Math.random().toString(36).substring(7);
@@ -250,6 +337,17 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         setCursorStyle,
         isZenMode,
         setIsZenMode,
+        themeMode,
+        setThemeMode,
+        accentColor,
+        setAccentColor,
+        fontFamily,
+        setFontFamily,
+        soundName,
+        setSoundName,
+        soundVolume,
+        setSoundVolume,
+        playClickSound,
         addToast,
         removeToast,
         logInLocal,

@@ -137,7 +137,12 @@ export const getActiveUser = async () => {
 
 export const getProfile = async (userId: string): Promise<UserProfile> => {
   let profile: UserProfile;
-  if (isLocalMode()) {
+  
+  const isUuid = (val: string): boolean => {
+    return /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(val);
+  };
+
+  if (isLocalMode() || !isUuid(userId)) {
     profile = getLocalData<UserProfile>('profile', DEFAULT_PROFILE);
   } else {
     const { data, error } = await supabase!
@@ -147,8 +152,78 @@ export const getProfile = async (userId: string): Promise<UserProfile> => {
       .single();
 
     if (error) {
-      console.error('Error fetching profile:', error);
-      profile = DEFAULT_PROFILE;
+      if (error.code === 'PGRST116') {
+        try {
+          const { data: { user: authUser } } = await supabase!.auth.getUser();
+          let username = authUser?.user_metadata?.username || authUser?.email?.split('@')[0] || 'NewTypist';
+          
+          // Make sure username is unique in profiles table
+          let isUnique = false;
+          let attempts = 0;
+          let checkUsername = username;
+          while (!isUnique && attempts < 10) {
+            const { data: existingUser, error: checkErr } = await supabase!
+              .from('profiles')
+              .select('username')
+              .eq('username', checkUsername)
+              .maybeSingle();
+            
+            if (!checkErr && !existingUser) {
+              isUnique = true;
+              username = checkUsername;
+            } else {
+              // Append a random 3-digit suffix to differentiate
+              checkUsername = `${username}${Math.floor(100 + Math.random() * 900)}`;
+              attempts++;
+            }
+          }
+
+          const avatarUrl = authUser?.user_metadata?.avatar_url || 'https://api.dicebear.com/7.x/pixel-art/svg?seed=' + username;
+
+          const newProfileData = {
+            id: userId,
+            username,
+            avatar_url: avatarUrl,
+            level: 1,
+            xp: 0,
+            wpm: 0,
+            accuracy: 0.00,
+            practice_time: 0,
+            streak: 1,
+            last_active: new Date().toISOString()
+          };
+
+          const { data: inserted, error: insertErr } = await supabase!
+            .from('profiles')
+            .insert(newProfileData)
+            .select()
+            .single();
+
+          if (insertErr) {
+            console.error('Failed to auto-create profile:', insertErr);
+            profile = { ...DEFAULT_PROFILE, id: userId };
+          } else {
+            profile = {
+              id: inserted.id,
+              username: inserted.username,
+              avatarUrl: inserted.avatar_url || 'https://api.dicebear.com/7.x/pixel-art/svg?seed=' + inserted.username,
+              level: inserted.level,
+              xp: inserted.xp,
+              wpm: inserted.wpm,
+              accuracy: Number(inserted.accuracy),
+              practiceTime: inserted.practice_time,
+              streak: inserted.streak,
+              lastActive: inserted.last_active
+            };
+          }
+        } catch (authErr) {
+          console.error('Failed auth metadata check for profile auto-create:', authErr);
+          profile = { ...DEFAULT_PROFILE, id: userId };
+        }
+      } else {
+        console.error('Error fetching profile:', error);
+        profile = { ...DEFAULT_PROFILE, id: userId };
+      }
     } else {
       profile = {
         id: data.id,
@@ -328,8 +403,8 @@ export const saveSession = async (
   const totalAcc = currentSessions.reduce((sum, s) => sum + s.accuracy, 0);
   const newAvgAccuracy = Math.round((totalAcc / (count || 1)) * 100) / 100;
   
-  // Max WPM
-  const maxWpm = Math.max(profile.wpm, session.wpm);
+  // Max WPM (only update if accuracy is >= 75%)
+  const maxWpm = session.accuracy >= 75 ? Math.max(profile.wpm, session.wpm) : profile.wpm;
   
   await updateProfile(userId, {
     wpm: maxWpm,

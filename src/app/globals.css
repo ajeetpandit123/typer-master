@@ -1,17 +1,18 @@
+@import url('https://fonts.googleapis.com/css2?family=Anonymous+Pro&family=Courier+Prime&family=DM+Mono&family=Fira+Code&family=IBM+Plex+Mono&family=Inconsolata&family=Inter:wght@300;400;600;800&family=JetBrains+Mono&family=Lato&family=Montserrat:wght@400;700&family=Nunito&family=Open+Sans&family=Outfit:wght@300;400;600;800&family=Poppins:wght@400;600&family=Raleway&family=Roboto&family=Source+Code+Pro&family=Space+Mono&family=Ubuntu&family=Ubuntu+Mono&display=swap');
 @import "tailwindcss";
 
 @theme {
   --color-cyber-dark: #070a13;
   --color-cyber-gray: #0f1322;
-  --color-cyber-blue: #00f2fe;
+  --color-cyber-blue: var(--accent-color, #00f2fe);
   --color-cyber-purple: #8b5cf6;
   --color-cyber-pink: #ec4899;
   --color-cyber-green: #10b981;
   --color-cyber-red: #f43f5e;
   --color-cyber-amber: #f59e0b;
   
-  --font-sans: 'Outfit', 'Inter', var(--font-geist-sans), sans-serif;
-  --font-mono: 'Fira Code', 'JetBrains Mono', var(--font-geist-mono), monospace;
+  --font-sans: var(--font-current, 'Outfit'), 'Inter', var(--font-geist-sans), sans-serif;
+  --font-mono: var(--font-current-mono, 'Fira Code'), 'JetBrains Mono', var(--font-geist-mono), monospace;
 }
 
 :root {
@@ -22,7 +23,7 @@
 body {
   background-color: var(--background);
   color: var(--foreground);
-  font-family: var(--font-sans);
+  font-family: var(--font-current, 'Outfit'), sans-serif !important;
   overflow-x: hidden;
 }
 
@@ -187,3 +188,85 @@ body.cursor-simple .typing-caret-active-bottom {
   background-image: linear-gradient(to right, rgba(255, 255, 255, 0.02) 1px, transparent 1px),
                     linear-gradient(to bottom, rgba(255, 255, 255, 0.02) 1px, transparent 1px);
 }
+
+/* Light Theme Variables and Overrides */
+body.theme-light {
+  --background: #f1f5f9;
+  --foreground: #0f172a;
+}
+
+body.theme-light {
+  background-color: #f1f5f9 !important;
+  color: #0f172a !important;
+}
+
+body.theme-light .grid-bg {
+  background-image: linear-gradient(to right, rgba(15, 23, 42, 0.03) 1px, transparent 1px),
+                    linear-gradient(to bottom, rgba(15, 23, 42, 0.03) 1px, transparent 1px);
+}
+
+body.theme-light .glass-card,
+body.theme-light .glass-panel {
+  background: rgba(255, 255, 255, 0.75) !important;
+  backdrop-filter: blur(16px);
+  border: 1px solid rgba(15, 23, 42, 0.08) !important;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.03) !important;
+}
+
+body.theme-light h1,
+body.theme-light h2,
+body.theme-light h3,
+body.theme-light h4,
+body.theme-light strong,
+body.theme-light .text-white {
+  color: #0f172a !important;
+}
+
+body.theme-light p,
+body.theme-light span,
+body.theme-light .text-slate-400,
+body.theme-light .text-slate-300,
+body.theme-light .text-slate-200 {
+  color: #334155 !important;
+}
+
+body.theme-light .text-slate-500 {
+  color: #64748b !important;
+}
+
+body.theme-light aside {
+  background-color: #f8fafc !important;
+  border-right: 1px solid rgba(15, 23, 42, 0.08) !important;
+}
+
+body.theme-light header {
+  background-color: #f8fafc !important;
+  border-bottom: 1px solid rgba(15, 23, 42, 0.08) !important;
+}
+
+body.theme-light .bg-slate-950\/30,
+body.theme-light .bg-slate-950\/40,
+body.theme-light .bg-slate-950\/50,
+body.theme-light .bg-slate-900,
+body.theme-light .bg-slate-900\/40 {
+  background-color: rgba(255, 255, 255, 0.8) !important;
+  border-color: rgba(15, 23, 42, 0.08) !important;
+}
+
+body.theme-light select,
+body.theme-light option,
+body.theme-light input {
+  background-color: #ffffff !important;
+  color: #0f172a !important;
+  border: 1px solid rgba(15, 23, 42, 0.15) !important;
+}
+
+/* Typing text styling overrides for light mode readability */
+body.theme-light .text-slate-500 {
+  color: #94a3b8 !important; /* Untyped text is medium-light gray */
+}
+
+body.theme-light .text-white {
+  color: #0f172a !important; /* Typed correct text is dark slate */
+}
+

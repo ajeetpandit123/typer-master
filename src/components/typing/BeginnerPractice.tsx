@@ -28,7 +28,7 @@ const BEGINNER_LESSONS: Lesson[] = [
 ];
 
 export const BeginnerPractice: React.FC = () => {
-  const { user, addToast, refreshProfile } = useApp();
+  const { user, addToast, refreshProfile, isZenMode, setIsZenMode } = useApp();
   
   const [currentLessonIdx, setCurrentLessonIdx] = useState(0);
   const [isPlaying, setIsPlaying] = useState(true);
@@ -42,6 +42,17 @@ export const BeginnerPractice: React.FC = () => {
   const lesson = BEGINNER_LESSONS[currentLessonIdx];
   const targetText = lesson.characters;
   const targetChar = targetText[inputIndex] || '';
+
+  useEffect(() => {
+    if (isPlaying && !showResults) {
+      setIsZenMode(true);
+    } else {
+      setIsZenMode(false);
+    }
+    return () => {
+      setIsZenMode(false);
+    };
+  }, [isPlaying, showResults, setIsZenMode]);
 
   // Track key errors key-by-key
   const recordKeyError = (char: string) => {
@@ -150,39 +161,41 @@ export const BeginnerPractice: React.FC = () => {
   const progressPercent = Math.min(100, Math.round((inputIndex / targetText.length) * 100));
 
   return (
-    <div className="space-y-6 max-w-4xl mx-auto pb-10">
+    <div className={`transition-all duration-500 ${isZenMode ? 'w-full h-full min-h-[90vh] flex flex-col justify-center max-w-5xl mx-auto px-6 pb-0' : 'space-y-6 max-w-4xl mx-auto pb-10'}`}>
       {/* 1. Header Navigation */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 glass-card p-5 rounded-2xl">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-cyan-500/10 border border-cyan-500/30 flex items-center justify-center text-cyan-400">
-            <BookOpen size={20} />
+      {!isZenMode && (
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 glass-card p-5 rounded-2xl">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-cyan-500/10 border border-cyan-500/30 flex items-center justify-center text-cyan-400">
+              <BookOpen size={20} />
+            </div>
+            <div>
+              <span className="text-[10px] text-cyan-400 font-bold uppercase tracking-wider">Level 1 - Beginner Learning Path</span>
+              <h2 className="text-lg font-bold text-white leading-tight">Lesson {currentLessonIdx + 1}: {lesson.title}</h2>
+            </div>
           </div>
-          <div>
-            <span className="text-[10px] text-cyan-400 font-bold uppercase tracking-wider">Level 1 - Beginner Learning Path</span>
-            <h2 className="text-lg font-bold text-white leading-tight">Lesson {currentLessonIdx + 1}: {lesson.title}</h2>
-          </div>
+          
+          {/* Lesson Select */}
+          <select 
+            value={currentLessonIdx} 
+            onChange={(e) => {
+              setCurrentLessonIdx(Number(e.target.value));
+              setIsPlaying(false);
+              setShowResults(false);
+              setInputIndex(0);
+              setMistakes(0);
+            }}
+            className="bg-slate-900 border border-white/10 rounded-lg text-xs font-semibold px-3 py-2 text-slate-300 focus:outline-none focus:border-cyber-blue"
+          >
+            {BEGINNER_LESSONS.map((l, idx) => (
+              <option key={l.id} value={idx}>Lesson {idx + 1}: {l.title}</option>
+            ))}
+          </select>
         </div>
-        
-        {/* Lesson Select */}
-        <select 
-          value={currentLessonIdx} 
-          onChange={(e) => {
-            setCurrentLessonIdx(Number(e.target.value));
-            setIsPlaying(false);
-            setShowResults(false);
-            setInputIndex(0);
-            setMistakes(0);
-          }}
-          className="bg-slate-900 border border-white/10 rounded-lg text-xs font-semibold px-3 py-2 text-slate-300 focus:outline-none focus:border-cyber-blue"
-        >
-          {BEGINNER_LESSONS.map((l, idx) => (
-            <option key={l.id} value={idx}>Lesson {idx + 1}: {l.title}</option>
-          ))}
-        </select>
-      </div>
+      )}
 
       {/* 2. Main Arena Card */}
-      <div className="glass-card p-6 rounded-2xl relative overflow-hidden flex flex-col items-center">
+      <div className={`relative overflow-hidden flex flex-col items-center transition-all duration-500 ${isZenMode ? 'border-0 bg-transparent shadow-none p-0 w-full' : 'glass-card p-6 rounded-2xl'}`}>
         {showResults ? (
           /* Lesson Completed Panel */
           <div className="py-8 flex flex-col items-center text-center max-w-md w-full space-y-6">
@@ -229,28 +242,32 @@ export const BeginnerPractice: React.FC = () => {
           /* Active Practice Arena */
           <div className="w-full space-y-6">
             {/* Live Stats */}
-            <div className="flex justify-between items-center bg-slate-950/30 px-4 py-2 border border-white/5 rounded-xl">
+            <div className={`flex justify-between items-center transition-all duration-300 w-full ${isZenMode ? 'px-0 py-0 border-0 bg-transparent text-slate-500 text-lg' : 'bg-slate-950/30 px-4 py-2 border border-white/5 rounded-xl'}`}>
               <div className="flex items-center gap-2">
-                <span className="text-xs text-slate-400">Accuracy:</span>
-                <span className={`text-xs font-bold ${accuracy >= 90 ? 'text-cyber-green' : 'text-cyber-amber'}`}>
-                  {accuracy}%
-                </span>
+                <span className={isZenMode ? 'text-sm uppercase tracking-wider text-slate-500 font-semibold' : 'text-xs text-slate-400'}>Accuracy:</span>
+                <span className={isZenMode ? 'text-3xl font-black text-cyber-green text-glow-cyan' : `text-xs font-bold ${accuracy >= 90 ? 'text-cyber-green' : 'text-cyber-amber'}`}>{accuracy}%</span>
               </div>
               <div className="flex items-center gap-2">
-                <span className="text-xs text-slate-400">Mistakes:</span>
-                <span className="text-xs font-bold text-cyber-red">{mistakes}</span>
+                <span className={isZenMode ? 'text-sm uppercase tracking-wider text-slate-500 font-semibold' : 'text-xs text-slate-400'}>Mistakes:</span>
+                <span className={isZenMode ? 'text-3xl font-black text-cyber-red' : 'text-xs font-bold text-cyber-red'}>{mistakes}</span>
               </div>
               <div className="flex items-center gap-2">
-                <span className="text-xs text-slate-400">Progress:</span>
-                <span className="text-xs font-bold text-white">{progressPercent}%</span>
+                <span className={isZenMode ? 'text-sm uppercase tracking-wider text-slate-500 font-semibold' : 'text-xs text-slate-400'}>Progress:</span>
+                <span className={isZenMode ? 'text-3xl font-black text-white' : 'text-xs font-bold text-white'}>{progressPercent}%</span>
               </div>
             </div>
 
             {/* Typography Arena */}
-            <div className="w-full border border-white/10 rounded-2xl bg-slate-950/50 p-8 flex items-center justify-center text-2xl font-mono relative overflow-hidden select-none">
-              <div className="absolute top-2 left-2 text-[10px] uppercase font-bold text-slate-600 tracking-widest">
-                Interactive Text Box
-              </div>
+            <div className={`w-full transition-all duration-500 flex items-center justify-center text-3xl font-mono relative overflow-hidden select-none whitespace-pre-wrap ${
+              isZenMode 
+                ? 'border-0 bg-transparent p-0 min-h-36 leading-loose' 
+                : 'border border-white/10 rounded-2xl bg-slate-950/50 p-8 leading-relaxed'
+            }`}>
+              {!isZenMode && (
+                <div className="absolute top-2 left-2 text-[10px] uppercase font-bold text-slate-600 tracking-widest">
+                  Interactive Text Box
+                </div>
+              )}
               <div className="flex flex-wrap items-center justify-center text-center max-w-2xl leading-loose tracking-wide">
                 {targetText.split('').map((char, index) => {
                   let charClass = 'text-slate-600';
@@ -272,12 +289,18 @@ export const BeginnerPractice: React.FC = () => {
               </div>
             </div>
 
-            <div className="flex justify-center">
+            <div className="flex justify-center gap-4">
               <button 
                 onClick={handleStart}
                 className="text-xs text-slate-500 hover:text-slate-300 font-semibold underline flex items-center gap-1.5"
               >
                 Reset Lesson
+              </button>
+              <button 
+                onClick={() => setIsZenMode(!isZenMode)}
+                className="text-xs text-cyber-blue hover:text-cyber-blue/80 font-semibold underline flex items-center gap-1.5"
+              >
+                {isZenMode ? 'Exit Full Screen' : 'Full Screen Mode'}
               </button>
             </div>
           </div>

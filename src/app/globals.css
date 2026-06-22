@@ -133,27 +133,29 @@ body.no-blink .animate-pulse-caret {
   border-bottom: 2px solid transparent;
 }
 
-/* Cyber Cursor Style (glow, block, bold text, neon accent color) */
+/* Cyber Cursor Style (sleek glowing line cursor, no text shifting or block fills) */
 body.cursor-cyber .typing-caret-active {
   color: #00f2fe !important;
-  font-weight: 800 !important;
-  border-left: 2px solid #00f2fe !important;
-  background-color: rgba(0, 242, 254, 0.15) !important;
-  padding-left: 0.125rem !important;
-  padding-right: 0.125rem !important;
-  border-radius: 0.25rem !important;
-  box-shadow: 0 0 8px rgba(0, 242, 254, 0.3) !important;
+  border-left: 2.5px solid #00f2fe !important;
+  text-shadow: 0 0 4px rgba(0, 242, 254, 0.6) !important;
+  background-color: transparent !important;
+  padding-left: 0 !important;
+  padding-right: 0 !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+  font-weight: inherit !important;
 }
 
 body.cursor-cyber .typing-caret-active-bottom {
   color: #00f2fe !important;
-  font-weight: 800 !important;
-  border-bottom: 2px solid #00f2fe !important;
-  background-color: rgba(0, 242, 254, 0.15) !important;
-  padding-left: 0.125rem !important;
-  padding-right: 0.125rem !important;
-  border-radius: 0.25rem !important;
-  box-shadow: 0 0 8px rgba(0, 242, 254, 0.3) !important;
+  border-bottom: 2.5px solid #00f2fe !important;
+  text-shadow: 0 0 4px rgba(0, 242, 254, 0.6) !important;
+  background-color: transparent !important;
+  padding-left: 0 !important;
+  padding-right: 0 !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+  font-weight: inherit !important;
 }
 
 /* Simple Cursor Style (clean left vertical border or bottom border line only; text, weight, bg and shadow are unchanged) */

@@ -11,7 +11,7 @@ import {
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell } from 'recharts';
 
 export const CodingPractice: React.FC = () => {
-  const { user, addToast, refreshProfile } = useApp();
+  const { user, addToast, refreshProfile, isZenMode, setIsZenMode } = useApp();
 
   // Settings
   const [selectedLang, setSelectedLang] = useState<'javascript' | 'java' | 'cpp'>('javascript');
@@ -23,6 +23,17 @@ export const CodingPractice: React.FC = () => {
   const [rawTypedText, setRawTypedText] = useState('');
   const [elapsedTime, setElapsedTime] = useState(0);
   const [showResults, setShowResults] = useState(false);
+
+  useEffect(() => {
+    if (isPlaying && !showResults) {
+      setIsZenMode(true);
+    } else {
+      setIsZenMode(false);
+    }
+    return () => {
+      setIsZenMode(false);
+    };
+  }, [isPlaying, showResults, setIsZenMode]);
 
   // Symbol analytics
   const [totalSymbols, setTotalSymbols] = useState(0);
@@ -271,50 +282,52 @@ export const CodingPractice: React.FC = () => {
   const cppProg = getLanguageProgress('cpp');
 
   return (
-    <div className="space-y-6 max-w-4xl mx-auto pb-10">
+    <div className={`transition-all duration-500 ${isZenMode ? 'w-full h-full min-h-[90vh] flex flex-col justify-center max-w-5xl mx-auto px-6 pb-0' : 'space-y-6 max-w-4xl mx-auto pb-10'}`}>
       {/* 1. Header Navigation */}
-      <div className="glass-card p-5 rounded-2xl flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-blue-500/10 border border-blue-500/30 flex items-center justify-center text-blue-400">
-            <Code size={20} />
+      {!isZenMode && (
+        <div className="glass-card p-5 rounded-2xl flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-blue-500/10 border border-blue-500/30 flex items-center justify-center text-blue-400">
+              <Code size={20} />
+            </div>
+            <div>
+              <span className="text-[10px] text-blue-400 font-bold uppercase tracking-wider">Coding Typing Mode</span>
+              <h2 className="text-lg font-bold text-white leading-tight">Developer Syntax Familiarity</h2>
+            </div>
           </div>
-          <div>
-            <span className="text-[10px] text-blue-400 font-bold uppercase tracking-wider">Coding Typing Mode</span>
-            <h2 className="text-lg font-bold text-white leading-tight">Developer Syntax Familiarity</h2>
-          </div>
+
+          {/* Configurations */}
+          {!isPlaying && !showResults && (
+            <div className="flex items-center gap-2 flex-wrap">
+              <select
+                value={selectedLang}
+                onChange={(e) => setSelectedLang(e.target.value as any)}
+                className="bg-slate-900 border border-white/10 rounded-lg text-xs font-semibold px-3 py-2 text-slate-300 focus:outline-none focus:border-cyber-blue"
+              >
+                <option value="javascript">JavaScript</option>
+                <option value="java">Java</option>
+                <option value="cpp">C++</option>
+              </select>
+
+              <select
+                value={selectedLessonIdx}
+                onChange={(e) => {
+                  setSelectedLessonIdx(Number(e.target.value));
+                  setRawTypedText('');
+                }}
+                className="bg-slate-900 border border-white/10 rounded-lg text-xs font-semibold px-3 py-2 text-slate-300 focus:outline-none"
+              >
+                {filteredLessons.map((l, idx) => (
+                  <option key={l.id} value={idx}>Module {idx + 1}: {l.title} ({l.difficulty})</option>
+                ))}
+              </select>
+            </div>
+          )}
         </div>
-
-        {/* Configurations */}
-        {!isPlaying && !showResults && (
-          <div className="flex items-center gap-2 flex-wrap">
-            <select
-              value={selectedLang}
-              onChange={(e) => setSelectedLang(e.target.value as any)}
-              className="bg-slate-900 border border-white/10 rounded-lg text-xs font-semibold px-3 py-2 text-slate-300 focus:outline-none focus:border-cyber-blue"
-            >
-              <option value="javascript">JavaScript</option>
-              <option value="java">Java</option>
-              <option value="cpp">C++</option>
-            </select>
-
-            <select
-              value={selectedLessonIdx}
-              onChange={(e) => {
-                setSelectedLessonIdx(Number(e.target.value));
-                setRawTypedText('');
-              }}
-              className="bg-slate-900 border border-white/10 rounded-lg text-xs font-semibold px-3 py-2 text-slate-300 focus:outline-none"
-            >
-              {filteredLessons.map((l, idx) => (
-                <option key={l.id} value={idx}>Module {idx + 1}: {l.title} ({l.difficulty})</option>
-              ))}
-            </select>
-          </div>
-        )}
-      </div>
+      )}
 
       {/* 2. Main Typing Area */}
-      <div className="glass-card p-6 rounded-2xl flex flex-col relative overflow-hidden">
+      <div className={`relative overflow-hidden flex flex-col transition-all duration-500 ${isZenMode ? 'border-0 bg-transparent shadow-none p-0 w-full' : 'glass-card p-6 rounded-2xl'}`}>
         {showResults ? (
           /* Results Dashboard */
           <div className="py-6 space-y-6">
@@ -403,29 +416,29 @@ export const CodingPractice: React.FC = () => {
           </div>
         ) : (
           /* Active IDE Editor Workspace */
-          <div className="space-y-4">
+          <div className={`relative transition-all duration-500 ${isZenMode ? 'space-y-8 w-full' : 'space-y-4'}`}>
             {/* Live Metrics HUD */}
-            <div className="flex justify-between items-center bg-slate-950/30 px-4 py-2 border border-white/5 rounded-xl text-xs">
+            <div className={`flex justify-between items-center transition-all duration-300 w-full ${isZenMode ? 'px-0 py-0 border-0 bg-transparent text-slate-500 text-lg' : 'bg-slate-950/30 px-4 py-2 border border-white/5 rounded-xl'}`}>
               <div className="flex items-center gap-1.5">
                 <span className="w-2.5 h-2.5 rounded-full bg-yellow-500 animate-ping" />
-                <span className="text-slate-400 font-bold uppercase tracking-wider">{selectedLang.toUpperCase()} Mode</span>
+                <span className={isZenMode ? 'text-sm uppercase tracking-wider text-slate-500 font-semibold' : 'text-slate-400 font-bold uppercase tracking-wider'}>{selectedLang.toUpperCase()} Mode</span>
               </div>
               <div className="flex items-center gap-4">
                 <div>
-                  <span className="text-slate-500 mr-1">WPM:</span>
-                  <span className="font-bold text-cyber-blue">{currentWpm}</span>
+                  <span className={isZenMode ? 'text-sm text-slate-500 font-semibold' : 'text-slate-500 mr-1'}>WPM:</span>
+                  <span className={isZenMode ? 'text-2xl font-black text-cyber-blue text-glow-cyan' : 'font-bold text-cyber-blue'}>{currentWpm}</span>
                 </div>
                 <div>
-                  <span className="text-slate-500 mr-1">Accuracy:</span>
-                  <span className="font-bold text-cyber-green">{accuracy}%</span>
+                  <span className={isZenMode ? 'text-sm text-slate-500 font-semibold' : 'text-slate-500 mr-1'}>Accuracy:</span>
+                  <span className={isZenMode ? 'text-2xl font-black text-cyber-green' : 'font-bold text-cyber-green'}>{accuracy}%</span>
                 </div>
                 <div>
-                  <span className="text-slate-500 mr-1">Symbol Acc:</span>
-                  <span className="font-bold text-purple-400">{symbolAccuracy}%</span>
+                  <span className={isZenMode ? 'text-sm text-slate-500 font-semibold' : 'text-slate-500 mr-1'}>Symbol:</span>
+                  <span className={isZenMode ? 'text-2xl font-black text-purple-400' : 'font-bold text-purple-400'}>{symbolAccuracy}%</span>
                 </div>
                 <div>
-                  <span className="text-slate-500 mr-1">Timer:</span>
-                  <span className="font-bold text-white">{elapsedTime}s</span>
+                  <span className={isZenMode ? 'text-sm text-slate-500 font-semibold' : 'text-slate-500 mr-1'}>Timer:</span>
+                  <span className={isZenMode ? 'text-2xl font-black text-white' : 'font-bold text-white'}>{elapsedTime}s</span>
                 </div>
               </div>
             </div>
@@ -433,7 +446,7 @@ export const CodingPractice: React.FC = () => {
             {/* Simulated VS Code Editor Pane */}
             <div 
               onClick={() => { if (textInputRef.current) textInputRef.current.focus(); }}
-              className="w-full border border-slate-800 rounded-xl bg-[#090d16] p-5 shadow-2xl relative select-none cursor-text overflow-x-auto min-h-48"
+              className={`w-full border border-slate-800 rounded-xl bg-[#090d16] p-5 shadow-2xl relative select-none cursor-text overflow-x-auto transition-all duration-500 ${isZenMode ? 'min-h-96 text-lg py-10' : 'min-h-48'}`}
             >
               {/* Tab Header bar */}
               <div className="absolute top-0 left-0 right-0 h-8 bg-[#06090e] border-b border-slate-800/80 px-4 flex items-center justify-between">
@@ -473,13 +486,22 @@ export const CodingPractice: React.FC = () => {
 
             {/* Controls */}
             <div className="flex justify-between items-center text-xs">
-              <button
-                onClick={handleStart}
-                className="px-4 py-2 bg-white/5 border border-white/10 hover:bg-white/10 text-white rounded-lg font-bold transition flex items-center gap-1.5"
-              >
-                <RotateCcw size={12} />
-                Reset Code
-              </button>
+              <div className="flex gap-2">
+                <button
+                  onClick={handleStart}
+                  className="px-4 py-2 bg-white/5 border border-white/10 hover:bg-white/10 text-white rounded-lg font-bold transition flex items-center gap-1.5 cursor-pointer"
+                >
+                  <RotateCcw size={12} />
+                  Reset Code
+                </button>
+                <button
+                  onClick={() => setIsZenMode(!isZenMode)}
+                  className="px-4 py-2 bg-white/5 border border-cyber-blue/30 hover:bg-cyber-blue/10 text-cyber-blue rounded-lg font-bold transition flex items-center gap-1.5 shadow-sm cursor-pointer"
+                  title="Toggle distraction-free full-screen layout"
+                >
+                  {isZenMode ? 'Exit Full Screen' : 'Full Screen Mode'}
+                </button>
+              </div>
               <button
                 onClick={() => {
                   if (isPlaying && elapsedTime > 0 && user) {

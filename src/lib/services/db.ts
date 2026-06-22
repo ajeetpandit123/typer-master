@@ -64,6 +64,57 @@ const setLocalData = <T>(key: string, value: T): void => {
   localStorage.setItem(`typemaster_${key}`, JSON.stringify(value));
 };
 
+// ---------------- TIMEZONE-SAFE DATE & STREAK HELPERS ----------------
+const getLocalDateString = (dateOrStr: Date | string): string => {
+  const d = new Date(dateOrStr);
+  const year = d.getFullYear();
+  const month = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+};
+
+const parseLocalDate = (dateStr: string): Date => {
+  const [year, month, day] = dateStr.split('-').map(Number);
+  return new Date(year, month - 1, day);
+};
+
+export const calculateStreakFromSessions = (sessions: TypingSession[]): number => {
+  if (sessions.length === 0) return 0;
+
+  // Extract local date strings and get unique sorted days (descending)
+  const uniqueDays = Array.from(new Set(sessions.map(s => getLocalDateString(s.createdAt))))
+    .sort((a, b) => b.localeCompare(a));
+
+  if (uniqueDays.length === 0) return 0;
+
+  const todayStr = getLocalDateString(new Date());
+  const yesterday = new Date();
+  yesterday.setDate(yesterday.getDate() - 1);
+  const yesterdayStr = getLocalDateString(yesterday);
+
+  const mostRecentDay = uniqueDays[0];
+
+  // If the most recent practice day is neither today nor yesterday, streak is 0
+  if (mostRecentDay !== todayStr && mostRecentDay !== yesterdayStr) {
+    return 0;
+  }
+
+  let streak = 0;
+  const currentCheckDate = parseLocalDate(mostRecentDay);
+
+  while (true) {
+    const checkStr = getLocalDateString(currentCheckDate);
+    if (uniqueDays.includes(checkStr)) {
+      streak++;
+      currentCheckDate.setDate(currentCheckDate.getDate() - 1);
+    } else {
+      break;
+    }
+  }
+
+  return streak;
+};
+
 // ---------------- USER AUTHENTICATION & PROFILE ----------------
 export const getActiveUser = async () => {
   if (isLocalMode()) {
@@ -85,34 +136,52 @@ export const getActiveUser = async () => {
 };
 
 export const getProfile = async (userId: string): Promise<UserProfile> => {
+  let profile: UserProfile;
   if (isLocalMode()) {
-    const profile = getLocalData<UserProfile>('profile', DEFAULT_PROFILE);
-    return profile;
+    profile = getLocalData<UserProfile>('profile', DEFAULT_PROFILE);
+  } else {
+    const { data, error } = await supabase!
+      .from('profiles')
+      .select('*')
+      .eq('id', userId)
+      .single();
+
+    if (error) {
+      console.error('Error fetching profile:', error);
+      profile = DEFAULT_PROFILE;
+    } else {
+      profile = {
+        id: data.id,
+        username: data.username,
+        avatarUrl: data.avatar_url || 'https://api.dicebear.com/7.x/pixel-art/svg?seed=' + data.username,
+        level: data.level,
+        xp: data.xp,
+        wpm: data.wpm,
+        accuracy: Number(data.accuracy),
+        practiceTime: data.practice_time,
+        streak: data.streak,
+        lastActive: data.last_active
+      };
+    }
   }
 
-  const { data, error } = await supabase!
-    .from('profiles')
-    .select('*')
-    .eq('id', userId)
-    .single();
+  // Calculate and sync daily streak dynamically from sessions history
+  const sessions = await getSessions(userId);
+  const calculatedStreak = calculateStreakFromSessions(sessions);
 
-  if (error) {
-    console.error('Error fetching profile:', error);
-    return DEFAULT_PROFILE;
+  if (profile.streak !== calculatedStreak) {
+    profile.streak = calculatedStreak;
+    if (isLocalMode()) {
+      setLocalData('profile', profile);
+    } else {
+      await supabase!
+        .from('profiles')
+        .update({ streak: calculatedStreak })
+        .eq('id', userId);
+    }
   }
 
-  return {
-    id: data.id,
-    username: data.username,
-    avatarUrl: data.avatar_url || 'https://api.dicebear.com/7.x/pixel-art/svg?seed=' + data.username,
-    level: data.level,
-    xp: data.xp,
-    wpm: data.wpm,
-    accuracy: Number(data.accuracy),
-    practiceTime: data.practice_time,
-    streak: data.streak,
-    lastActive: data.last_active
-  };
+  return profile;
 };
 
 export const updateProfile = async (userId: string, updates: Partial<UserProfile>): Promise<UserProfile> => {
@@ -265,13 +334,22 @@ export const saveSession = async (
   await updateProfile(userId, {
     wpm: maxWpm,
     accuracy: newAvgAccuracy,
-    practiceTime: profile.practiceTime + session.duration
+    practiceTime: profile.practiceTime + session.duration,
+    streak: profile.streak
   });
 
   // 3. Grant XP: 1 XP per word typed correctly, plus bonus if accuracy > 95%
   const wordsTyped = Math.round((session.charsTyped - session.errors) / 5);
   const xpReward = Math.max(10, wordsTyped) + (session.accuracy >= 95 ? 50 : 0);
   await grantXp(userId, xpReward);
+
+  // 4. Check and unlock streak achievements
+  if (profile.streak >= 7) {
+    await unlockAchievement(userId, 'streak_7');
+  }
+  if (profile.streak >= 30) {
+    await unlockAchievement(userId, 'streak_30');
+  }
 
   return newSession;
 };

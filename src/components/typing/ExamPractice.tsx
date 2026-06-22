@@ -57,7 +57,7 @@ const EXAM_PARAGRAPHS = [
 ];
 
 export const ExamPractice: React.FC = () => {
-  const { user, addToast, refreshProfile } = useApp();
+  const { user, addToast, refreshProfile, isZenMode, setIsZenMode } = useApp();
 
   // Mode settings
   const [selectedPresetId, setSelectedPresetId] = useState<string>('support-agent');
@@ -82,6 +82,17 @@ export const ExamPractice: React.FC = () => {
   const [showResults, setShowResults] = useState(false);
   const [passed, setPassed] = useState(false);
   const [failReason, setFailReason] = useState('');
+
+  useEffect(() => {
+    if (isPlaying && !showResults) {
+      setIsZenMode(true);
+    } else {
+      setIsZenMode(false);
+    }
+    return () => {
+      setIsZenMode(false);
+    };
+  }, [isPlaying, showResults, setIsZenMode]);
 
   // Refs
   const timerRef = useRef<NodeJS.Timeout | null>(null);
@@ -323,44 +334,46 @@ export const ExamPractice: React.FC = () => {
   };
 
   return (
-    <div className="space-y-6 max-w-4xl mx-auto pb-10">
+    <div className={`transition-all duration-500 ${isZenMode ? 'w-full h-full min-h-[90vh] flex flex-col justify-center max-w-5xl mx-auto px-6 pb-0' : 'space-y-6 max-w-4xl mx-auto pb-10'}`}>
       {/* 1. Header Information */}
-      <div className="glass-card p-5 rounded-2xl flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-cyan-500/10 border border-cyan-500/30 flex items-center justify-center text-cyan-400">
-            <FileText size={20} />
+      {!isZenMode && (
+        <div className="glass-card p-5 rounded-2xl flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-cyan-500/10 border border-cyan-500/30 flex items-center justify-center text-cyan-400">
+              <FileText size={20} />
+            </div>
+            <div>
+              <span className="text-[10px] text-cyan-400 font-bold uppercase tracking-wider font-mono">Exam Simulation Module</span>
+              <h2 className="text-lg font-bold text-white leading-tight">Professional Assessment Simulator</h2>
+            </div>
           </div>
-          <div>
-            <span className="text-[10px] text-cyan-400 font-bold uppercase tracking-wider font-mono">Exam Simulation Module</span>
-            <h2 className="text-lg font-bold text-white leading-tight">Professional Assessment Simulator</h2>
-          </div>
-        </div>
 
-        {/* Configuration tab styles (only visible when not active) */}
-        {!isPlaying && !showResults && (
-          <div className="flex bg-slate-900 border border-white/5 p-1 rounded-lg">
-            <button
-              onClick={() => setIsCustomMode(false)}
-              className={`px-3 py-1.5 rounded-md text-xs font-semibold transition ${
-                !isCustomMode ? 'bg-cyber-purple text-white' : 'text-slate-400 hover:text-slate-200'
-              }`}
-            >
-              Sim Presets
-            </button>
-            <button
-              onClick={() => setIsCustomMode(true)}
-              className={`px-3 py-1.5 rounded-md text-xs font-semibold transition ${
-                isCustomMode ? 'bg-cyber-purple text-white' : 'text-slate-400 hover:text-slate-200'
-              }`}
-            >
-              Custom Exam
-            </button>
-          </div>
-        )}
-      </div>
+          {/* Configuration tab styles (only visible when not active) */}
+          {!isPlaying && !showResults && (
+            <div className="flex bg-slate-900 border border-white/5 p-1 rounded-lg">
+              <button
+                onClick={() => setIsCustomMode(false)}
+                className={`px-3 py-1.5 rounded-md text-xs font-semibold transition ${
+                  !isCustomMode ? 'bg-cyber-purple text-white' : 'text-slate-400 hover:text-slate-200'
+                }`}
+              >
+                Sim Presets
+              </button>
+              <button
+                onClick={() => setIsCustomMode(true)}
+                className={`px-3 py-1.5 rounded-md text-xs font-semibold transition ${
+                  isCustomMode ? 'bg-cyber-purple text-white' : 'text-slate-400 hover:text-slate-200'
+                }`}
+              >
+                Custom Exam
+              </button>
+            </div>
+          )}
+        </div>
+      )}
 
       {/* 2. Main Practice Panel */}
-      <div className="glass-card p-6 rounded-2xl relative overflow-hidden flex flex-col">
+      <div className={`relative overflow-hidden flex flex-col transition-all duration-500 ${isZenMode ? 'border-0 bg-transparent shadow-none p-0 w-full' : 'glass-card p-6 rounded-2xl'}`}>
         {showResults ? (
           /* Results Certificate View */
           <div className="py-6 flex flex-col items-center text-center max-w-lg mx-auto w-full space-y-6">
@@ -514,16 +527,16 @@ export const ExamPractice: React.FC = () => {
           </div>
         ) : (
           /* Active Typing Engine */
-          <div className="space-y-6 relative">
+          <div className={`relative transition-all duration-500 ${isZenMode ? 'space-y-12 w-full font-mono' : 'space-y-6'}`}>
             {/* Live Metrics HUD */}
-            <div className="flex justify-between items-center bg-slate-950/30 px-4 py-2 border border-white/5 rounded-xl text-xs select-none">
+            <div className={`flex justify-between items-center transition-all duration-300 w-full ${isZenMode ? 'px-0 py-0 border-0 bg-transparent text-slate-500 text-lg' : 'bg-slate-950/30 px-4 py-2 border border-white/5 rounded-xl text-xs select-none'}`}>
               <div className="flex items-center gap-2">
-                <span className="text-slate-400">Words Goals:</span>
-                <span className="font-bold text-white">{wordsTyped} / {activeWords}</span>
+                <span className={isZenMode ? 'text-sm uppercase tracking-wider text-slate-500 font-semibold' : 'text-slate-400'}>Goal:</span>
+                <span className={isZenMode ? 'text-2xl font-black text-white' : 'font-bold text-white'}>{wordsTyped} / {activeWords}</span>
               </div>
               <div className="flex items-center gap-2">
-                <span className="text-slate-400">Time Left:</span>
-                <span className="font-bold text-white font-mono">{formatTime(timeLeft)}</span>
+                <span className={isZenMode ? 'text-sm uppercase tracking-wider text-slate-500 font-semibold' : 'text-slate-400'}>Time Left:</span>
+                <span className={isZenMode ? 'text-2xl font-black text-white font-mono' : 'font-bold text-white font-mono'}>{formatTime(timeLeft)}</span>
               </div>
               
               {/* Pacing Capsule */}
@@ -535,24 +548,30 @@ export const ExamPractice: React.FC = () => {
               </div>
 
               <div className="flex items-center gap-2">
-                <span className="text-slate-400 font-medium">Live WPM:</span>
-                <span className="font-bold text-cyber-blue">{currentWpm}</span>
+                <span className={isZenMode ? 'text-sm uppercase tracking-wider text-slate-500 font-semibold' : 'text-slate-400 font-medium'}>WPM:</span>
+                <span className={isZenMode ? 'text-3xl font-black text-cyber-blue text-glow-cyan' : 'font-bold text-cyber-blue'}>{currentWpm}</span>
               </div>
               <div className="flex items-center gap-2">
-                <span className="text-slate-400 font-medium">Accuracy:</span>
-                <span className="font-bold text-cyber-green">{accuracy}%</span>
+                <span className={isZenMode ? 'text-sm uppercase tracking-wider text-slate-500 font-semibold' : 'text-slate-400 font-medium'}>Accuracy:</span>
+                <span className={isZenMode ? 'text-3xl font-black text-cyber-green' : 'font-bold text-cyber-green'}>{accuracy}%</span>
               </div>
             </div>
 
             {/* Display Text panel */}
             <div 
               onClick={() => { if (textInputRef.current) textInputRef.current.focus(); }}
-              className="w-full border border-white/10 rounded-2xl bg-slate-950/50 p-8 min-h-36 text-lg leading-relaxed select-none cursor-text relative overflow-y-auto max-h-56"
+              className={`w-full transition-all duration-500 select-none cursor-text overflow-hidden relative whitespace-pre-wrap ${
+                isZenMode 
+                  ? 'border-0 bg-transparent p-0 min-h-48 max-h-96 text-2xl md:text-3xl leading-loose font-mono' 
+                  : 'border border-white/10 rounded-2xl bg-slate-950/50 p-8 min-h-36 max-h-56 overflow-y-auto text-lg leading-relaxed'
+              }`}
             >
               {renderTextHighlights()}
 
               {!isStarted && (
-                <div className="absolute right-3 bottom-3 flex items-center gap-1.5 text-[10px] text-slate-400 bg-slate-900 border border-white/5 px-2.5 py-1.5 rounded-lg animate-pulse select-none pointer-events-none">
+                <div className={`absolute flex items-center gap-1.5 text-slate-400 bg-slate-900 border border-white/5 px-2.5 py-1.5 rounded-lg animate-pulse select-none pointer-events-none ${
+                  isZenMode ? 'right-0 bottom-0 text-xs' : 'right-3 bottom-3 text-[10px]'
+                }`}>
                   <Sparkles size={12} className="text-yellow-400 animate-spin" style={{ animationDuration: '3s' }} />
                   Start typing to begin exam timer
                 </div>
@@ -573,13 +592,22 @@ export const ExamPractice: React.FC = () => {
 
             {/* Control buttons */}
             <div className="flex justify-between items-center text-xs">
-              <button
-                onClick={handleLaunchExam}
-                className="px-4 py-2 bg-white/5 border border-white/10 hover:bg-white/10 hover:border-cyber-red/20 text-white rounded-lg font-bold transition flex items-center gap-1.5"
-              >
-                <RotateCcw size={12} />
-                Restart Exam
-              </button>
+              <div className="flex gap-2">
+                <button
+                  onClick={handleLaunchExam}
+                  className="px-4 py-2 bg-white/5 border border-white/10 hover:bg-white/10 hover:border-cyber-red/20 text-white rounded-lg font-bold transition flex items-center gap-1.5 cursor-pointer"
+                >
+                  <RotateCcw size={12} />
+                  Restart Exam
+                </button>
+                <button
+                  onClick={() => setIsZenMode(!isZenMode)}
+                  className="px-4 py-2 bg-white/5 border border-cyber-blue/30 hover:bg-cyber-blue/10 text-cyber-blue rounded-lg font-bold transition flex items-center gap-1.5 shadow-sm cursor-pointer"
+                  title="Toggle distraction-free full-screen layout"
+                >
+                  {isZenMode ? 'Exit Full Screen' : 'Full Screen Mode'}
+                </button>
+              </div>
 
               <button
                 onClick={() => {

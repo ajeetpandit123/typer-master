@@ -26,6 +26,8 @@ interface AppContextType {
   setCaretBlinking: (val: boolean) => void;
   cursorStyle: 'cyber' | 'simple';
   setCursorStyle: (val: 'cyber' | 'simple') => void;
+  isZenMode: boolean;
+  setIsZenMode: (val: boolean) => void;
   addToast: (title: string, description: string, type?: ToastMessage['type']) => void;
   removeToast: (id: string) => void;
   logInLocal: (username: string, email: string) => Promise<void>;
@@ -42,6 +44,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [loading, setLoading] = useState<boolean>(true);
   const [localMode, setLocalMode] = useState<boolean>(true);
   const [toasts, setToasts] = useState<ToastMessage[]>([]);
+  const [isZenMode, setIsZenMode] = useState<boolean>(false);
   const [caretBlinking, setCaretBlinking] = useState<boolean>(() => {
     if (typeof window !== 'undefined') {
       const stored = localStorage.getItem('typemaster_caret_blinking');
@@ -245,6 +248,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         setCaretBlinking,
         cursorStyle,
         setCursorStyle,
+        isZenMode,
+        setIsZenMode,
         addToast,
         removeToast,
         logInLocal,

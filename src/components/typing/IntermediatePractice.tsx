@@ -27,7 +27,7 @@ const INTERMEDIATE_WORDS = [
 ];
 
 export const IntermediatePractice: React.FC = () => {
-  const { user, addToast, refreshProfile } = useApp();
+  const { user, addToast, refreshProfile, isZenMode, setIsZenMode } = useApp();
 
   // Test setup
   const [testMode, setTestMode] = useState<'time' | 'words'>('time');
@@ -35,6 +35,8 @@ export const IntermediatePractice: React.FC = () => {
   const [wordCount, setWordCount] = useState<number>(25); // 25, 50, 100
   const [isCustomDuration, setIsCustomDuration] = useState<boolean>(false);
   const [customInputVal, setCustomInputVal] = useState<string>('300'); // default 5 minutes (300s)
+  const [isCustomWordCount, setIsCustomWordCount] = useState<boolean>(false);
+  const [customWordInputVal, setCustomWordInputVal] = useState<string>('150'); // default 150 words
 
   // Game state
   const [isPlaying, setIsPlaying] = useState(false);
@@ -48,6 +50,17 @@ export const IntermediatePractice: React.FC = () => {
   const [elapsedTime, setElapsedTime] = useState(0);
   const [wpmHistory, setWpmHistory] = useState<{ time: number; wpm: number }[]>([]);
   const [showResults, setShowResults] = useState(false);
+
+  useEffect(() => {
+    if (isPlaying && !showResults) {
+      setIsZenMode(true);
+    } else {
+      setIsZenMode(false);
+    }
+    return () => {
+      setIsZenMode(false);
+    };
+  }, [isPlaying, showResults, setIsZenMode]);
 
   // Refs for tracking practice time on unmount/exits
   const elapsedTimeRef = useRef(0);
@@ -332,123 +345,169 @@ export const IntermediatePractice: React.FC = () => {
   const currentWpm = calculateLiveWpm(rawTypedText.length, elapsedTime);
 
   return (
-    <div className="space-y-6 max-w-4xl mx-auto pb-10">
+    <div className={`transition-all duration-500 ${isZenMode ? 'w-full h-full min-h-[90vh] flex flex-col justify-center max-w-5xl mx-auto px-6 pb-0' : 'space-y-6 max-w-4xl mx-auto pb-10'}`}>
       {/* 1. Configuration & Controls Bar */}
-      <div className="glass-card p-5 rounded-2xl flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-purple-500/10 border border-purple-500/30 flex items-center justify-center text-purple-400">
-            <Zap size={20} />
-          </div>
-          <div>
-            <span className="text-[10px] text-purple-400 font-bold uppercase tracking-wider">Level 2 - Intermediate Practice</span>
-            <h2 className="text-lg font-bold text-white leading-tight">Speed & Consistency</h2>
-          </div>
-        </div>
-
-        {/* Configuration settings (only active if not playing) */}
-        {!isPlaying && !showResults && (
-          <div className="flex items-center gap-4 flex-wrap">
-            <div className="flex bg-slate-900 border border-white/5 p-1 rounded-lg">
-              <button
-                onClick={() => setTestMode('time')}
-                className={`px-3 py-1 rounded-md text-xs font-semibold transition ${
-                  testMode === 'time' ? 'bg-cyber-purple text-white' : 'text-slate-400 hover:text-slate-200'
-                }`}
-              >
-                Time Mode
-              </button>
-              <button
-                onClick={() => setTestMode('words')}
-                className={`px-3 py-1 rounded-md text-xs font-semibold transition ${
-                  testMode === 'words' ? 'bg-cyber-purple text-white' : 'text-slate-400 hover:text-slate-200'
-                }`}
-              >
-                Words Mode
-              </button>
+      {!isZenMode && (
+        <div className="glass-card p-5 rounded-2xl flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-purple-500/10 border border-purple-500/30 flex items-center justify-center text-purple-400">
+              <Zap size={20} />
             </div>
-
-            {testMode === 'time' ? (
-              <div className="flex bg-slate-900 border border-white/5 p-1 rounded-lg items-center gap-1.5">
-                {[30, 60, 120, 180].map((t) => (
-                  <button
-                    key={t}
-                    onClick={() => { 
-                      setDuration(t); 
-                      setTimeLeft(t); 
-                      setIsCustomDuration(false);
-                    }}
-                    className={`px-2.5 py-1 rounded-md text-xs font-semibold transition ${
-                      !isCustomDuration && duration === t 
-                        ? 'bg-slate-800 text-cyber-blue font-bold shadow-[0_0_8px_rgba(0,242,254,0.2)]' 
-                        : 'text-slate-500 hover:text-slate-300'
-                    }`}
-                  >
-                    {t}s
-                  </button>
-                ))}
-                
-                {/* Custom Duration Option */}
-                <div className="flex items-center gap-1.5 pl-1.5 border-l border-white/10">
-                  <button
-                    onClick={() => {
-                      setIsCustomDuration(true);
-                      const numericVal = parseInt(customInputVal) || 300;
-                      setDuration(numericVal);
-                      setTimeLeft(numericVal);
-                    }}
-                    className={`px-2.5 py-1 rounded-md text-xs font-semibold transition ${
-                      isCustomDuration 
-                        ? 'bg-slate-800 text-cyber-blue font-bold shadow-[0_0_8px_rgba(0,242,254,0.2)]' 
-                        : 'text-slate-500 hover:text-slate-300'
-                    }`}
-                  >
-                    Custom
-                  </button>
-                  {isCustomDuration && (
-                    <div className="flex items-center gap-1 bg-slate-950 px-2 py-0.5 rounded border border-white/10">
-                      <input
-                        type="number"
-                        min="10"
-                        max="3600"
-                        value={customInputVal}
-                        onChange={(e) => {
-                          const valStr = e.target.value;
-                          setCustomInputVal(valStr);
-                          const valNum = parseInt(valStr) || 0;
-                          if (valNum >= 10 && valNum <= 3600) {
-                            setDuration(valNum);
-                            setTimeLeft(valNum);
-                          }
-                        }}
-                        className="w-12 bg-transparent text-xs text-white focus:outline-none text-center font-bold [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-                        placeholder="300"
-                      />
-                      <span className="text-[10px] text-slate-500">s</span>
-                    </div>
-                  )}
-                </div>
-              </div>
-            ) : (
-              <div className="flex bg-slate-900 border border-white/5 p-1 rounded-lg">
-                {[25, 50, 100].map((w) => (
-                  <button
-                    key={w}
-                    onClick={() => setWordCount(w)}
-                    className={`px-2.5 py-1 rounded-md text-xs font-semibold transition ${
-                      wordCount === w ? 'bg-slate-800 text-cyber-blue font-bold' : 'text-slate-500 hover:text-slate-300'
-                    }`}
-                  >
-                    {w}w
-                  </button>
-                ))}
-              </div>
-            )}
+            <div>
+              <span className="text-[10px] text-purple-400 font-bold uppercase tracking-wider">Level 2 - Intermediate Practice</span>
+              <h2 className="text-lg font-bold text-white leading-tight">Speed & Consistency</h2>
+            </div>
           </div>
-        )}
-      </div>
+
+          {/* Configuration settings (only active if not playing) */}
+          {!isPlaying && !showResults && (
+            <div className="flex items-center gap-4 flex-wrap">
+              <div className="flex bg-slate-900 border border-white/5 p-1 rounded-lg">
+                <button
+                  onClick={() => setTestMode('time')}
+                  className={`px-3 py-1 rounded-md text-xs font-semibold transition ${
+                    testMode === 'time' ? 'bg-cyber-purple text-white' : 'text-slate-400 hover:text-slate-200'
+                  }`}
+                >
+                  Time Mode
+                </button>
+                <button
+                  onClick={() => setTestMode('words')}
+                  className={`px-3 py-1 rounded-md text-xs font-semibold transition ${
+                    testMode === 'words' ? 'bg-cyber-purple text-white' : 'text-slate-400 hover:text-slate-200'
+                  }`}
+                >
+                  Words Mode
+                </button>
+              </div>
+
+              {testMode === 'time' ? (
+                <div className="flex bg-slate-900 border border-white/5 p-1 rounded-lg items-center gap-1.5">
+                  {[30, 60, 120, 180].map((t) => (
+                    <button
+                      key={t}
+                      onClick={() => { 
+                        setDuration(t); 
+                        setTimeLeft(t); 
+                        setIsCustomDuration(false);
+                      }}
+                      className={`px-2.5 py-1 rounded-md text-xs font-semibold transition ${
+                        !isCustomDuration && duration === t 
+                          ? 'bg-slate-800 text-cyber-blue font-bold shadow-[0_0_8px_rgba(0,242,254,0.2)]' 
+                          : 'text-slate-500 hover:text-slate-300'
+                      }`}
+                    >
+                      {t}s
+                    </button>
+                  ))}
+                  
+                  {/* Custom Duration Option */}
+                  <div className="flex items-center gap-1.5 pl-1.5 border-l border-white/10">
+                    <button
+                      onClick={() => {
+                        setIsCustomDuration(true);
+                        const numericVal = parseInt(customInputVal) || 300;
+                        setDuration(numericVal);
+                        setTimeLeft(numericVal);
+                      }}
+                      className={`px-2.5 py-1 rounded-md text-xs font-semibold transition ${
+                        isCustomDuration 
+                          ? 'bg-slate-800 text-cyber-blue font-bold shadow-[0_0_8px_rgba(0,242,254,0.2)]' 
+                          : 'text-slate-500 hover:text-slate-300'
+                      }`}
+                    >
+                      Custom
+                    </button>
+                    {isCustomDuration && (
+                      <div className="flex items-center gap-1 bg-slate-950 px-2 py-0.5 rounded border border-white/10">
+                        <input
+                          type="number"
+                          min="10"
+                          max="3600"
+                          value={customInputVal}
+                          onChange={(e) => {
+                            const valStr = e.target.value;
+                            setCustomInputVal(valStr);
+                            const valNum = parseInt(valStr) || 0;
+                            if (valNum >= 10 && valNum <= 3600) {
+                              setDuration(valNum);
+                              setTimeLeft(valNum);
+                            }
+                          }}
+                          className="w-12 bg-transparent text-xs text-white focus:outline-none text-center font-bold [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                          placeholder="300"
+                        />
+                        <span className="text-[10px] text-slate-500">s</span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              ) : (
+                <div className="flex bg-slate-900 border border-white/5 p-1 rounded-lg items-center gap-1.5">
+                  {[25, 50, 100].map((w) => (
+                    <button
+                      key={w}
+                      onClick={() => {
+                        setWordCount(w);
+                        setIsCustomWordCount(false);
+                      }}
+                      className={`px-2.5 py-1 rounded-md text-xs font-semibold transition ${
+                        !isCustomWordCount && wordCount === w 
+                          ? 'bg-slate-800 text-cyber-blue font-bold shadow-[0_0_8px_rgba(0,242,254,0.2)]' 
+                          : 'text-slate-500 hover:text-slate-300'
+                      }`}
+                    >
+                      {w}w
+                    </button>
+                  ))}
+
+                  {/* Custom Word Count Option */}
+                  <div className="flex items-center gap-1.5 pl-1.5 border-l border-white/10">
+                    <button
+                      onClick={() => {
+                        setIsCustomWordCount(true);
+                        const numericVal = parseInt(customWordInputVal) || 150;
+                        setWordCount(numericVal);
+                      }}
+                      className={`px-2.5 py-1 rounded-md text-xs font-semibold transition ${
+                        isCustomWordCount 
+                          ? 'bg-slate-800 text-cyber-blue font-bold shadow-[0_0_8px_rgba(0,242,254,0.2)]' 
+                          : 'text-slate-500 hover:text-slate-300'
+                      }`}
+                    >
+                      Custom
+                    </button>
+                    {isCustomWordCount && (
+                      <div className="flex items-center gap-1 bg-slate-950 px-2 py-0.5 rounded border border-white/10">
+                        <input
+                          type="number"
+                          min="5"
+                          max="1000"
+                          value={customWordInputVal}
+                          onChange={(e) => {
+                            const valStr = e.target.value;
+                            setCustomWordInputVal(valStr);
+                            const valNum = parseInt(valStr) || 0;
+                            if (valNum >= 5 && valNum <= 1000) {
+                              setWordCount(valNum);
+                            }
+                          }}
+                          className="w-12 bg-transparent text-xs text-white focus:outline-none text-center font-bold [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                          placeholder="150"
+                        />
+                        <span className="text-[10px] text-slate-500">w</span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+      )}
 
       {/* 2. Main Typing Canvas */}
-      <div className="glass-card p-6 rounded-2xl relative overflow-hidden flex flex-col">
+      <div className={`relative overflow-hidden flex flex-col transition-all duration-500 ${isZenMode ? 'border-0 bg-transparent shadow-none p-0 w-full' : 'glass-card p-6 rounded-2xl'}`}>
         {showResults ? (
           /* Results Panel */
           <div className="py-6 space-y-8">
@@ -535,27 +594,27 @@ export const IntermediatePractice: React.FC = () => {
           </div>
         ) : (
           /* Active typing engine container */
-          <div className="space-y-6 relative">
+          <div className={`relative transition-all duration-500 ${isZenMode ? 'space-y-12' : 'space-y-6'}`}>
             {/* Live Metrics */}
-            <div className="flex justify-between items-center bg-slate-950/30 px-4 py-2 border border-white/5 rounded-xl">
+            <div className={`flex justify-between items-center transition-all duration-300 ${isZenMode ? 'px-0 py-0 border-0 bg-transparent text-slate-500 text-lg' : 'bg-slate-950/30 px-4 py-2 border border-white/5 rounded-xl'}`}>
               <div className="flex items-center gap-2">
-                <span className="text-xs text-slate-400">Live WPM:</span>
-                <span className="text-xs font-bold text-cyber-blue">{currentWpm}</span>
+                <span className={isZenMode ? 'text-sm uppercase tracking-wider text-slate-500 font-semibold' : 'text-xs text-slate-400'}>WPM:</span>
+                <span className={isZenMode ? 'text-3xl font-black text-cyber-blue text-glow-cyan' : 'text-xs font-bold text-cyber-blue'}>{currentWpm}</span>
               </div>
               <div className="flex items-center gap-2">
-                <span className="text-xs text-slate-400">Accuracy:</span>
-                <span className="text-xs font-bold text-cyber-green">{accuracy}%</span>
+                <span className={isZenMode ? 'text-sm uppercase tracking-wider text-slate-500 font-semibold' : 'text-xs text-slate-400'}>Accuracy:</span>
+                <span className={isZenMode ? 'text-3xl font-black text-cyber-green' : 'text-xs font-bold text-cyber-green'}>{accuracy}%</span>
               </div>
               <div className="flex items-center gap-2">
                 {testMode === 'time' ? (
                   <>
-                    <span className="text-xs text-slate-400">Time Remaining:</span>
-                    <span className="text-xs font-bold text-white">{timeLeft}s</span>
+                    <span className={isZenMode ? 'text-sm uppercase tracking-wider text-slate-500 font-semibold' : 'text-xs text-slate-400'}>Time:</span>
+                    <span className={isZenMode ? 'text-3xl font-black text-white' : 'text-xs font-bold text-white'}>{timeLeft}s</span>
                   </>
                 ) : (
                   <>
-                    <span className="text-xs text-slate-400">Words Typed:</span>
-                    <span className="text-xs font-bold text-white">
+                    <span className={isZenMode ? 'text-sm uppercase tracking-wider text-slate-500 font-semibold' : 'text-xs text-slate-400'}>Words:</span>
+                    <span className={isZenMode ? 'text-3xl font-black text-white' : 'text-xs font-bold text-white'}>
                       {rawTypedText.trim().split(/\s+/).filter(Boolean).length} / {wordCount}
                     </span>
                   </>
@@ -564,7 +623,7 @@ export const IntermediatePractice: React.FC = () => {
             </div>
 
             {/* Display Text Panel */}
-            <div className="relative">
+            <div className="relative animate-fade-in">
               {isPaused && (
                 /* Blur Overlay */
                 <div className="absolute inset-0 z-30 glass-panel rounded-2xl flex flex-col items-center justify-center space-y-4">
@@ -580,12 +639,18 @@ export const IntermediatePractice: React.FC = () => {
 
               <div 
                 onClick={() => { if (textInputRef.current) textInputRef.current.focus(); }}
-                className="w-full border border-white/10 rounded-2xl bg-slate-950/50 p-8 min-h-36 text-lg leading-relaxed select-none cursor-text overflow-hidden max-h-56 overflow-y-auto relative whitespace-pre-wrap"
+                className={`w-full transition-all duration-500 select-none cursor-text overflow-hidden relative whitespace-pre-wrap ${
+                  isZenMode 
+                    ? 'border-0 bg-transparent p-0 min-h-48 max-h-96 text-2xl md:text-3xl leading-loose font-mono' 
+                    : 'border border-white/10 rounded-2xl bg-slate-950/50 p-8 min-h-36 max-h-56 overflow-y-auto text-lg leading-relaxed'
+                }`}
               >
                 {renderTextHighlights()}
 
                 {!isStarted && (
-                  <div className="absolute right-3 bottom-3 flex items-center gap-1.5 text-[10px] text-slate-400 bg-slate-900 border border-white/5 px-2.5 py-1.5 rounded-lg animate-pulse select-none pointer-events-none">
+                  <div className={`absolute flex items-center gap-1.5 text-slate-400 bg-slate-900 border border-white/5 px-2.5 py-1.5 rounded-lg animate-pulse select-none pointer-events-none ${
+                    isZenMode ? 'right-0 bottom-0 text-xs' : 'right-3 bottom-3 text-[10px]'
+                  }`}>
                     <Sparkles size={12} className="text-yellow-400 animate-spin" style={{ animationDuration: '3s' }} />
                     Type the first letter to begin timer
                   </div>
@@ -633,6 +698,13 @@ export const IntermediatePractice: React.FC = () => {
                 >
                   <RotateCcw size={12} />
                   Restart
+                </button>
+                <button
+                  onClick={() => setIsZenMode(!isZenMode)}
+                  className="px-4 py-2 bg-white/5 border border-cyber-blue/30 hover:bg-cyber-blue/10 text-cyber-blue rounded-lg text-xs font-bold transition flex items-center gap-1.5 shadow-sm cursor-pointer select-none"
+                  title="Toggle distraction-free full-screen layout"
+                >
+                  {isZenMode ? 'Exit Full Screen' : 'Full Screen Mode'}
                 </button>
               </div>
 

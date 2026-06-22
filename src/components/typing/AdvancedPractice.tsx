@@ -30,7 +30,7 @@ interface KeyStat {
 }
 
 export const AdvancedPractice: React.FC = () => {
-  const { user, addToast, refreshProfile } = useApp();
+  const { user, addToast, refreshProfile, isZenMode, setIsZenMode } = useApp();
 
   const [currentTextIdx, setCurrentTextIdx] = useState(0);
   const [isPlaying, setIsPlaying] = useState(false);
@@ -39,6 +39,17 @@ export const AdvancedPractice: React.FC = () => {
   const [timeLeft, setTimeLeft] = useState(60);
   const [elapsedTime, setElapsedTime] = useState(0);
   const [showResults, setShowResults] = useState(false);
+
+  useEffect(() => {
+    if (isPlaying && !showResults) {
+      setIsZenMode(true);
+    } else {
+      setIsZenMode(false);
+    }
+    return () => {
+      setIsZenMode(false);
+    };
+  }, [isPlaying, showResults, setIsZenMode]);
 
   // Character-specific metrics
   const [charSpeeds, setCharSpeeds] = useState<Record<string, KeyStat>>({});
@@ -252,38 +263,40 @@ export const AdvancedPractice: React.FC = () => {
   const chartData = getSpeedChartData();
 
   return (
-    <div className="space-y-6 max-w-4xl mx-auto pb-10">
+    <div className={`transition-all duration-500 ${isZenMode ? 'w-full h-full min-h-[90vh] flex flex-col justify-center max-w-5xl mx-auto px-6 pb-0' : 'space-y-6 max-w-4xl mx-auto pb-10'}`}>
       {/* 1. Header Header */}
-      <div className="glass-card p-5 rounded-2xl flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-rose-500/10 border border-rose-500/30 flex items-center justify-center text-rose-400">
-            <ShieldAlert size={20} />
+      {!isZenMode && (
+        <div className="glass-card p-5 rounded-2xl flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-rose-500/10 border border-rose-500/30 flex items-center justify-center text-rose-400">
+              <ShieldAlert size={20} />
+            </div>
+            <div>
+              <span className="text-[10px] text-rose-400 font-bold uppercase tracking-wider">Level 3 - Advanced Learning Path</span>
+              <h2 className="text-lg font-bold text-white leading-tight">Complex Sentences & Symbols</h2>
+            </div>
           </div>
-          <div>
-            <span className="text-[10px] text-rose-400 font-bold uppercase tracking-wider">Level 3 - Advanced Learning Path</span>
-            <h2 className="text-lg font-bold text-white leading-tight">Complex Sentences & Symbols</h2>
-          </div>
-        </div>
 
-        {/* Text Selection */}
-        {!isPlaying && !showResults && (
-          <select 
-            value={currentTextIdx} 
-            onChange={(e) => {
-              setCurrentTextIdx(Number(e.target.value));
-              setRawTypedText('');
-            }}
-            className="bg-slate-900 border border-white/10 rounded-lg text-xs font-semibold px-3 py-2 text-slate-300 focus:outline-none focus:border-cyber-blue"
-          >
-            {ADVANCED_TEXTS.map((t, idx) => (
-              <option key={idx} value={idx}>Module {idx + 1}: {t.slice(0, 25)}...</option>
-            ))}
-          </select>
-        )}
-      </div>
+          {/* Text Selection */}
+          {!isPlaying && !showResults && (
+            <select 
+              value={currentTextIdx} 
+              onChange={(e) => {
+                setCurrentTextIdx(Number(e.target.value));
+                setRawTypedText('');
+              }}
+              className="bg-slate-900 border border-white/10 rounded-lg text-xs font-semibold px-3 py-2 text-slate-300 focus:outline-none focus:border-cyber-blue"
+            >
+              {ADVANCED_TEXTS.map((t, idx) => (
+                <option key={idx} value={idx}>Module {idx + 1}: {t.slice(0, 25)}...</option>
+              ))}
+            </select>
+          )}
+        </div>
+      )}
 
       {/* 2. Typing Sandbox */}
-      <div className="glass-card p-6 rounded-2xl relative overflow-hidden flex flex-col">
+      <div className={`relative overflow-hidden flex flex-col transition-all duration-500 ${isZenMode ? 'border-0 bg-transparent shadow-none p-0 w-full' : 'glass-card p-6 rounded-2xl'}`}>
         {showResults ? (
           /* Advanced results board */
           <div className="py-6 space-y-8">
@@ -400,32 +413,38 @@ export const AdvancedPractice: React.FC = () => {
           </div>
         ) : (
           /* Active typing engine container */
-          <div className="space-y-6 relative">
+          <div className={`relative transition-all duration-500 ${isZenMode ? 'space-y-12' : 'space-y-6'}`}>
             {/* Live Metrics */}
-            <div className="flex justify-between items-center bg-slate-950/30 px-4 py-2 border border-white/5 rounded-xl">
+            <div className={`flex justify-between items-center transition-all duration-300 ${isZenMode ? 'px-0 py-0 border-0 bg-transparent text-slate-500 text-lg' : 'bg-slate-950/30 px-4 py-2 border border-white/5 rounded-xl'}`}>
               <div className="flex items-center gap-2">
-                <span className="text-xs text-slate-400">WPM:</span>
-                <span className="text-xs font-bold text-cyber-blue">{currentWpm}</span>
+                <span className={isZenMode ? 'text-sm uppercase tracking-wider text-slate-500 font-semibold' : 'text-xs text-slate-400'}>WPM:</span>
+                <span className={isZenMode ? 'text-3xl font-black text-cyber-blue text-glow-cyan' : 'text-xs font-bold text-cyber-blue'}>{currentWpm}</span>
               </div>
               <div className="flex items-center gap-2">
-                <span className="text-xs text-slate-400">Accuracy:</span>
-                <span className="text-xs font-bold text-cyber-green">{accuracy}%</span>
+                <span className={isZenMode ? 'text-sm uppercase tracking-wider text-slate-500 font-semibold' : 'text-xs text-slate-400'}>Accuracy:</span>
+                <span className={isZenMode ? 'text-3xl font-black text-cyber-green' : 'text-xs font-bold text-cyber-green'}>{accuracy}%</span>
               </div>
               <div className="flex items-center gap-2">
-                <span className="text-xs text-slate-400">Time Remaining:</span>
-                <span className="text-xs font-bold text-white">{60 - elapsedTime}s</span>
+                <span className={isZenMode ? 'text-sm uppercase tracking-wider text-slate-500 font-semibold' : 'text-xs text-slate-400'}>Time:</span>
+                <span className={isZenMode ? 'text-3xl font-black text-white' : 'text-xs font-bold text-white'}>{60 - elapsedTime}s</span>
               </div>
             </div>
 
             {/* Display Text Panel */}
             <div 
               onClick={() => { if (textInputRef.current) textInputRef.current.focus(); }}
-              className="w-full border border-white/10 rounded-2xl bg-slate-950/50 p-8 min-h-36 text-lg leading-relaxed select-none cursor-text overflow-hidden relative"
+              className={`w-full transition-all duration-500 select-none cursor-text overflow-hidden relative whitespace-pre-wrap ${
+                isZenMode 
+                  ? 'border-0 bg-transparent p-0 min-h-48 max-h-96 text-2xl md:text-3xl leading-loose font-mono' 
+                  : 'border border-white/10 rounded-2xl bg-slate-950/50 p-8 min-h-36 max-h-56 overflow-y-auto text-lg leading-relaxed'
+              }`}
             >
               {renderTextHighlights()}
 
               {!isStarted && (
-                <div className="absolute right-3 bottom-3 flex items-center gap-1.5 text-[10px] text-slate-400 bg-slate-900 border border-white/5 px-2.5 py-1.5 rounded-lg animate-pulse select-none pointer-events-none">
+                <div className={`absolute flex items-center gap-1.5 text-slate-400 bg-slate-900 border border-white/5 px-2.5 py-1.5 rounded-lg animate-pulse select-none pointer-events-none ${
+                  isZenMode ? 'right-0 bottom-0 text-xs' : 'right-3 bottom-3 text-[10px]'
+                }`}>
                   <Sparkles size={12} className="text-yellow-400 animate-spin" style={{ animationDuration: '3s' }} />
                   Type the first letter to begin timer
                 </div>
@@ -446,13 +465,22 @@ export const AdvancedPractice: React.FC = () => {
 
             {/* Controls */}
             <div className="flex justify-between items-center">
-              <button
-                onClick={handleStart}
-                className="px-4 py-2 bg-white/5 border border-white/10 hover:bg-white/10 text-white rounded-lg text-xs font-bold transition flex items-center gap-1.5"
-              >
-                <RotateCcw size={12} />
-                Restart
-              </button>
+              <div className="flex gap-2">
+                <button
+                  onClick={handleStart}
+                  className="px-4 py-2 bg-white/5 border border-white/10 hover:bg-white/10 text-white rounded-lg text-xs font-bold transition flex items-center gap-1.5"
+                >
+                  <RotateCcw size={12} />
+                  Restart
+                </button>
+                <button
+                  onClick={() => setIsZenMode(!isZenMode)}
+                  className="px-4 py-2 bg-white/5 border border-cyber-blue/30 hover:bg-cyber-blue/10 text-cyber-blue rounded-lg text-xs font-bold transition flex items-center gap-1.5 shadow-sm cursor-pointer select-none"
+                  title="Toggle distraction-free full-screen layout"
+                >
+                  {isZenMode ? 'Exit Full Screen' : 'Full Screen Mode'}
+                </button>
+              </div>
 
               <button
                 onClick={() => {

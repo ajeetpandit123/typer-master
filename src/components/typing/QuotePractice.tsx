@@ -9,7 +9,7 @@ import {
 } from 'lucide-react';
 
 export const QuotePractice: React.FC = () => {
-  const { user, addToast, refreshProfile } = useApp();
+  const { user, addToast, refreshProfile, isZenMode, setIsZenMode } = useApp();
 
   // Settings
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
@@ -24,6 +24,17 @@ export const QuotePractice: React.FC = () => {
   // Timers & Stats
   const [elapsedTime, setElapsedTime] = useState(0);
   const [showResults, setShowResults] = useState(false);
+
+  useEffect(() => {
+    if (isPlaying && !showResults) {
+      setIsZenMode(true);
+    } else {
+      setIsZenMode(false);
+    }
+    return () => {
+      setIsZenMode(false);
+    };
+  }, [isPlaying, showResults, setIsZenMode]);
   
   const timerRef = useRef<NodeJS.Timeout | null>(null);
   const textInputRef = useRef<HTMLTextAreaElement | null>(null);
@@ -181,52 +192,54 @@ export const QuotePractice: React.FC = () => {
   const currentWpm = Math.round((rawTypedText.length / 5) / ((elapsedTime || 1) / 60));
 
   return (
-    <div className="space-y-6 max-w-4xl mx-auto pb-10">
+    <div className={`transition-all duration-500 ${isZenMode ? 'w-full h-full min-h-[90vh] flex flex-col justify-center max-w-5xl mx-auto px-6 pb-0' : 'space-y-6 max-w-4xl mx-auto pb-10'}`}>
       {/* 1. Header & Filters */}
-      <div className="glass-card p-5 rounded-2xl flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-yellow-500/10 border border-yellow-500/30 flex items-center justify-center text-yellow-400">
-            <QuoteIcon size={20} />
+      {!isZenMode && (
+        <div className="glass-card p-5 rounded-2xl flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-yellow-500/10 border border-yellow-500/30 flex items-center justify-center text-yellow-400">
+              <QuoteIcon size={20} />
+            </div>
+            <div>
+              <span className="text-[10px] text-yellow-400 font-bold uppercase tracking-wider">Quote Mode</span>
+              <h2 className="text-lg font-bold text-white leading-tight">Inspirational & Educational Quotes</h2>
+            </div>
           </div>
-          <div>
-            <span className="text-[10px] text-yellow-400 font-bold uppercase tracking-wider">Quote Mode</span>
-            <h2 className="text-lg font-bold text-white leading-tight">Inspirational & Educational Quotes</h2>
-          </div>
+
+          {/* Dropdown Filters (Disabled during typing) */}
+          {!isStarted && !showResults && (
+            <div className="flex items-center gap-2 flex-wrap">
+              <select
+                value={selectedCategory}
+                onChange={(e) => setSelectedCategory(e.target.value)}
+                className="bg-slate-900 border border-white/10 rounded-lg text-xs font-semibold px-3 py-2 text-slate-300 focus:outline-none focus:border-cyber-blue"
+              >
+                <option value="all">All Categories</option>
+                <option value="motivation">Motivation</option>
+                <option value="business">Business</option>
+                <option value="technology">Technology</option>
+                <option value="leadership">Leadership</option>
+                <option value="education">Education</option>
+                <option value="philosophy">Philosophy</option>
+              </select>
+
+              <select
+                value={selectedLength}
+                onChange={(e) => setSelectedLength(e.target.value)}
+                className="bg-slate-900 border border-white/10 rounded-lg text-xs font-semibold px-3 py-2 text-slate-300 focus:outline-none focus:border-cyber-blue"
+              >
+                <option value="all">All Lengths</option>
+                <option value="short">Short (10-30 words)</option>
+                <option value="medium">Medium (30-80 words)</option>
+                <option value="long">Long (80+ words)</option>
+              </select>
+            </div>
+          )}
         </div>
-
-        {/* Dropdown Filters (Disabled during typing) */}
-        {!isStarted && !showResults && (
-          <div className="flex items-center gap-2 flex-wrap">
-            <select
-              value={selectedCategory}
-              onChange={(e) => setSelectedCategory(e.target.value)}
-              className="bg-slate-900 border border-white/10 rounded-lg text-xs font-semibold px-3 py-2 text-slate-300 focus:outline-none focus:border-cyber-blue"
-            >
-              <option value="all">All Categories</option>
-              <option value="motivation">Motivation</option>
-              <option value="business">Business</option>
-              <option value="technology">Technology</option>
-              <option value="leadership">Leadership</option>
-              <option value="education">Education</option>
-              <option value="philosophy">Philosophy</option>
-            </select>
-
-            <select
-              value={selectedLength}
-              onChange={(e) => setSelectedLength(e.target.value)}
-              className="bg-slate-900 border border-white/10 rounded-lg text-xs font-semibold px-3 py-2 text-slate-300 focus:outline-none focus:border-cyber-blue"
-            >
-              <option value="all">All Lengths</option>
-              <option value="short">Short (10-30 words)</option>
-              <option value="medium">Medium (30-80 words)</option>
-              <option value="long">Long (80+ words)</option>
-            </select>
-          </div>
-        )}
-      </div>
+      )}
 
       {/* 2. Typing Area */}
-      <div className="glass-card p-6 rounded-2xl flex flex-col relative overflow-hidden">
+      <div className={`relative overflow-hidden flex flex-col transition-all duration-500 ${isZenMode ? 'border-0 bg-transparent shadow-none p-0 w-full' : 'glass-card p-6 rounded-2xl'}`}>
         {showResults ? (
           /* Results Panel */
           <div className="py-6 space-y-6">
@@ -275,36 +288,42 @@ export const QuotePractice: React.FC = () => {
           /* Active Typing Engine */
           <div className="space-y-6">
             {/* Live Stats */}
-            <div className="flex justify-between items-center bg-slate-950/30 px-4 py-2 border border-white/5 rounded-xl">
+            <div className={`flex justify-between items-center transition-all duration-300 ${isZenMode ? 'px-0 py-0 border-0 bg-transparent text-slate-500 text-lg' : 'bg-slate-950/30 px-4 py-2 border border-white/5 rounded-xl'}`}>
               <div className="flex items-center gap-2">
-                <span className="text-xs text-slate-400 font-medium">Category:</span>
-                <span className="text-xs font-bold text-yellow-400 uppercase tracking-wider">
+                <span className={isZenMode ? 'text-sm uppercase tracking-wider text-slate-500 font-semibold' : 'text-xs text-slate-400 font-medium'}>Category:</span>
+                <span className={isZenMode ? 'text-3xl font-black text-yellow-400 uppercase tracking-wider' : 'text-xs font-bold text-yellow-400 uppercase tracking-wider'}>
                   {activeQuote?.category}
                 </span>
               </div>
               <div className="flex items-center gap-2">
-                <span className="text-xs text-slate-400">Live Speed:</span>
-                <span className="text-xs font-bold text-cyber-blue">{isStarted ? currentWpm : 0} WPM</span>
+                <span className={isZenMode ? 'text-sm uppercase tracking-wider text-slate-500 font-semibold' : 'text-xs text-slate-400'}>Speed:</span>
+                <span className={isZenMode ? 'text-3xl font-black text-cyber-blue text-glow-cyan' : 'text-xs font-bold text-cyber-blue'}>{isStarted ? currentWpm : 0} WPM</span>
               </div>
               <div className="flex items-center gap-2">
-                <span className="text-xs text-slate-400">Accuracy:</span>
-                <span className="text-xs font-bold text-cyber-green">{accuracy}%</span>
+                <span className={isZenMode ? 'text-sm uppercase tracking-wider text-slate-500 font-semibold' : 'text-xs text-slate-400'}>Accuracy:</span>
+                <span className={isZenMode ? 'text-3xl font-black text-cyber-green' : 'text-xs font-bold text-cyber-green'}>{accuracy}%</span>
               </div>
               <div className="flex items-center gap-2">
-                <span className="text-xs text-slate-400">Time:</span>
-                <span className="text-xs font-bold text-white">{elapsedTime}s</span>
+                <span className={isZenMode ? 'text-sm uppercase tracking-wider text-slate-500 font-semibold' : 'text-xs text-slate-400'}>Time:</span>
+                <span className={isZenMode ? 'text-3xl font-black text-white' : 'text-xs font-bold text-white'}>{elapsedTime}s</span>
               </div>
             </div>
 
             {/* Quote block layout */}
             <div 
               onClick={() => { if (textInputRef.current) textInputRef.current.focus(); }}
-              className="w-full border border-white/10 rounded-2xl bg-slate-950/50 p-8 min-h-36 text-lg leading-relaxed select-none cursor-text relative overflow-hidden"
+              className={`w-full transition-all duration-500 select-none cursor-text overflow-hidden relative whitespace-pre-wrap ${
+                isZenMode 
+                  ? 'border-0 bg-transparent p-0 min-h-48 max-h-96 text-2xl md:text-3xl leading-loose font-mono' 
+                  : 'border border-white/10 rounded-2xl bg-slate-950/50 p-8 min-h-36 max-h-56 overflow-y-auto text-lg leading-relaxed'
+              }`}
             >
               {renderTextHighlights()}
               
               {!isStarted && (
-                <div className="absolute right-3 bottom-3 flex items-center gap-1.5 text-[10px] text-slate-400 bg-slate-900 border border-white/5 px-2.5 py-1.5 rounded-lg animate-pulse">
+                <div className={`absolute flex items-center gap-1.5 text-slate-400 bg-slate-900 border border-white/5 px-2.5 py-1.5 rounded-lg animate-pulse ${
+                  isZenMode ? 'right-0 bottom-0 text-xs' : 'right-3 bottom-3 text-[10px]'
+                }`}>
                   <Sparkles size={12} className="text-yellow-400" />
                   Type the first letter to begin timer
                 </div>
@@ -325,15 +344,24 @@ export const QuotePractice: React.FC = () => {
 
             {/* Controls */}
             {activeQuote && (
-              <div className="flex justify-between items-center text-xs text-slate-400">
+              <div className="flex justify-between items-center text-xs text-slate-400 mt-4">
                 <span>Author: <strong className="text-white">{activeQuote.author}</strong></span>
-                <button
-                  onClick={loadNewQuote}
-                  className="px-4 py-2 bg-white/5 border border-white/10 hover:bg-white/10 text-white rounded-lg font-bold transition flex items-center gap-1.5"
-                >
-                  <RotateCcw size={12} />
-                  New Quote
-                </button>
+                <div className="flex gap-2">
+                  <button
+                    onClick={loadNewQuote}
+                    className="px-4 py-2 bg-white/5 border border-white/10 hover:bg-white/10 text-white rounded-lg font-bold transition flex items-center gap-1.5 cursor-pointer"
+                  >
+                    <RotateCcw size={12} />
+                    New Quote
+                  </button>
+                  <button
+                    onClick={() => setIsZenMode(!isZenMode)}
+                    className="px-4 py-2 bg-white/5 border border-cyber-blue/30 hover:bg-cyber-blue/10 text-cyber-blue rounded-lg font-bold transition flex items-center gap-1.5 shadow-sm cursor-pointer"
+                    title="Toggle distraction-free full-screen layout"
+                  >
+                    {isZenMode ? 'Exit Full Screen' : 'Full Screen Mode'}
+                  </button>
+                </div>
               </div>
             )}
           </div>

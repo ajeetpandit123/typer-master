@@ -51,7 +51,7 @@ export default function Home() {
       case 'beginner':
         return <BeginnerPractice />;
       case 'intermediate':
-        return <IntermediatePractice />;
+        return <IntermediatePractice onBack={() => setActiveTab('dashboard')} />;
       case 'advanced':
         return <AdvancedPractice />;
       case 'quote':
@@ -91,7 +91,11 @@ export default function Home() {
   ];
 
   return (
-    <div className="min-h-screen flex bg-bg text-text grid-bg relative">
+    <div className={`flex bg-bg text-text grid-bg relative transition-all duration-500 ${
+      isZenMode 
+        ? 'h-screen max-h-screen overflow-hidden w-screen' 
+        : 'min-h-screen w-full'
+    }`}>
       
       {/* 1. Desktop Sidebar */}
       <aside className={`hidden lg:flex flex-col border-r border-border bg-surface justify-between shrink-0 transition-all duration-500 ease-in-out ${
@@ -361,7 +365,11 @@ export default function Home() {
         </header>
 
         {/* Content Pane */}
-        <div className={`flex-1 overflow-y-auto transition-all duration-500 ease-in-out ${isZenMode ? 'p-0' : 'p-6 md:p-8'}`}>
+        <div className={`flex-1 transition-all duration-500 ease-in-out ${
+          isZenMode 
+            ? 'p-0 overflow-hidden' 
+            : 'p-6 md:p-8 overflow-y-auto'
+        }`}>
           {renderActiveView()}
         </div>
       </main>

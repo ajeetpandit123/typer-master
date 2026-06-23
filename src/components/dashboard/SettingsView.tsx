@@ -361,7 +361,7 @@ export const SettingsView: React.FC = () => {
     return demoText.split('').map((char, index) => {
       const typedChar = typedText[index];
       let charClass = "opacity-45";
-      let charStyle = { color: 'var(--text-muted)' };
+      let charStyle: React.CSSProperties = { color: 'var(--text-muted)' };
 
       if (typedChar !== undefined) {
         if (typedChar === char) {
@@ -375,7 +375,7 @@ export const SettingsView: React.FC = () => {
 
       const isActive = index === typedText.length;
       const activeClass = isActive ? "border-l-2 animate-caret relative" : "";
-      const caretStyle = isActive ? { borderLeftColor: 'var(--caret)' } : {};
+      const caretStyle: React.CSSProperties = isActive ? { borderLeftColor: 'var(--caret)' } : {};
 
       return (
         <span 

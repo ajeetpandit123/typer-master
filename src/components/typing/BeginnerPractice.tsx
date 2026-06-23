@@ -165,7 +165,7 @@ export const BeginnerPractice: React.FC = () => {
   const progressPercent = Math.min(100, Math.round((inputIndex / targetText.length) * 100));
 
   return (
-    <div className={`transition-all duration-500 ${isZenMode ? 'w-full h-full min-h-[90vh] flex flex-col justify-center max-w-5xl mx-auto px-6 pb-0' : 'space-y-6 max-w-4xl mx-auto pb-10'}`}>
+    <div className={`transition-all duration-500 ${isZenMode ? 'w-full h-screen max-h-screen overflow-hidden flex flex-col justify-center mx-auto px-6 md:px-16 lg:px-24 pb-0' : 'space-y-6 max-w-5xl mx-auto pb-10'}`}>
       {/* 1. Header Navigation */}
       {!isZenMode && (
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 glass-card p-5 rounded-2xl">

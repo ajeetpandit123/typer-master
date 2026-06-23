@@ -43,7 +43,7 @@ export const LeaderboardView: React.FC = () => {
   if (podiumEntries[2]) sortedPodium.push({ entry: podiumEntries[2], rank: 3 });
 
   return (
-    <div className="space-y-6 max-w-4xl mx-auto pb-10">
+    <div className="space-y-6 max-w-5xl mx-auto pb-10">
       {/* 1. Header & Period Filters */}
       <div className="glass-card p-5 rounded-2xl flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div className="flex items-center gap-3">

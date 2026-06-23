@@ -166,6 +166,23 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }
   }, [caretBlinking, cursorStyle]);
 
+  // Sync body and html overflow styles to prevent scrolling in Zen Mode
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      if (isZenMode) {
+        document.body.style.overflow = 'hidden';
+        document.body.style.height = '100vh';
+        document.documentElement.style.overflow = 'hidden';
+        document.documentElement.style.height = '100vh';
+      } else {
+        document.body.style.overflow = '';
+        document.body.style.height = '';
+        document.documentElement.style.overflow = '';
+        document.documentElement.style.height = '';
+      }
+    }
+  }, [isZenMode]);
+
   // Apply active theme colors to DOM CSS variables
   useEffect(() => {
     if (typeof window !== 'undefined' && currentTheme) {

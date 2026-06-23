@@ -4,7 +4,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useApp } from '@/context/AppContext';
 import { saveSession, unlockAchievement, incrementPracticeTime, getSessions } from '@/lib/services/db';
 import { 
-  Zap, Play, Pause, RotateCcw, Target, AlertTriangle, ArrowRight,
+  Zap, Play, Pause, RotateCcw, Target, AlertTriangle, ArrowRight, ArrowLeft,
   TrendingUp, Award, BarChart2, Sparkles, BookOpen, ShieldCheck
 } from 'lucide-react';
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
@@ -26,7 +26,7 @@ const INTERMEDIATE_WORDS = [
   'weekly', 'while', 'winner', 'wizard', 'world', 'write', 'writer', 'young'
 ];
 
-export const IntermediatePractice: React.FC = () => {
+export const IntermediatePractice: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
   const { user, profile, addToast, refreshProfile, isZenMode, setIsZenMode, playClickSound } = useApp();
 
   const [stats, setStats] = useState({
@@ -36,26 +36,32 @@ export const IntermediatePractice: React.FC = () => {
     totalLessons: 0
   });
 
+  const [allSessions, setAllSessions] = useState<any[]>([]);
+  const [showProgressModal, setShowProgressModal] = useState(false);
+  const [showAccuracyModal, setShowAccuracyModal] = useState(false);
+  const [showSettingsModal, setShowSettingsModal] = useState(false);
+
   useEffect(() => {
     const loadStats = async () => {
       if (user) {
         try {
           const sess = await getSessions(user.id);
-          const intermediateSess = sess.filter(s => s.levelType === 'intermediate');
-          const best = intermediateSess.length > 0 ? Math.max(...intermediateSess.map(s => s.wpm)) : 0;
+          setAllSessions(sess);
           
-          const avgW = intermediateSess.length > 0 
-            ? Math.round(intermediateSess.reduce((acc, s) => acc + s.wpm, 0) / intermediateSess.length) 
-            : 0;
-          const avgA = intermediateSess.length > 0 
-            ? Math.round(intermediateSess.reduce((acc, s) => acc + s.accuracy, 0) / intermediateSess.length) 
-            : 0;
+          const best = sess.length > 0 ? Math.max(...sess.map(s => s.wpm)) : profile?.wpm || 0;
+          
+          const avgW = sess.length > 0 
+            ? Math.round(sess.reduce((acc, s) => acc + s.wpm, 0) / sess.length) 
+            : profile?.wpm || 0;
+          const avgA = sess.length > 0 
+            ? Math.round(sess.reduce((acc, s) => acc + s.accuracy, 0) / sess.length) 
+            : profile?.accuracy || 0;
 
           setStats({
-            avgWpm: avgW || profile?.wpm || 0,
-            avgAccuracy: avgA || profile?.accuracy || 0,
+            avgWpm: avgW,
+            avgAccuracy: avgA,
             bestWpm: best,
-            totalLessons: intermediateSess.length
+            totalLessons: sess.length
           });
         } catch (err) {
           console.error('Failed to load stats for intermediate landing:', err);
@@ -377,7 +383,7 @@ export const IntermediatePractice: React.FC = () => {
   const currentWpm = calculateLiveWpm(rawTypedText.length, elapsedTime);
 
   return (
-    <div className={`transition-all duration-500 ${isZenMode ? 'w-full h-full min-h-[90vh] flex flex-col justify-center max-w-5xl mx-auto px-6 pb-0' : 'space-y-6 max-w-4xl mx-auto pb-10'}`}>
+    <div className={`transition-all duration-500 ${isZenMode ? `w-full h-screen max-h-screen overflow-hidden flex flex-col justify-center mx-auto pb-0 ${isPlaying || showResults ? 'px-6 md:px-16 lg:px-24' : 'px-0'}` : 'space-y-6 max-w-5xl mx-auto pb-10'}`}>
       {/* 1. Configuration & Controls Bar */}
       {!isZenMode && (
         <div className="glass-card p-5 rounded-2xl flex flex-col md:flex-row md:items-center justify-between gap-4">
@@ -607,7 +613,11 @@ export const IntermediatePractice: React.FC = () => {
           </div>
         ) : !isPlaying ? (
           /* Upgraded Premium Landing Screen */
-          <div className="w-full max-w-5xl mx-auto rounded-3xl overflow-hidden border flex flex-col md:flex-row shadow-[0_20px_50px_rgba(0,0,0,0.45)] transition-all duration-500 animate-fade-in"
+          <div className={`w-full mx-auto flex flex-col md:flex-row transition-all duration-500 animate-fade-in ${
+            isZenMode 
+              ? 'h-screen w-screen border-none rounded-none overflow-hidden' 
+              : 'max-w-none rounded-3xl overflow-hidden border shadow-[0_20px_50px_rgba(0,0,0,0.45)]'
+          }`}
                style={{ backgroundColor: 'var(--surface)', borderColor: 'var(--border)' }}>
             
             {/* Left Content Area */}
@@ -615,21 +625,36 @@ export const IntermediatePractice: React.FC = () => {
               
               {/* Top Header Row */}
               <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2.5 select-none">
-                  <div className="w-8 h-8 rounded-lg flex items-center justify-center font-black text-sm text-bg bg-accent shadow-[0_0_12px_var(--accent)]">
-                    TM
+                <div className="flex items-center gap-4">
+                  {onBack && (
+                    <button
+                      onClick={onBack}
+                      className="p-1.5 rounded-lg border flex items-center justify-center cursor-pointer hover:bg-selection hover:border-accent hover:text-accent transition-all active:scale-[0.98]"
+                      style={{ borderColor: 'var(--border)', color: 'var(--text-muted)' }}
+                      title="Back to Dashboard"
+                    >
+                      <ArrowLeft size={16} />
+                    </button>
+                  )}
+                  <div className="flex items-center gap-2.5 select-none">
+                    <div className="w-8 h-8 rounded-lg flex items-center justify-center font-black text-sm text-bg bg-accent shadow-[0_0_12px_var(--accent)]">
+                      TM
+                    </div>
+                    <span className="text-sm font-bold tracking-wider" style={{ color: 'var(--text)' }}>
+                      TypeMaster
+                    </span>
                   </div>
-                  <span className="text-sm font-bold tracking-wider" style={{ color: 'var(--text)' }}>
-                    TypeMaster
-                  </span>
                 </div>
                 
-                {/* Simulated Track Progress button */}
-                <span className="text-[10px] font-bold px-3 py-1.5 rounded-lg border flex items-center gap-1.5 cursor-default select-none transition-all"
-                      style={{ backgroundColor: 'var(--surface-2)', borderColor: 'var(--border)', color: 'var(--text-muted)' }}>
+               {/* Track Progress button */}
+                <button
+                  onClick={() => setShowProgressModal(true)}
+                  className="text-[10px] font-bold px-3 py-1.5 rounded-lg border flex items-center gap-1.5 cursor-pointer hover:bg-surface-2 transition-all active:scale-[0.98]"
+                  style={{ borderColor: 'var(--border)', color: 'var(--text-muted)' }}
+                >
                   <TrendingUp size={12} style={{ color: 'var(--accent)' }} />
                   Track Progress Active
-                </span>
+                </button>
               </div>
 
               {/* Central Information */}
@@ -660,7 +685,10 @@ export const IntermediatePractice: React.FC = () => {
 
               {/* Three Value Props Rows */}
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-6 border-t" style={{ borderColor: 'var(--border)' }}>
-                <div className="flex items-center gap-2.5">
+                <button 
+                  onClick={() => setShowAccuracyModal(true)}
+                  className="flex items-center gap-2.5 hover:bg-selection/45 p-2 rounded-xl transition cursor-pointer text-left focus:outline-none"
+                >
                   <div className="w-8 h-8 rounded-full flex items-center justify-center text-accent" style={{ backgroundColor: 'var(--selection)' }}>
                     <Target size={14} />
                   </div>
@@ -668,19 +696,25 @@ export const IntermediatePractice: React.FC = () => {
                     <h4 className="text-xs font-bold" style={{ color: 'var(--text)' }}>Improve Accuracy</h4>
                     <p className="text-[10px]" style={{ color: 'var(--text-muted)' }}>Focus on correct typing</p>
                   </div>
-                </div>
+                </button>
 
-                <div className="flex items-center gap-2.5">
+                <button 
+                  onClick={() => setShowSettingsModal(true)}
+                  className="flex items-center gap-2.5 hover:bg-selection/45 p-2 rounded-xl transition cursor-pointer text-left focus:outline-none"
+                >
                   <div className="w-8 h-8 rounded-full flex items-center justify-center text-accent" style={{ backgroundColor: 'var(--selection)' }}>
                     <Zap size={14} />
                   </div>
                   <div>
                     <h4 className="text-xs font-bold" style={{ color: 'var(--text)' }}>Boost Speed</h4>
-                    <p className="text-[10px]" style={{ color: 'var(--text-muted)' }}>Type faster with practice</p>
+                    <p className="text-[10px]" style={{ color: 'var(--text-muted)' }}>Change time/word rules</p>
                   </div>
-                </div>
+                </button>
 
-                <div className="flex items-center gap-2.5">
+                <button 
+                  onClick={() => setShowProgressModal(true)}
+                  className="flex items-center gap-2.5 hover:bg-selection/45 p-2 rounded-xl transition cursor-pointer text-left focus:outline-none"
+                >
                   <div className="w-8 h-8 rounded-full flex items-center justify-center text-accent" style={{ backgroundColor: 'var(--selection)' }}>
                     <BarChart2 size={14} />
                   </div>
@@ -688,7 +722,7 @@ export const IntermediatePractice: React.FC = () => {
                     <h4 className="text-xs font-bold" style={{ color: 'var(--text)' }}>Track Progress</h4>
                     <p className="text-[10px]" style={{ color: 'var(--text-muted)' }}>See your improvement</p>
                   </div>
-                </div>
+                </button>
               </div>
 
               {/* Bottom HUD bar */}
@@ -696,7 +730,10 @@ export const IntermediatePractice: React.FC = () => {
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 p-4 rounded-2xl border"
                      style={{ backgroundColor: 'var(--surface-2)', borderColor: 'var(--border)' }}>
                   
-                  <div className="flex flex-col justify-between">
+                  <div 
+                    onClick={() => setShowProgressModal(true)}
+                    className="flex flex-col justify-between cursor-pointer hover:bg-white/5 p-2 rounded-lg transition"
+                  >
                     <span className="text-[9px] uppercase font-bold tracking-wider" style={{ color: 'var(--text-muted)' }}>WPM</span>
                     <div className="flex items-baseline gap-1 mt-1">
                       <span className="text-lg font-black" style={{ color: 'var(--text)' }}>{stats.avgWpm}</span>
@@ -704,7 +741,10 @@ export const IntermediatePractice: React.FC = () => {
                     </div>
                   </div>
 
-                  <div className="flex flex-col justify-between">
+                  <div 
+                    onClick={() => setShowAccuracyModal(true)}
+                    className="flex flex-col justify-between cursor-pointer hover:bg-white/5 p-2 rounded-lg transition"
+                  >
                     <span className="text-[9px] uppercase font-bold tracking-wider" style={{ color: 'var(--text-muted)' }}>Accuracy</span>
                     <div className="flex items-baseline gap-1 mt-1">
                       <span className="text-lg font-black" style={{ color: 'var(--text)' }}>{stats.avgAccuracy}%</span>
@@ -712,7 +752,10 @@ export const IntermediatePractice: React.FC = () => {
                     </div>
                   </div>
 
-                  <div className="flex flex-col justify-between">
+                  <div 
+                    onClick={() => setShowProgressModal(true)}
+                    className="flex flex-col justify-between cursor-pointer hover:bg-white/5 p-2 rounded-lg transition"
+                  >
                     <span className="text-[9px] uppercase font-bold tracking-wider" style={{ color: 'var(--text-muted)' }}>Best WPM</span>
                     <div className="flex items-baseline gap-1 mt-1">
                       <span className="text-lg font-black" style={{ color: 'var(--accent)' }}>{stats.bestWpm || '-'}</span>
@@ -720,7 +763,10 @@ export const IntermediatePractice: React.FC = () => {
                     </div>
                   </div>
 
-                  <div className="flex flex-col justify-between">
+                  <div 
+                    onClick={() => setShowProgressModal(true)}
+                    className="flex flex-col justify-between cursor-pointer hover:bg-white/5 p-2 rounded-lg transition"
+                  >
                     <span className="text-[9px] uppercase font-bold tracking-wider" style={{ color: 'var(--text-muted)' }}>Sessions</span>
                     <div className="flex items-baseline gap-1 mt-1">
                       <span className="text-lg font-black" style={{ color: 'var(--text)' }}>{stats.totalLessons}</span>
@@ -891,6 +937,281 @@ export const IntermediatePractice: React.FC = () => {
           </div>
         )}
       </div>
+
+      {/* Modals */}
+      {showProgressModal && (
+        <div 
+          onClick={(e) => { if (e.target === e.currentTarget) setShowProgressModal(false); }}
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 backdrop-blur-md p-4 animate-fade-in text-left"
+        >
+          <div className="glass-card max-w-2xl w-full p-6 rounded-2xl border border-white/10 shadow-2xl relative bg-slate-900/90 text-slate-100">
+            <button 
+              onClick={() => setShowProgressModal(false)}
+              className="absolute top-4 right-4 text-slate-400 hover:text-white text-lg font-bold cursor-pointer"
+            >
+              ✕
+            </button>
+            <h3 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
+              <TrendingUp className="text-cyber-blue" size={20} />
+              Your Typing Speed Progress
+            </h3>
+            
+            {allSessions.length > 0 ? (
+              <div className="space-y-6">
+                <div className="h-56 w-full bg-slate-950/40 p-4 rounded-xl border border-white/5">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <LineChart data={[...allSessions].reverse().slice(-10).map((s, idx) => ({ name: `Run ${idx+1}`, wpm: s.wpm }))}>
+                      <XAxis dataKey="name" stroke="#475569" fontSize={9} />
+                      <YAxis stroke="#475569" fontSize={9} />
+                      <Tooltip contentStyle={{ backgroundColor: '#0f1322', border: '1px solid rgba(255,255,255,0.08)' }} />
+                      <Line type="monotone" dataKey="wpm" stroke="#00f2fe" strokeWidth={2.5} dot={{ fill: '#00f2fe' }} />
+                    </LineChart>
+                  </ResponsiveContainer>
+                </div>
+                
+                <div className="space-y-2">
+                  <h4 className="text-xs font-bold text-slate-400">Recent Sessions</h4>
+                  <div className="max-h-40 overflow-y-auto space-y-1.5 pr-1">
+                    {allSessions.slice(0, 5).map((s) => (
+                      <div key={s.id} className="flex justify-between items-center bg-slate-950/80 p-2.5 rounded-lg border border-white/5 text-xs">
+                        <span className="text-white capitalize font-semibold">{s.levelType} Mode</span>
+                        <span className="text-slate-400">{new Date(s.createdAt).toLocaleDateString()}</span>
+                        <span className="text-cyber-blue font-bold">{s.wpm} WPM</span>
+                        <span className="text-cyber-green font-semibold">{s.accuracy}% Acc</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <div className="py-12 text-center text-slate-500 text-sm">
+                No session history recorded yet. Start practicing to see your progress chart!
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {showAccuracyModal && (
+        <div 
+          onClick={(e) => { if (e.target === e.currentTarget) setShowAccuracyModal(false); }}
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 backdrop-blur-md p-4 animate-fade-in text-left"
+        >
+          <div className="glass-card max-w-xl w-full p-6 rounded-2xl border border-white/10 shadow-2xl relative bg-slate-900/90 text-slate-100">
+            <button 
+              onClick={() => setShowAccuracyModal(false)}
+              className="absolute top-4 right-4 text-slate-400 hover:text-white text-lg font-bold cursor-pointer"
+            >
+              ✕
+            </button>
+            <h3 className="text-lg font-bold text-white mb-2 flex items-center gap-2">
+              <Target className="text-cyber-green" size={20} />
+              Typing Accuracy & Heatmap Analysis
+            </h3>
+            <p className="text-xs text-slate-400 mb-4">
+              Here is your accuracy performance status, showing keys that receive the most frequent mistakes.
+            </p>
+
+            <div className="space-y-4">
+              <div className="grid grid-cols-2 gap-4 bg-slate-950/40 p-4 rounded-xl border border-white/5 text-center">
+                <div>
+                  <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider block">Average Accuracy</span>
+                  <span className="text-2xl font-black text-cyber-green mt-1 block">{stats.avgAccuracy}%</span>
+                </div>
+                <div>
+                  <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider block">Status Rank</span>
+                  <span className="text-2xl font-black text-white mt-1 block">
+                    {stats.avgAccuracy >= 95 ? 'Sharpshooter' : stats.avgAccuracy >= 90 ? 'Sniper' : 'Skilled'}
+                  </span>
+                </div>
+              </div>
+
+              {/* Heatmap */}
+              <div className="space-y-2 select-none border border-white/5 p-4 rounded-xl bg-slate-950/40">
+                <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider block mb-2">My Mistake Heatmap</span>
+                <div className="space-y-1.5">
+                  {[
+                    ['Q', 'W', 'E', 'R', 'T', 'Y', 'U', 'I', 'O', 'P'],
+                    ['A', 'S', 'D', 'F', 'G', 'H', 'J', 'K', 'L', ';'],
+                    ['Z', 'X', 'C', 'V', 'B', 'N', 'M', ',', '.', '/']
+                  ].map((row, rIdx) => (
+                    <div key={rIdx} className="flex justify-center gap-1" style={{ paddingLeft: `${rIdx * 8}px` }}>
+                      {row.map((key) => {
+                        const storedErrors = typeof window !== 'undefined' ? localStorage.getItem('typemaster_key_errors') : null;
+                        const keyErrors = storedErrors ? JSON.parse(storedErrors) : {};
+                        const count = keyErrors[key] || 0;
+                        let colorClass = 'bg-slate-800/40 border-slate-700/60 text-slate-500';
+                        if (count === 1) colorClass = 'bg-amber-500/20 border-amber-500/40 text-amber-300';
+                        if (count === 2) colorClass = 'bg-orange-500/30 border-orange-500/50 text-orange-200';
+                        if (count > 2) colorClass = 'bg-cyber-red/30 border-cyber-red/50 text-rose-200 animate-pulse';
+
+                        return (
+                          <div 
+                            key={key} 
+                            title={`${key}: ${count} mistakes`}
+                            className={`w-7 h-7 rounded border flex items-center justify-center text-[10px] font-bold ${colorClass}`}
+                          >
+                            {key}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showSettingsModal && (
+        <div 
+          onClick={(e) => { if (e.target === e.currentTarget) setShowSettingsModal(false); }}
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 backdrop-blur-md p-4 animate-fade-in text-left"
+        >
+          <div className="glass-card max-w-md w-full p-6 rounded-2xl border border-white/10 shadow-2xl relative bg-slate-900/90 text-slate-100">
+            <button 
+              onClick={() => setShowSettingsModal(false)}
+              className="absolute top-4 right-4 text-slate-400 hover:text-white text-lg font-bold cursor-pointer"
+            >
+              ✕
+            </button>
+            <h3 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
+              <Zap className="text-cyber-purple" size={20} />
+              Typing Test Customizer
+            </h3>
+
+            <div className="space-y-4">
+              {/* Test Mode */}
+              <div className="space-y-1.5">
+                <label className="text-xs text-slate-400 font-semibold block">Test Mode</label>
+                <div className="flex bg-slate-950 border border-white/5 p-1 rounded-lg">
+                  <button
+                    onClick={() => setTestMode('time')}
+                    className={`flex-1 py-2 rounded-md text-xs font-semibold transition cursor-pointer ${
+                      testMode === 'time' ? 'bg-cyber-purple text-white font-bold' : 'text-slate-400 hover:text-slate-200'
+                    }`}
+                  >
+                    Time Mode
+                  </button>
+                  <button
+                    onClick={() => setTestMode('words')}
+                    className={`flex-1 py-2 rounded-md text-xs font-semibold transition cursor-pointer ${
+                      testMode === 'words' ? 'bg-cyber-purple text-white font-bold' : 'text-slate-400 hover:text-slate-200'
+                    }`}
+                  >
+                    Words Mode
+                  </button>
+                </div>
+              </div>
+
+              {/* Mode Options */}
+              {testMode === 'time' ? (
+                <div className="space-y-1.5">
+                  <label className="text-xs text-slate-400 font-semibold block">Select Duration</label>
+                  <div className="grid grid-cols-4 gap-2 bg-slate-950 p-1 rounded-lg">
+                    {[30, 60, 120, 180].map((t) => (
+                      <button
+                        key={t}
+                        onClick={() => { 
+                          setDuration(t); 
+                          setTimeLeft(t); 
+                          setIsCustomDuration(false);
+                        }}
+                        className={`py-1.5 rounded-md text-xs font-semibold transition cursor-pointer ${
+                          !isCustomDuration && duration === t 
+                            ? 'bg-slate-800 text-cyber-blue font-bold shadow-md' 
+                            : 'text-slate-500 hover:text-slate-300'
+                        }`}
+                      >
+                        {t}s
+                      </button>
+                    ))}
+                  </div>
+                  
+                  {/* Custom option */}
+                  <div className="flex items-center justify-between pt-2">
+                    <span className="text-xs text-slate-400">Custom Duration</span>
+                    <div className="flex items-center gap-1.5 bg-slate-950 px-3 py-1 rounded border border-white/10">
+                      <input
+                        type="number"
+                        min="10"
+                        max="3600"
+                        value={customInputVal}
+                        onChange={(e) => {
+                          const valStr = e.target.value;
+                          setCustomInputVal(valStr);
+                          const valNum = parseInt(valStr) || 0;
+                          if (valNum >= 10 && valNum <= 3600) {
+                            setDuration(valNum);
+                            setTimeLeft(valNum);
+                            setIsCustomDuration(true);
+                          }
+                        }}
+                        className="w-12 bg-transparent text-xs text-white focus:outline-none text-center font-bold"
+                      />
+                      <span className="text-[10px] text-slate-500 font-mono">sec</span>
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <div className="space-y-1.5">
+                  <label className="text-xs text-slate-400 font-semibold block">Select Word Count</label>
+                  <div className="grid grid-cols-3 gap-2 bg-slate-950 p-1 rounded-lg">
+                    {[25, 50, 100].map((w) => (
+                      <button
+                        key={w}
+                        onClick={() => {
+                          setWordCount(w);
+                          setIsCustomWordCount(false);
+                        }}
+                        className={`py-1.5 rounded-md text-xs font-semibold transition cursor-pointer ${
+                          !isCustomWordCount && wordCount === w 
+                            ? 'bg-slate-800 text-cyber-blue font-bold shadow-md' 
+                            : 'text-slate-500 hover:text-slate-300'
+                        }`}
+                      >
+                        {w}w
+                      </button>
+                    ))}
+                  </div>
+                  
+                  {/* Custom option */}
+                  <div className="flex items-center justify-between pt-2">
+                    <span className="text-xs text-slate-400">Custom Word Count</span>
+                    <div className="flex items-center gap-1.5 bg-slate-950 px-3 py-1 rounded border border-white/10">
+                      <input
+                        type="number"
+                        min="5"
+                        max="1000"
+                        value={customWordInputVal}
+                        onChange={(e) => {
+                          const valStr = e.target.value;
+                          setCustomWordInputVal(valStr);
+                          const valNum = parseInt(valStr) || 0;
+                          if (valNum >= 5 && valNum <= 1000) {
+                            setWordCount(valNum);
+                            setIsCustomWordCount(true);
+                          }
+                        }}
+                        className="w-12 bg-transparent text-xs text-white focus:outline-none text-center font-bold"
+                      />
+                      <span className="text-[10px] text-slate-500 font-mono">words</span>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              <button
+                onClick={() => setShowSettingsModal(false)}
+                className="w-full mt-4 py-2.5 bg-cyber-purple hover:bg-cyber-purple/90 text-white font-bold rounded-lg text-xs transition shadow-md cursor-pointer"
+              >
+                Apply Custom Settings
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

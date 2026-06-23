@@ -139,7 +139,7 @@ export const AdminView: React.FC = () => {
   };
 
   return (
-    <div className="space-y-6 max-w-4xl mx-auto pb-10">
+    <div className="space-y-6 max-w-5xl mx-auto pb-10">
       {/* 1. Header hud */}
       <div className="glass-card p-5 rounded-2xl flex items-center justify-between">
         <div className="flex items-center gap-3">

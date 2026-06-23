@@ -5,7 +5,7 @@ import { useApp } from '@/context/AppContext';
 import { saveSession, unlockAchievement } from '@/lib/services/db';
 import { HandGuide } from './HandGuide';
 import { KeyboardVisualizer } from './KeyboardVisualizer';
-import { BookOpen, RefreshCw, CheckCircle, AlertTriangle, ArrowRight, Play } from 'lucide-react';
+import { BookOpen, RefreshCw, CheckCircle, AlertTriangle, ArrowRight, Play, ArrowLeft } from 'lucide-react';
 
 interface Lesson {
   id: string;
@@ -27,7 +27,7 @@ const BEGINNER_LESSONS: Lesson[] = [
   { id: 'beg-10', title: 'Full Alphabet Fluidity', description: 'Combine all rows and practice complete word rhythms.', characters: 'the quick brown fox jumps over the lazy dog' }
 ];
 
-export const BeginnerPractice: React.FC = () => {
+export const BeginnerPractice: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
   const { user, addToast, refreshProfile, isZenMode, setIsZenMode, playClickSound } = useApp();
   
   const [currentLessonIdx, setCurrentLessonIdx] = useState(0);
@@ -170,6 +170,16 @@ export const BeginnerPractice: React.FC = () => {
       {!isZenMode && (
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 glass-card p-5 rounded-2xl">
           <div className="flex items-center gap-3">
+            {onBack && (
+              <button
+                onClick={onBack}
+                className="p-1.5 rounded-lg border flex items-center justify-center cursor-pointer hover:bg-selection hover:border-accent hover:text-accent transition-all active:scale-[0.98]"
+                style={{ borderColor: 'rgba(255, 255, 255, 0.1)', color: 'var(--text-muted)' }}
+                title="Back to Dashboard"
+              >
+                <ArrowLeft size={16} />
+              </button>
+            )}
             <div className="w-10 h-10 rounded-xl bg-cyan-500/10 border border-cyan-500/30 flex items-center justify-center text-cyan-400">
               <BookOpen size={20} />
             </div>
@@ -241,6 +251,20 @@ export const BeginnerPractice: React.FC = () => {
                 <ArrowRight size={14} />
               </button>
             </div>
+
+            {onBack && (
+              <div className="flex justify-center pt-2">
+                <button
+                  onClick={() => {
+                    setIsZenMode(false);
+                    onBack();
+                  }}
+                  className="text-xs text-cyber-red hover:text-cyber-red/80 font-semibold underline transition cursor-pointer"
+                >
+                  Exit Practice
+                </button>
+              </div>
+            )}
           </div>
         ) : (
           /* Active Practice Arena */
@@ -306,6 +330,17 @@ export const BeginnerPractice: React.FC = () => {
               >
                 {isZenMode ? 'Exit Full Screen' : 'Full Screen Mode'}
               </button>
+              {onBack && (
+                <button 
+                  onClick={() => {
+                    setIsZenMode(false);
+                    onBack();
+                  }}
+                  className="text-xs text-cyber-red hover:text-cyber-red/80 font-semibold underline flex items-center gap-1.5 cursor-pointer"
+                >
+                  Exit Practice
+                </button>
+              )}
             </div>
           </div>
         )}

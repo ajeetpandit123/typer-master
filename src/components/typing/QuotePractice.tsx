@@ -5,10 +5,10 @@ import { useApp } from '@/context/AppContext';
 import { saveSession, incrementPracticeTime } from '@/lib/services/db';
 import { QUOTES, Quote } from '@/lib/services/mockData';
 import { 
-  FileText, Play, RotateCcw, Target, Hourglass, ArrowRight, BookOpen, Quote as QuoteIcon, Sparkles
+  FileText, Play, RotateCcw, Target, Hourglass, ArrowRight, BookOpen, Quote as QuoteIcon, Sparkles, ArrowLeft
 } from 'lucide-react';
 
-export const QuotePractice: React.FC = () => {
+export const QuotePractice: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
   const { user, addToast, refreshProfile, isZenMode, setIsZenMode, playClickSound } = useApp();
 
   // Settings
@@ -197,6 +197,16 @@ export const QuotePractice: React.FC = () => {
       {!isZenMode && (
         <div className="glass-card p-5 rounded-2xl flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div className="flex items-center gap-3">
+            {onBack && (
+              <button
+                onClick={onBack}
+                className="p-1.5 rounded-lg border flex items-center justify-center cursor-pointer hover:bg-selection hover:border-accent hover:text-accent transition-all active:scale-[0.98]"
+                style={{ borderColor: 'rgba(255, 255, 255, 0.1)', color: 'var(--text-muted)' }}
+                title="Back to Dashboard"
+              >
+                <ArrowLeft size={16} />
+              </button>
+            )}
             <div className="w-10 h-10 rounded-xl bg-yellow-500/10 border border-yellow-500/30 flex items-center justify-center text-yellow-400">
               <QuoteIcon size={20} />
             </div>
@@ -283,6 +293,19 @@ export const QuotePractice: React.FC = () => {
               <RotateCcw size={16} />
               Load Next Quote
             </button>
+            {onBack && (
+              <div className="flex justify-center pt-2">
+                <button
+                  onClick={() => {
+                    setIsZenMode(false);
+                    onBack();
+                  }}
+                  className="text-xs text-cyber-red hover:text-cyber-red/80 font-semibold underline transition cursor-pointer"
+                >
+                  Exit Practice
+                </button>
+              </div>
+            )}
           </div>
         ) : (
           /* Active Typing Engine */
@@ -347,7 +370,7 @@ export const QuotePractice: React.FC = () => {
             {activeQuote && (
               <div className="flex justify-between items-center text-xs text-slate-400 mt-4">
                 <span>Author: <strong className="text-white">{activeQuote.author}</strong></span>
-                <div className="flex gap-2">
+                <div className="flex gap-2 items-center">
                   <button
                     onClick={loadNewQuote}
                     className="px-4 py-2 bg-white/5 border border-white/10 hover:bg-white/10 text-white rounded-lg font-bold transition flex items-center gap-1.5 cursor-pointer"
@@ -362,6 +385,17 @@ export const QuotePractice: React.FC = () => {
                   >
                     {isZenMode ? 'Exit Full Screen' : 'Full Screen Mode'}
                   </button>
+                  {onBack && (
+                    <button
+                      onClick={() => {
+                        setIsZenMode(false);
+                        onBack();
+                      }}
+                      className="px-4 py-2 bg-white/5 border border-cyber-red/30 hover:bg-cyber-red/10 text-cyber-red rounded-lg font-bold transition flex items-center gap-1.5 shadow-sm cursor-pointer"
+                    >
+                      Exit Practice
+                    </button>
+                  )}
                 </div>
               </div>
             )}

@@ -49,19 +49,19 @@ export default function Home() {
       case 'dashboard':
         return <DashboardView onNavigate={(tab) => setActiveTab(tab)} />;
       case 'beginner':
-        return <BeginnerPractice />;
+        return <BeginnerPractice onBack={() => setActiveTab('dashboard')} />;
       case 'intermediate':
         return <IntermediatePractice onBack={() => setActiveTab('dashboard')} />;
       case 'advanced':
-        return <AdvancedPractice />;
+        return <AdvancedPractice onBack={() => setActiveTab('dashboard')} />;
       case 'quote':
-        return <QuotePractice />;
+        return <QuotePractice onBack={() => setActiveTab('dashboard')} />;
       case 'challenge':
-        return <ChallengePractice />;
+        return <ChallengePractice onBack={() => setActiveTab('dashboard')} />;
       case 'coding':
-        return <CodingPractice />;
+        return <CodingPractice onBack={() => setActiveTab('dashboard')} />;
       case 'exam':
-        return <ExamPractice />;
+        return <ExamPractice onBack={() => setActiveTab('dashboard')} />;
       case 'battle':
         return <MultiplayerBattle />;
       case 'leaderboard':

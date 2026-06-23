@@ -5,7 +5,7 @@ import { useApp } from '@/context/AppContext';
 import { saveSession, incrementPracticeTime } from '@/lib/services/db';
 import { 
   ShieldAlert, Play, RotateCcw, Target, AlertTriangle, ArrowRight,
-  TrendingUp, BarChart3, AlertCircle, Clock, Zap, Sparkles
+  TrendingUp, BarChart3, AlertCircle, Clock, Zap, Sparkles, ArrowLeft
 } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
 
@@ -29,7 +29,7 @@ interface KeyStat {
   errors: number;
 }
 
-export const AdvancedPractice: React.FC = () => {
+export const AdvancedPractice: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
   const { user, addToast, refreshProfile, isZenMode, setIsZenMode, playClickSound } = useApp();
 
   const [currentTextIdx, setCurrentTextIdx] = useState(0);
@@ -268,6 +268,16 @@ export const AdvancedPractice: React.FC = () => {
       {!isZenMode && (
         <div className="glass-card p-5 rounded-2xl flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div className="flex items-center gap-3">
+            {onBack && (
+              <button
+                onClick={onBack}
+                className="p-1.5 rounded-lg border flex items-center justify-center cursor-pointer hover:bg-selection hover:border-accent hover:text-accent transition-all active:scale-[0.98]"
+                style={{ borderColor: 'rgba(255, 255, 255, 0.1)', color: 'var(--text-muted)' }}
+                title="Back to Dashboard"
+              >
+                <ArrowLeft size={16} />
+              </button>
+            )}
             <div className="w-10 h-10 rounded-xl bg-rose-500/10 border border-rose-500/30 flex items-center justify-center text-rose-400">
               <ShieldAlert size={20} />
             </div>
@@ -391,6 +401,19 @@ export const AdvancedPractice: React.FC = () => {
               <RotateCcw size={16} />
               Restart Assessment
             </button>
+            {onBack && (
+              <div className="flex justify-center pt-2">
+                <button
+                  onClick={() => {
+                    setIsZenMode(false);
+                    onBack();
+                  }}
+                  className="text-xs text-cyber-red hover:text-cyber-red/80 font-semibold underline transition cursor-pointer"
+                >
+                  Exit Practice
+                </button>
+              </div>
+            )}
           </div>
         ) : !isPlaying ? (
           /* Start Screen */
@@ -403,13 +426,23 @@ export const AdvancedPractice: React.FC = () => {
               </p>
             </div>
 
-            <button
-              onClick={handleStart}
-              className="px-8 py-3 bg-gradient-to-r from-cyber-blue to-cyber-purple hover:opacity-95 text-white font-bold rounded-xl text-sm transition flex items-center gap-2 shadow-lg hover:shadow-[0_0_15px_rgba(0,242,254,0.3)] active:scale-[0.98]"
-            >
-              <Play size={16} fill="white" />
-              Begin Assessment
-            </button>
+            <div className="flex flex-col items-center gap-3">
+              <button
+                onClick={handleStart}
+                className="px-8 py-3 bg-gradient-to-r from-cyber-blue to-cyber-purple hover:opacity-95 text-white font-bold rounded-xl text-sm transition flex items-center gap-2 shadow-lg hover:shadow-[0_0_15px_rgba(0,242,254,0.3)] active:scale-[0.98]"
+              >
+                <Play size={16} fill="white" />
+                Begin Assessment
+              </button>
+              {onBack && (
+                <button
+                  onClick={onBack}
+                  className="text-xs text-slate-500 hover:text-slate-300 font-semibold underline cursor-pointer mt-2"
+                >
+                  Back to Dashboard
+                </button>
+              )}
+            </div>
           </div>
         ) : (
           /* Active typing engine container */
@@ -483,19 +516,32 @@ export const AdvancedPractice: React.FC = () => {
                 </button>
               </div>
 
-              <button
-                onClick={() => {
-                  if (isPlaying && elapsedTime > 0 && user) {
-                    incrementPracticeTime(user.id, elapsedTime);
-                  }
-                  setIsPlaying(false);
-                  setShowResults(false);
-                  if (timerRef.current) clearInterval(timerRef.current);
-                }}
-                className="text-xs text-slate-500 hover:text-slate-300 font-semibold"
-              >
-                Back to settings
-              </button>
+              <div className="flex items-center gap-4">
+                {onBack && (
+                  <button
+                    onClick={() => {
+                      setIsZenMode(false);
+                      onBack();
+                    }}
+                    className="text-xs text-cyber-red hover:text-cyber-red/80 font-semibold underline cursor-pointer"
+                  >
+                    Exit Practice
+                  </button>
+                )}
+                <button
+                  onClick={() => {
+                    if (isPlaying && elapsedTime > 0 && user) {
+                      incrementPracticeTime(user.id, elapsedTime);
+                    }
+                    setIsPlaying(false);
+                    setShowResults(false);
+                    if (timerRef.current) clearInterval(timerRef.current);
+                  }}
+                  className="text-xs text-slate-500 hover:text-slate-300 font-semibold"
+                >
+                  Back to settings
+                </button>
+              </div>
             </div>
           </div>
         )}

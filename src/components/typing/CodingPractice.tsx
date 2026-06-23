@@ -6,11 +6,11 @@ import { saveSession, incrementPracticeTime } from '@/lib/services/db';
 import { CODING_LESSONS, CodingLesson } from '@/lib/services/mockData';
 import { 
   Code, Play, RotateCcw, Target, Hourglass, ArrowRight, CheckCircle, 
-  Terminal, ShieldCheck, Award, Sparkles
+  Terminal, ShieldCheck, Award, Sparkles, ArrowLeft
 } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell } from 'recharts';
 
-export const CodingPractice: React.FC = () => {
+export const CodingPractice: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
   const { user, addToast, refreshProfile, isZenMode, setIsZenMode, playClickSound } = useApp();
 
   // Settings
@@ -287,6 +287,16 @@ export const CodingPractice: React.FC = () => {
       {!isZenMode && (
         <div className="glass-card p-5 rounded-2xl flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div className="flex items-center gap-3">
+            {onBack && (
+              <button
+                onClick={onBack}
+                className="p-1.5 rounded-lg border flex items-center justify-center cursor-pointer hover:bg-selection hover:border-accent hover:text-accent transition-all active:scale-[0.98] mr-1"
+                style={{ borderColor: 'rgba(255, 255, 255, 0.1)', color: 'var(--text-muted)' }}
+                title="Back to Dashboard"
+              >
+                <ArrowLeft size={16} />
+              </button>
+            )}
             <div className="w-10 h-10 rounded-xl bg-blue-500/10 border border-blue-500/30 flex items-center justify-center text-blue-400">
               <Code size={20} />
             </div>
@@ -386,6 +396,19 @@ export const CodingPractice: React.FC = () => {
                 </button>
               )}
             </div>
+            {onBack && (
+              <div className="flex justify-center pt-2">
+                <button
+                  onClick={() => {
+                    setIsZenMode(false);
+                    onBack();
+                  }}
+                  className="text-xs text-cyber-red hover:text-cyber-red/80 font-semibold underline transition cursor-pointer"
+                >
+                  Exit Practice
+                </button>
+              </div>
+            )}
           </div>
         ) : !isPlaying ? (
           /* Start Screen */
@@ -406,13 +429,23 @@ export const CodingPractice: React.FC = () => {
               </p>
             </div>
 
-            <button
-              onClick={handleStart}
-              className="px-8 py-3 bg-gradient-to-r from-cyber-blue to-cyber-purple hover:opacity-95 text-white font-bold rounded-xl text-sm transition flex items-center gap-2 shadow-lg hover:shadow-[0_0_15px_rgba(0,242,254,0.3)] active:scale-[0.98]"
-            >
-              <Play size={16} fill="white" />
-              Start Coding Lesson
-            </button>
+            <div className="flex flex-col items-center gap-3">
+              <button
+                onClick={handleStart}
+                className="px-8 py-3 bg-gradient-to-r from-cyber-blue to-cyber-purple hover:opacity-95 text-white font-bold rounded-xl text-sm transition flex items-center gap-2 shadow-lg hover:shadow-[0_0_15px_rgba(0,242,254,0.3)] active:scale-[0.98]"
+              >
+                <Play size={16} fill="white" />
+                Start Coding Lesson
+              </button>
+              {onBack && (
+                <button
+                  onClick={onBack}
+                  className="text-xs text-slate-500 hover:text-slate-300 font-semibold underline cursor-pointer mt-2"
+                >
+                  Back to Dashboard
+                </button>
+              )}
+            </div>
           </div>
         ) : (
           /* Active IDE Editor Workspace */
@@ -503,19 +536,33 @@ export const CodingPractice: React.FC = () => {
                   {isZenMode ? 'Exit Full Screen' : 'Full Screen Mode'}
                 </button>
               </div>
-              <button
-                onClick={() => {
-                  if (isPlaying && elapsedTime > 0 && user) {
-                    incrementPracticeTime(user.id, elapsedTime);
-                  }
-                  setIsPlaying(false);
-                  setShowResults(false);
-                  if (timerRef.current) clearInterval(timerRef.current);
-                }}
-                className="text-slate-500 hover:text-slate-300 font-semibold"
-              >
-                Exit editor
-              </button>
+
+              <div className="flex items-center gap-4">
+                {onBack && (
+                  <button
+                    onClick={() => {
+                      setIsZenMode(false);
+                      onBack();
+                    }}
+                    className="text-xs text-cyber-red hover:text-cyber-red/80 font-semibold underline cursor-pointer"
+                  >
+                    Exit Practice
+                  </button>
+                )}
+                <button
+                  onClick={() => {
+                    if (isPlaying && elapsedTime > 0 && user) {
+                      incrementPracticeTime(user.id, elapsedTime);
+                    }
+                    setIsPlaying(false);
+                    setShowResults(false);
+                    if (timerRef.current) clearInterval(timerRef.current);
+                  }}
+                  className="text-slate-500 hover:text-slate-300 font-semibold"
+                >
+                  Exit editor
+                </button>
+              </div>
             </div>
           </div>
         )}

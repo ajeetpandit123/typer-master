@@ -6,10 +6,10 @@ import { getChallengeProgress, saveChallengeCompletion, saveSession, incrementPr
 import { CHALLENGES, Challenge } from '@/lib/services/mockData';
 import { 
   Trophy, Lock, Play, RotateCcw, CheckCircle, XCircle, ArrowRight,
-  Target, Zap, Clock, ShieldAlert, Award, Sparkles
+  Target, Zap, Clock, ShieldAlert, Award, Sparkles, ArrowLeft
 } from 'lucide-react';
 
-export const ChallengePractice: React.FC = () => {
+export const ChallengePractice: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
   const { user, addToast, refreshProfile, isZenMode, setIsZenMode, playClickSound } = useApp();
 
   const [progress, setProgress] = useState<Record<number, any>>({});
@@ -243,6 +243,16 @@ export const ChallengePractice: React.FC = () => {
       {!isZenMode && (
         <div className="glass-card p-5 rounded-2xl flex items-center justify-between">
           <div className="flex items-center gap-3">
+            {onBack && (
+              <button
+                onClick={onBack}
+                className="p-1.5 rounded-lg border flex items-center justify-center cursor-pointer hover:bg-selection hover:border-accent hover:text-accent transition-all active:scale-[0.98] mr-1"
+                style={{ borderColor: 'rgba(255, 255, 255, 0.1)', color: 'var(--text-muted)' }}
+                title="Back to Dashboard"
+              >
+                <ArrowLeft size={16} />
+              </button>
+            )}
             <div className="w-10 h-10 rounded-xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-center text-amber-400">
               <Trophy size={20} />
             </div>
@@ -326,6 +336,20 @@ export const ChallengePractice: React.FC = () => {
                   </button>
                 )}
               </div>
+
+              {onBack && (
+                <div className="flex justify-center pt-2">
+                  <button
+                    onClick={() => {
+                      setIsZenMode(false);
+                      onBack();
+                    }}
+                    className="text-xs text-cyber-red hover:text-cyber-red/80 font-semibold underline transition cursor-pointer"
+                  >
+                    Exit Practice
+                  </button>
+                </div>
+              )}
             </div>
           ) : (
             /* Active gameplay sandbox */
@@ -404,17 +428,31 @@ export const ChallengePractice: React.FC = () => {
                     {isZenMode ? 'Exit Full Screen' : 'Full Screen Mode'}
                   </button>
                 </div>
-                <button
-                  onClick={() => {
-                    if (isPlaying && elapsedTime > 0 && user) {
-                      incrementPracticeTime(user.id, elapsedTime);
-                    }
-                    setSelectedChallenge(null);
-                  }}
-                  className="text-xs text-slate-500 hover:text-slate-300 font-semibold"
-                >
-                  Exit Level
-                </button>
+
+                <div className="flex items-center gap-4">
+                  {onBack && (
+                    <button
+                      onClick={() => {
+                        setIsZenMode(false);
+                        onBack();
+                      }}
+                      className="text-xs text-cyber-red hover:text-cyber-red/80 font-semibold underline cursor-pointer"
+                    >
+                      Exit Practice
+                    </button>
+                  )}
+                  <button
+                    onClick={() => {
+                      if (isPlaying && elapsedTime > 0 && user) {
+                        incrementPracticeTime(user.id, elapsedTime);
+                      }
+                      setSelectedChallenge(null);
+                    }}
+                    className="text-xs text-slate-500 hover:text-slate-300 font-semibold"
+                  >
+                    Exit Level
+                  </button>
+                </div>
               </div>
             </div>
           )}

@@ -6,7 +6,7 @@ import { saveSession, incrementPracticeTime } from '@/lib/services/db';
 import { 
   FileText, Play, RotateCcw, Target, Hourglass, ArrowRight,
   TrendingUp, Award, Clock, Sparkles, CheckCircle2, XCircle, ChevronRight,
-  HelpCircle, UserCheck, PlayCircle
+  HelpCircle, UserCheck, PlayCircle, ArrowLeft
 } from 'lucide-react';
 
 interface ExamPreset {
@@ -56,7 +56,7 @@ const EXAM_PARAGRAPHS = [
   "Welcome to the technical service hotline. If you are experiencing slow wireless connectivity in your workspace, it may be due to frequency channel interference from nearby electrical equipment. We suggest logging into the access point setup screen and changing the channel settings from automatic selection to static channel eleven or six. This adjustment often improves signal stability and transfer speeds for remote devices."
 ];
 
-export const ExamPractice: React.FC = () => {
+export const ExamPractice: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
   const { user, addToast, refreshProfile, isZenMode, setIsZenMode, playClickSound } = useApp();
 
   // Mode settings
@@ -339,6 +339,16 @@ export const ExamPractice: React.FC = () => {
       {!isZenMode && (
         <div className="glass-card p-5 rounded-2xl flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div className="flex items-center gap-3">
+            {onBack && (
+              <button
+                onClick={onBack}
+                className="p-1.5 rounded-lg border flex items-center justify-center cursor-pointer hover:bg-selection hover:border-accent hover:text-accent transition-all active:scale-[0.98] mr-1"
+                style={{ borderColor: 'rgba(255, 255, 255, 0.1)', color: 'var(--text-muted)' }}
+                title="Back to Dashboard"
+              >
+                <ArrowLeft size={16} />
+              </button>
+            )}
             <div className="w-10 h-10 rounded-xl bg-cyan-500/10 border border-cyan-500/30 flex items-center justify-center text-cyan-400">
               <FileText size={20} />
             </div>
@@ -437,6 +447,19 @@ export const ExamPractice: React.FC = () => {
               <RotateCcw size={16} />
               Attempt Another Exam
             </button>
+            {onBack && (
+              <div className="flex justify-center pt-2">
+                <button
+                  onClick={() => {
+                    setIsZenMode(false);
+                    onBack();
+                  }}
+                  className="text-xs text-cyber-red hover:text-cyber-red/80 font-semibold underline transition cursor-pointer"
+                >
+                  Exit Practice
+                </button>
+              </div>
+            )}
           </div>
         ) : !isPlaying ? (
           /* Selection Landing Screen */
@@ -515,7 +538,7 @@ export const ExamPractice: React.FC = () => {
               </div>
             )}
 
-            <div className="flex justify-center pt-2">
+            <div className="flex flex-col items-center gap-3 pt-2">
               <button
                 onClick={handleLaunchExam}
                 className="px-8 py-3 bg-gradient-to-r from-cyber-blue to-cyber-purple hover:opacity-95 text-white font-bold rounded-xl text-sm transition flex items-center gap-2 shadow-lg hover:shadow-[0_0_15px_rgba(0,242,254,0.3)] active:scale-[0.98]"
@@ -523,6 +546,14 @@ export const ExamPractice: React.FC = () => {
                 <Play size={16} fill="white" />
                 Launch Exam Simulation
               </button>
+              {onBack && (
+                <button
+                  onClick={onBack}
+                  className="text-xs text-slate-500 hover:text-slate-300 font-semibold underline cursor-pointer mt-2"
+                >
+                  Back to Dashboard
+                </button>
+              )}
             </div>
           </div>
         ) : (
@@ -610,19 +641,32 @@ export const ExamPractice: React.FC = () => {
                 </button>
               </div>
 
-              <button
-                onClick={() => {
-                  if (isPlaying && elapsedTime > 0 && user) {
-                    incrementPracticeTime(user.id, elapsedTime);
-                  }
-                  setIsPlaying(false);
-                  setShowResults(false);
-                  if (timerRef.current) clearInterval(timerRef.current);
-                }}
-                className="text-slate-500 hover:text-slate-300 font-semibold"
-              >
-                Exit Simulation
-              </button>
+              <div className="flex items-center gap-4">
+                {onBack && (
+                  <button
+                    onClick={() => {
+                      setIsZenMode(false);
+                      onBack();
+                    }}
+                    className="text-xs text-cyber-red hover:text-cyber-red/80 font-semibold underline cursor-pointer"
+                  >
+                    Exit Practice
+                  </button>
+                )}
+                <button
+                  onClick={() => {
+                    if (isPlaying && elapsedTime > 0 && user) {
+                      incrementPracticeTime(user.id, elapsedTime);
+                    }
+                    setIsPlaying(false);
+                    setShowResults(false);
+                    if (timerRef.current) clearInterval(timerRef.current);
+                  }}
+                  className="text-slate-500 hover:text-slate-300 font-semibold"
+                >
+                  Exit Simulation
+                </button>
+              </div>
             </div>
           </div>
         )}

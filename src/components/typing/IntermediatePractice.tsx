@@ -48,7 +48,7 @@ export const IntermediatePractice: React.FC<{ onBack?: () => void }> = ({ onBack
           const sess = await getSessions(user.id);
           setAllSessions(sess);
           
-          const best = sess.length > 0 ? Math.max(...sess.map(s => s.wpm)) : profile?.wpm || 0;
+          const best = profile?.wpm || 0;
           
           const avgW = sess.length > 0 
             ? Math.round(sess.reduce((acc, s) => acc + s.wpm, 0) / sess.length) 

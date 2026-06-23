@@ -196,28 +196,31 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   // Sync auth state
   useEffect(() => {
+    let unsubscribeFn: (() => void) | undefined;
+
     const initAuth = async () => {
       const mode = isLocalMode();
       setLocalMode(mode);
 
-      if (mode) {
-        // Local Mode Auth Check
-        const guestUser = await getActiveUser();
-        if (guestUser) {
-          setUser(guestUser);
-          const uProfile = await getProfile(guestUser.id);
+      try {
+        const currentUser = await getActiveUser();
+        if (currentUser) {
+          setUser(currentUser);
+          const uProfile = await getProfile(currentUser.id);
           setProfile(uProfile);
+        } else {
+          setUser(null);
+          setProfile(null);
         }
+      } catch (err) {
+        console.error('Error initializing auth:', err);
+        setUser(null);
+        setProfile(null);
+      } finally {
         setLoading(false);
-      } else {
-        // Supabase Auth Check
-        const { data: { session } } = await supabase!.auth.getSession();
-        if (session?.user) {
-          setUser(session.user);
-          const uProfile = await getProfile(session.user.id);
-          setProfile(uProfile);
-        }
-        
+      }
+
+      if (!mode) {
         // Listen for changes
         const { data: { subscription } } = supabase!.auth.onAuthStateChange(
           async (event, currentSession) => {
@@ -232,15 +235,15 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
             setLoading(false);
           }
         );
-
-        setLoading(false);
-        return () => {
-          subscription.unsubscribe();
-        };
+        unsubscribeFn = () => subscription.unsubscribe();
       }
     };
 
     initAuth();
+
+    return () => {
+      if (unsubscribeFn) unsubscribeFn();
+    };
   }, []);
 
   const logInLocal = async (username: string, email: string) => {

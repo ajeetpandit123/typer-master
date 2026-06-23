@@ -52,15 +52,11 @@ export const IntermediatePractice: React.FC = () => {
   const [showResults, setShowResults] = useState(false);
 
   useEffect(() => {
-    if (isPlaying && !showResults) {
-      setIsZenMode(true);
-    } else {
-      setIsZenMode(false);
-    }
+    setIsZenMode(true);
     return () => {
       setIsZenMode(false);
     };
-  }, [isPlaying, showResults, setIsZenMode]);
+  }, [setIsZenMode]);
 
   // Refs for tracking practice time on unmount/exits
   const elapsedTimeRef = useRef(0);

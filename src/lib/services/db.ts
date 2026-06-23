@@ -221,7 +221,12 @@ export const getProfile = async (userId: string): Promise<UserProfile> => {
           profile = { ...DEFAULT_PROFILE, id: userId };
         }
       } else {
-        console.error('Error fetching profile:', error);
+        console.error('Error fetching profile:', {
+          message: error.message,
+          details: error.details,
+          hint: error.hint,
+          code: error.code
+        });
         profile = { ...DEFAULT_PROFILE, id: userId };
       }
     } else {

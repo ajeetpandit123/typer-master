@@ -94,7 +94,11 @@ export default function Home() {
     <div className="min-h-screen flex bg-cyber-dark text-slate-100 grid-bg relative">
       
       {/* 1. Desktop Sidebar */}
-      <aside className={`${isZenMode ? 'hidden' : 'hidden lg:flex'} flex-col w-64 border-r border-white/5 bg-[#090d16]/80 backdrop-blur-xl p-6 justify-between shrink-0`}>
+      <aside className={`hidden lg:flex flex-col border-r border-white/5 bg-[#090d16]/80 backdrop-blur-xl justify-between shrink-0 transition-all duration-500 ease-in-out ${
+        isZenMode 
+          ? 'w-0 opacity-0 p-0 border-r-0 overflow-hidden' 
+          : 'w-64 opacity-100 p-6'
+      }`}>
         <div className="space-y-6">
           {/* Logo */}
           <div className="flex items-center gap-2 select-none">
@@ -154,7 +158,11 @@ export default function Home() {
       </aside>
 
       {/* 2. Mobile Nav Header Bar */}
-      <div className={`${isZenMode ? 'hidden' : 'lg:hidden'} fixed top-0 left-0 right-0 z-40 h-14 border-b border-white/5 bg-[#090d16]/80 backdrop-blur-xl px-4 flex items-center justify-between`}>
+      <div className={`fixed top-0 left-0 right-0 z-40 border-b border-white/5 bg-[#090d16]/80 backdrop-blur-xl px-4 flex items-center justify-between lg:hidden transition-all duration-500 ease-in-out overflow-hidden ${
+        isZenMode 
+          ? 'h-0 opacity-0 border-b-0 py-0 pointer-events-none' 
+          : 'h-14 opacity-100'
+      }`}>
         <div className="flex items-center gap-2">
           <button 
             onClick={() => setSidebarOpen(!sidebarOpen)}
@@ -248,83 +256,85 @@ export default function Home() {
       )}
 
       {/* 4. Main Panel Body */}
-      <main className={`flex-1 flex flex-col min-w-0 ${isZenMode ? 'pt-0' : 'pt-14 lg:pt-0'}`}>
+      <main className={`flex-1 flex flex-col min-w-0 transition-all duration-500 ease-in-out ${isZenMode ? 'pt-0' : 'pt-14 lg:pt-0'}`}>
         
         {/* Header HUD panel */}
-        {!isZenMode && (
-          <header className="hidden lg:flex items-center justify-between h-14 border-b border-white/5 px-8 shrink-0">
-            <div className="flex items-center gap-2">
-              <span className="text-xs text-slate-400 font-semibold uppercase tracking-wider capitalize">
-                {activeTab === 'dashboard' ? 'Overview' : activeTab.replace(/([A-Z])/g, ' $1')}
-              </span>
+        <header className={`hidden lg:flex items-center justify-between border-b border-white/5 px-8 shrink-0 transition-all duration-500 ease-in-out overflow-hidden ${
+          isZenMode 
+            ? 'h-0 opacity-0 border-b-0 py-0 pointer-events-none' 
+            : 'h-14 opacity-100'
+        }`}>
+          <div className="flex items-center gap-2">
+            <span className="text-xs text-slate-400 font-semibold uppercase tracking-wider capitalize">
+              {activeTab === 'dashboard' ? 'Overview' : activeTab.replace(/([A-Z])/g, ' $1')}
+            </span>
+          </div>
+
+          <div className="flex items-center gap-3">
+            {/* Cursor Style Toggle */}
+            <button
+              onClick={() => setCursorStyle(cursorStyle === 'cyber' ? 'simple' : 'cyber')}
+              className={`flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-semibold border transition-all duration-300 cursor-pointer select-none ${
+                cursorStyle === 'cyber' 
+                  ? 'border-cyber-blue/30 bg-cyber-blue/5 text-cyber-blue shadow-[0_0_8px_rgba(0,242,254,0.15)]' 
+                  : 'border-white/10 bg-slate-900 text-slate-400'
+              }`}
+              title="Toggle glowing neon cursor vs simple vertical line cursor"
+            >
+              {cursorStyle === 'cyber' ? (
+                <>
+                  <span>Cyber Cursor</span>
+                </>
+              ) : (
+                <>
+                  <span>Simple Cursor</span>
+                </>
+              )}
+            </button>
+
+            {/* Cursor Blink Toggle */}
+            <button
+              onClick={() => setCaretBlinking(!caretBlinking)}
+              className={`flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-semibold border transition-all duration-300 cursor-pointer select-none ${
+                caretBlinking 
+                  ? 'border-cyber-blue/30 bg-cyber-blue/5 text-cyber-blue shadow-[0_0_8px_rgba(0,242,254,0.15)]' 
+                  : 'border-white/10 bg-slate-900 text-slate-400'
+              }`}
+              title="Toggle cursor blinking animation"
+            >
+              {caretBlinking ? (
+                <>
+                  <span className="w-1.5 h-1.5 rounded-full bg-cyber-blue animate-ping" />
+                  <span>Blinking</span>
+                </>
+              ) : (
+                <>
+                  <span className="w-1.5 h-1.5 rounded-full bg-slate-500" />
+                  <span>Steady</span>
+                </>
+              )}
+            </button>
+
+            {/* Database indicator */}
+            <span className="text-[10px] bg-slate-900 border border-white/5 px-2.5 py-1 rounded-full text-slate-400 flex items-center gap-1.5 shadow-sm">
+              <span className={`w-1.5 h-1.5 rounded-full ${localMode ? 'bg-cyber-blue animate-pulse' : 'bg-cyber-green'}`} />
+              <DatabaseZap size={10} className="text-slate-400" />
+              {localMode ? 'Local state engine active' : 'Supabase database synced'}
+            </span>
+
+            {/* User header XP preview */}
+            <div className="flex items-center gap-2 text-xs">
+              <span className="text-slate-400 font-medium">Rank:</span>
+              <strong className="text-white flex items-center gap-1">
+                <Sparkles size={12} className="text-yellow-400" />
+                Lvl {profile.level}
+              </strong>
             </div>
-
-            <div className="flex items-center gap-3">
-              {/* Cursor Style Toggle */}
-              <button
-                onClick={() => setCursorStyle(cursorStyle === 'cyber' ? 'simple' : 'cyber')}
-                className={`flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-semibold border transition-all duration-300 cursor-pointer select-none ${
-                  cursorStyle === 'cyber' 
-                    ? 'border-cyber-blue/30 bg-cyber-blue/5 text-cyber-blue shadow-[0_0_8px_rgba(0,242,254,0.15)]' 
-                    : 'border-white/10 bg-slate-900 text-slate-400'
-                }`}
-                title="Toggle glowing neon cursor vs simple vertical line cursor"
-              >
-                {cursorStyle === 'cyber' ? (
-                  <>
-                    <span>Cyber Cursor</span>
-                  </>
-                ) : (
-                  <>
-                    <span>Simple Cursor</span>
-                  </>
-                )}
-              </button>
-
-              {/* Cursor Blink Toggle */}
-              <button
-                onClick={() => setCaretBlinking(!caretBlinking)}
-                className={`flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-semibold border transition-all duration-300 cursor-pointer select-none ${
-                  caretBlinking 
-                    ? 'border-cyber-blue/30 bg-cyber-blue/5 text-cyber-blue shadow-[0_0_8px_rgba(0,242,254,0.15)]' 
-                    : 'border-white/10 bg-slate-900 text-slate-400'
-                }`}
-                title="Toggle cursor blinking animation"
-              >
-                {caretBlinking ? (
-                  <>
-                    <span className="w-1.5 h-1.5 rounded-full bg-cyber-blue animate-ping" />
-                    <span>Blinking</span>
-                  </>
-                ) : (
-                  <>
-                    <span className="w-1.5 h-1.5 rounded-full bg-slate-500" />
-                    <span>Steady</span>
-                  </>
-                )}
-              </button>
-
-              {/* Database indicator */}
-              <span className="text-[10px] bg-slate-900 border border-white/5 px-2.5 py-1 rounded-full text-slate-400 flex items-center gap-1.5 shadow-sm">
-                <span className={`w-1.5 h-1.5 rounded-full ${localMode ? 'bg-cyber-blue animate-pulse' : 'bg-cyber-green'}`} />
-                <DatabaseZap size={10} className="text-slate-400" />
-                {localMode ? 'Local state engine active' : 'Supabase database synced'}
-              </span>
-
-              {/* User header XP preview */}
-              <div className="flex items-center gap-2 text-xs">
-                <span className="text-slate-400 font-medium">Rank:</span>
-                <strong className="text-white flex items-center gap-1">
-                  <Sparkles size={12} className="text-yellow-400" />
-                  Lvl {profile.level}
-                </strong>
-              </div>
-            </div>
-          </header>
-        )}
+          </div>
+        </header>
 
         {/* Content Pane */}
-        <div className={`flex-1 overflow-y-auto ${isZenMode ? 'p-0' : 'p-6 md:p-8'}`}>
+        <div className={`flex-1 overflow-y-auto transition-all duration-500 ease-in-out ${isZenMode ? 'p-0' : 'p-6 md:p-8'}`}>
           {renderActiveView()}
         </div>
       </main>

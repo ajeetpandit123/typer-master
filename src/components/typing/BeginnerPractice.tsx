@@ -119,7 +119,8 @@ export const BeginnerPractice: React.FC = () => {
     setIsPlaying(false);
     setShowResults(true);
 
-    const accuracy = Math.max(0, Math.round(((totalTyped - totalMistakes) / totalTyped) * 100));
+    const totalKeys = totalTyped + totalMistakes;
+    const accuracy = totalKeys > 0 ? Math.max(0, Math.round((totalTyped / totalKeys) * 100)) : 100;
 
     if (user) {
       try {
@@ -159,7 +160,8 @@ export const BeginnerPractice: React.FC = () => {
     }
   };
 
-  const accuracy = inputIndex > 0 ? Math.max(0, Math.round(((inputIndex - mistakes) / inputIndex) * 100)) : 100;
+  const totalKeys = inputIndex + mistakes;
+  const accuracy = totalKeys > 0 ? Math.max(0, Math.round((inputIndex / totalKeys) * 100)) : 100;
   const progressPercent = Math.min(100, Math.round((inputIndex / targetText.length) * 100));
 
   return (
@@ -214,7 +216,7 @@ export const BeginnerPractice: React.FC = () => {
               <div className="text-center p-2">
                 <span className="text-xs text-slate-400 uppercase tracking-wider font-semibold block">Accuracy</span>
                 <span className="text-2xl font-extrabold text-white mt-1 block">
-                  {Math.round(((targetText.length - mistakes) / targetText.length) * 100)}%
+                  {targetText.length + mistakes > 0 ? Math.round((targetText.length / (targetText.length + mistakes)) * 100) : 100}%
                 </span>
               </div>
               <div className="text-center p-2">

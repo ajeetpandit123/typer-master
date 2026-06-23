@@ -178,7 +178,7 @@ export const QuotePractice: React.FC = () => {
         : '';
 
       return (
-        <span key={index} className={`${charClass} ${activeClass} transition-all duration-700 font-mono tracking-wide`}>
+        <span key={index} className={`${charClass} ${activeClass} transition-all duration-100 font-mono tracking-wide`}>
           {char}
         </span>
       );

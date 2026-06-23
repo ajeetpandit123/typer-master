@@ -23,9 +23,17 @@ import {
 } from 'lucide-react';
 
 export default function Home() {
-  const { user, profile, loading, localMode, logOut, caretBlinking, setCaretBlinking, cursorStyle, setCursorStyle, isZenMode } = useApp();
+  const { user, profile, loading, localMode, logOut, caretBlinking, setCaretBlinking, cursorStyle, setCursorStyle, isZenMode, setIsZenMode } = useApp();
   const [activeTab, setActiveTab] = useState<string>('dashboard');
   const [sidebarOpen, setSidebarOpen] = useState(false);
+
+  const navigateTo = (tab: string) => {
+    setActiveTab(tab);
+    const practiceTabs = ['beginner', 'intermediate', 'advanced', 'quote', 'challenge', 'coding', 'exam'];
+    if (!practiceTabs.includes(tab)) {
+      setIsZenMode(false);
+    }
+  };
 
   if (loading) {
     return (
@@ -47,21 +55,21 @@ export default function Home() {
   const renderActiveView = () => {
     switch (activeTab) {
       case 'dashboard':
-        return <DashboardView onNavigate={(tab) => setActiveTab(tab)} />;
+        return <DashboardView onNavigate={(tab) => navigateTo(tab)} />;
       case 'beginner':
-        return <BeginnerPractice onBack={() => setActiveTab('dashboard')} />;
+        return <BeginnerPractice onBack={() => navigateTo('dashboard')} />;
       case 'intermediate':
-        return <IntermediatePractice onBack={() => setActiveTab('dashboard')} />;
+        return <IntermediatePractice onBack={() => navigateTo('dashboard')} />;
       case 'advanced':
-        return <AdvancedPractice onBack={() => setActiveTab('dashboard')} />;
+        return <AdvancedPractice onBack={() => navigateTo('dashboard')} />;
       case 'quote':
-        return <QuotePractice onBack={() => setActiveTab('dashboard')} />;
+        return <QuotePractice onBack={() => navigateTo('dashboard')} />;
       case 'challenge':
-        return <ChallengePractice onBack={() => setActiveTab('dashboard')} />;
+        return <ChallengePractice onBack={() => navigateTo('dashboard')} />;
       case 'coding':
-        return <CodingPractice onBack={() => setActiveTab('dashboard')} />;
+        return <CodingPractice onBack={() => navigateTo('dashboard')} />;
       case 'exam':
-        return <ExamPractice onBack={() => setActiveTab('dashboard')} />;
+        return <ExamPractice onBack={() => navigateTo('dashboard')} />;
       case 'battle':
         return <MultiplayerBattle />;
       case 'leaderboard':
@@ -71,7 +79,7 @@ export default function Home() {
       case 'settings':
         return <SettingsView />;
       default:
-        return <DashboardView onNavigate={(tab) => setActiveTab(tab)} />;
+        return <DashboardView onNavigate={(tab) => navigateTo(tab)} />;
     }
   };
 
@@ -91,7 +99,7 @@ export default function Home() {
   ];
 
   return (
-    <div className={`flex bg-bg text-text grid-bg relative transition-all duration-500 ${
+    <div className={`flex bg-bg text-text grid-bg relative ${
       isZenMode 
         ? 'h-screen max-h-screen overflow-hidden w-screen' 
         : 'min-h-screen w-full'
@@ -142,7 +150,7 @@ export default function Home() {
                     </div>
                   )}
                   <button
-                    onClick={() => setActiveTab(item.id)}
+                    onClick={() => navigateTo(item.id)}
                     className={`w-full px-3 py-2 rounded-lg text-xs font-semibold flex items-center gap-2.5 transition-all border ${
                       isActive 
                         ? 'bg-selection border-accent text-accent' 
@@ -249,7 +257,7 @@ export default function Home() {
                 {navItems.map((item) => (
                   <button
                     key={item.id}
-                    onClick={() => { setActiveTab(item.id); setSidebarOpen(false); }}
+                    onClick={() => { navigateTo(item.id); setSidebarOpen(false); }}
                     className={`w-full px-3 py-2 rounded-lg text-xs font-semibold flex items-center gap-2.5 transition border cursor-pointer ${
                       activeTab === item.id 
                         ? 'bg-selection text-accent' 
@@ -278,7 +286,7 @@ export default function Home() {
       )}
 
       {/* 4. Main Panel Body */}
-      <main className={`flex-1 flex flex-col min-w-0 transition-all duration-500 ease-in-out ${isZenMode ? 'pt-0' : 'pt-14 lg:pt-0'}`}>
+      <main className={`flex-1 flex flex-col min-w-0 ${isZenMode ? 'pt-0' : 'pt-14 lg:pt-0'}`}>
         
         {/* Header HUD panel */}
         <header className={`hidden lg:flex items-center justify-between border-b px-8 shrink-0 transition-all duration-500 ease-in-out overflow-hidden ${
@@ -365,7 +373,7 @@ export default function Home() {
         </header>
 
         {/* Content Pane */}
-        <div className={`flex-1 transition-all duration-500 ease-in-out ${
+        <div className={`flex-1 ${
           isZenMode 
             ? 'p-0 overflow-hidden' 
             : 'p-6 md:p-8 overflow-y-auto'

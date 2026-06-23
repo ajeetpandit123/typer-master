@@ -15,11 +15,12 @@ import { LeaderboardView } from '@/components/dashboard/LeaderboardView';
 import { AdminView } from '@/components/dashboard/AdminView';
 import { ExamPractice } from '@/components/typing/ExamPractice';
 import { SettingsView } from '@/components/dashboard/SettingsView';
+import { ThemeEngineView } from '@/components/dashboard/ThemeEngineView';
 
 import { 
   Trophy, Zap, Target, Hourglass, ShieldAlert, Award, 
   BookOpen, MessageSquare, Code, Sword, LogOut, Settings, 
-  Menu, X, Sparkles, Database, DatabaseZap, FileText
+  Menu, X, Sparkles, Database, DatabaseZap, FileText, Palette
 } from 'lucide-react';
 
 export default function Home() {
@@ -70,6 +71,8 @@ export default function Home() {
         return <AdminView />;
       case 'settings':
         return <SettingsView />;
+      case 'themes':
+        return <ThemeEngineView />;
       default:
         return <DashboardView onNavigate={(tab) => setActiveTab(tab)} />;
     }
@@ -87,14 +90,15 @@ export default function Home() {
     { id: 'battle', label: 'Multiplayer Battle', icon: <Sword size={16} /> },
     { id: 'leaderboard', label: 'Leaderboard', icon: <Award size={16} />, header: 'Rankings' },
     { id: 'admin', label: 'Admin Dashboard', icon: <Database size={16} /> },
+    { id: 'themes', label: 'Theme Builder', icon: <Palette size={16} />, header: 'Customizer' },
     { id: 'settings', label: 'Settings', icon: <Settings size={16} /> },
   ];
 
   return (
-    <div className="min-h-screen flex bg-cyber-dark text-slate-100 grid-bg relative">
+    <div className="min-h-screen flex bg-bg text-text grid-bg relative">
       
       {/* 1. Desktop Sidebar */}
-      <aside className={`hidden lg:flex flex-col border-r border-white/5 bg-[#090d16]/80 backdrop-blur-xl justify-between shrink-0 transition-all duration-500 ease-in-out ${
+      <aside className={`hidden lg:flex flex-col border-r border-border bg-surface justify-between shrink-0 transition-all duration-500 ease-in-out ${
         isZenMode 
           ? 'w-0 opacity-0 p-0 border-r-0 overflow-hidden' 
           : 'w-64 opacity-100 p-6'
@@ -102,20 +106,27 @@ export default function Home() {
         <div className="space-y-6">
           {/* Logo */}
           <div className="flex items-center gap-2 select-none">
-            <div className="w-8 h-8 rounded-lg bg-gradient-to-tr from-cyber-blue to-cyber-purple flex items-center justify-center font-black text-slate-950 text-sm shadow-[0_0_10px_rgba(0,242,254,0.3)]">
+            <div 
+              className="w-8 h-8 rounded-lg flex items-center justify-center font-black text-sm transition-all duration-300"
+              style={{ 
+                backgroundColor: 'var(--accent)', 
+                color: 'var(--bg)', 
+                boxShadow: '0 0 12px var(--accent)' 
+              }}
+            >
               TM
             </div>
-            <h1 className="text-lg font-bold tracking-wider text-white">
-              TypeMaster <span className="text-cyber-blue text-glow-cyan">Pro</span>
+            <h1 className="text-lg font-bold tracking-wider" style={{ color: 'var(--text)' }}>
+              TypeMaster <span style={{ color: 'var(--accent)', textShadow: '0 0 6px var(--accent)' }}>Pro</span>
             </h1>
           </div>
 
           {/* User Profile Widget */}
-          <div className="p-3 bg-slate-950/40 rounded-xl border border-white/5 flex items-center gap-3">
-            <img src={profile.avatarUrl} alt="Avatar" className="w-10 h-10 rounded-full border border-cyber-blue/30" />
+          <div className="p-3 rounded-xl border flex items-center gap-3 bg-surface-2 border-border">
+            <img src={profile.avatarUrl} alt="Avatar" className="w-10 h-10 rounded-full border border-border" />
             <div className="truncate">
-              <h4 className="text-xs font-bold text-white truncate">{profile.username}</h4>
-              <span className="text-[10px] text-cyber-blue font-semibold">Lvl {profile.level} Typist</span>
+              <h4 className="text-xs font-bold truncate" style={{ color: 'var(--text)' }}>{profile.username}</h4>
+              <span className="text-[10px] font-semibold" style={{ color: 'var(--accent)' }}>Lvl {profile.level} Typist</span>
             </div>
           </div>
 
@@ -126,16 +137,16 @@ export default function Home() {
               return (
                 <div key={item.id}>
                   {item.header && (
-                    <div className="text-[9px] uppercase tracking-widest text-slate-600 font-bold mt-4 mb-1 px-3">
+                    <div className="text-[9px] uppercase tracking-widest font-bold mt-4 mb-1 px-3 text-text-muted">
                       {item.header}
                     </div>
                   )}
                   <button
                     onClick={() => setActiveTab(item.id)}
-                    className={`w-full px-3 py-2 rounded-lg text-xs font-semibold flex items-center gap-2.5 transition-all ${
+                    className={`w-full px-3 py-2 rounded-lg text-xs font-semibold flex items-center gap-2.5 transition-all border ${
                       isActive 
-                        ? 'bg-gradient-to-r from-cyber-blue/10 to-cyber-purple/10 border border-cyber-blue/20 text-cyber-blue text-glow-cyan' 
-                        : 'border border-transparent text-slate-400 hover:text-slate-200 hover:bg-white/5'
+                        ? 'bg-selection border-accent text-accent' 
+                        : 'border-transparent text-text-muted hover:text-text hover:bg-surface-2'
                     }`}
                   >
                     {item.icon}
@@ -150,7 +161,7 @@ export default function Home() {
         {/* Sidebar Footer Logout */}
         <button
           onClick={logOut}
-          className="px-3 py-2 rounded-lg text-xs font-semibold text-slate-500 hover:text-cyber-red hover:bg-cyber-red/5 transition flex items-center gap-2.5 border border-transparent hover:border-cyber-red/10"
+          className="px-3 py-2 rounded-lg text-xs font-semibold transition flex items-center gap-2.5 border border-transparent text-text-muted hover:text-error hover:bg-error/10 hover:border-error/20"
         >
           <LogOut size={16} />
           Sign Out

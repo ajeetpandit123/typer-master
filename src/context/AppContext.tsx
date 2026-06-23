@@ -9,6 +9,7 @@ import {
 } from '@/lib/services/db';
 import { supabase, isSupabaseConfigured } from '@/lib/services/supabaseClient';
 import { playKeystrokeSound } from '@/lib/services/soundSynth';
+import { Theme, PRESET_THEMES } from '@/lib/services/themeColors';
 
 export interface ToastMessage {
   id: string;
@@ -46,6 +47,10 @@ interface AppContextType {
   signUpLocal: (username: string, email: string) => Promise<void>;
   logOut: () => Promise<void>;
   refreshProfile: () => Promise<void>;
+  currentTheme: Theme;
+  setCurrentTheme: React.Dispatch<React.SetStateAction<Theme>>;
+  customThemes: Theme[];
+  setCustomThemes: React.Dispatch<React.SetStateAction<Theme[]>>;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -57,6 +62,36 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [localMode, setLocalMode] = useState<boolean>(true);
   const [toasts, setToasts] = useState<ToastMessage[]>([]);
   const [isZenMode, setIsZenMode] = useState<boolean>(false);
+
+  // Monkeytype Theme Engine States
+  const [customThemes, setCustomThemes] = useState<Theme[]>(() => {
+    if (typeof window !== 'undefined') {
+      try {
+        const stored = localStorage.getItem('typemaster_custom_themes');
+        return stored ? JSON.parse(stored) : [];
+      } catch (err) {
+        console.error('Error parsing custom themes:', err);
+      }
+    }
+    return [];
+  });
+
+  const [currentTheme, setCurrentTheme] = useState<Theme>(() => {
+    const presets = PRESET_THEMES;
+    if (typeof window !== 'undefined') {
+      try {
+        const activeThemeId = localStorage.getItem('typemaster_active_theme_id') || 'classic-dark';
+        const storedCustom = localStorage.getItem('typemaster_custom_themes');
+        const parsedCustom: Theme[] = storedCustom ? JSON.parse(storedCustom) : [];
+        const found = [...presets, ...parsedCustom].find(t => t.id === activeThemeId);
+        return found || presets[0];
+      } catch (err) {
+        console.error('Error parsing active theme:', err);
+      }
+    }
+    return presets[0];
+  });
+
   const [caretBlinking, setCaretBlinking] = useState<boolean>(() => {
     if (typeof window !== 'undefined') {
       const stored = localStorage.getItem('typemaster_caret_blinking');
@@ -130,6 +165,36 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       }
     }
   }, [caretBlinking, cursorStyle]);
+
+  // Apply active theme colors to DOM CSS variables
+  useEffect(() => {
+    if (typeof window !== 'undefined' && currentTheme) {
+      const root = document.documentElement;
+      root.style.setProperty('--bg', currentTheme.bg);
+      root.style.setProperty('--surface', currentTheme.surface);
+      root.style.setProperty('--surface-2', currentTheme.surface2);
+      root.style.setProperty('--text', currentTheme.text);
+      root.style.setProperty('--text-muted', currentTheme.textMuted);
+      root.style.setProperty('--accent', currentTheme.accent);
+      root.style.setProperty('--error', currentTheme.error);
+      root.style.setProperty('--success', currentTheme.success);
+      root.style.setProperty('--caret', currentTheme.caret);
+      root.style.setProperty('--border', currentTheme.border);
+      root.style.setProperty('--selection', currentTheme.selection);
+      
+      // Keep accentColor synchronized for components relying on legacy settings
+      setAccentColor(currentTheme.accent);
+      
+      localStorage.setItem('typemaster_active_theme_id', currentTheme.id);
+    }
+  }, [currentTheme]);
+
+  // Sync custom themes to localStorage
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('typemaster_custom_themes', JSON.stringify(customThemes));
+    }
+  }, [customThemes]);
 
   // Synchronize dynamic styles: themeMode, accentColor, fontFamily, sound settings
   useEffect(() => {
@@ -356,7 +421,11 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         logInLocal,
         signUpLocal,
         logOut,
-        refreshProfile
+        refreshProfile,
+        currentTheme,
+        setCurrentTheme,
+        customThemes,
+        setCustomThemes
       }}
     >
       {children}

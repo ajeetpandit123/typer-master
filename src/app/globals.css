@@ -2,22 +2,47 @@
 @import "tailwindcss";
 
 @theme {
-  --color-cyber-dark: #070a13;
-  --color-cyber-gray: #0f1322;
-  --color-cyber-blue: var(--accent-color, #00f2fe);
-  --color-cyber-purple: #8b5cf6;
-  --color-cyber-pink: #ec4899;
-  --color-cyber-green: #10b981;
-  --color-cyber-red: #f43f5e;
-  --color-cyber-amber: #f59e0b;
+  --color-cyber-dark: var(--bg, #070a13);
+  --color-cyber-gray: var(--surface, #0f1322);
+  --color-cyber-blue: var(--accent, #00f2fe);
+  --color-cyber-purple: var(--accent, #8b5cf6);
+  --color-cyber-pink: var(--accent, #ec4899);
+  --color-cyber-green: var(--success, #10b981);
+  --color-cyber-red: var(--error, #f43f5e);
+  --color-cyber-amber: var(--accent, #f59e0b);
+  
+  --color-bg: var(--bg);
+  --color-surface: var(--surface);
+  --color-surface-2: var(--surface-2);
+  --color-text: var(--text);
+  --color-text-muted: var(--text-muted);
+  --color-accent: var(--accent);
+  --color-error: var(--error);
+  --color-success: var(--success);
+  --color-caret: var(--caret);
+  --color-border: var(--border);
+  --color-selection: var(--selection);
   
   --font-sans: var(--font-current, 'Outfit'), 'Inter', var(--font-geist-sans), sans-serif;
   --font-mono: var(--font-current-mono, 'Fira Code'), 'JetBrains Mono', var(--font-geist-mono), monospace;
 }
 
 :root {
-  --background: #070a13;
-  --foreground: #f8fafc;
+  --background: var(--bg, #070a13);
+  --foreground: var(--text, #f8fafc);
+  
+  /* Fallback values for Monkeytype Theme Engine */
+  --bg: #111111;
+  --surface: #1a1a1a;
+  --surface-2: #222222;
+  --text: #f5f5f5;
+  --text-muted: #666666;
+  --accent: #e2b714;
+  --error: #ff5f5f;
+  --success: #67c587;
+  --caret: #e2b714;
+  --border: #262626;
+  --selection: #3b3212;
 }
 
 body {

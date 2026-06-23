@@ -15,12 +15,11 @@ import { LeaderboardView } from '@/components/dashboard/LeaderboardView';
 import { AdminView } from '@/components/dashboard/AdminView';
 import { ExamPractice } from '@/components/typing/ExamPractice';
 import { SettingsView } from '@/components/dashboard/SettingsView';
-import { ThemeEngineView } from '@/components/dashboard/ThemeEngineView';
 
 import { 
   Trophy, Zap, Target, Hourglass, ShieldAlert, Award, 
   BookOpen, MessageSquare, Code, Sword, LogOut, Settings, 
-  Menu, X, Sparkles, Database, DatabaseZap, FileText, Palette
+  Menu, X, Sparkles, Database, DatabaseZap, FileText
 } from 'lucide-react';
 
 export default function Home() {
@@ -71,8 +70,6 @@ export default function Home() {
         return <AdminView />;
       case 'settings':
         return <SettingsView />;
-      case 'themes':
-        return <ThemeEngineView />;
       default:
         return <DashboardView onNavigate={(tab) => setActiveTab(tab)} />;
     }
@@ -90,8 +87,7 @@ export default function Home() {
     { id: 'battle', label: 'Multiplayer Battle', icon: <Sword size={16} /> },
     { id: 'leaderboard', label: 'Leaderboard', icon: <Award size={16} />, header: 'Rankings' },
     { id: 'admin', label: 'Admin Dashboard', icon: <Database size={16} /> },
-    { id: 'themes', label: 'Theme Builder', icon: <Palette size={16} />, header: 'Customizer' },
-    { id: 'settings', label: 'Settings', icon: <Settings size={16} /> },
+    { id: 'settings', label: 'Settings', icon: <Settings size={16} />, header: 'Customizer' },
   ];
 
   return (
@@ -169,20 +165,20 @@ export default function Home() {
       </aside>
 
       {/* 2. Mobile Nav Header Bar */}
-      <div className={`fixed top-0 left-0 right-0 z-40 border-b border-white/5 bg-[#090d16]/80 backdrop-blur-xl px-4 flex items-center justify-between lg:hidden transition-all duration-500 ease-in-out overflow-hidden ${
+      <div className={`fixed top-0 left-0 right-0 z-40 border-b bg-surface/85 backdrop-blur-xl px-4 flex items-center justify-between lg:hidden transition-all duration-500 ease-in-out overflow-hidden ${
         isZenMode 
           ? 'h-0 opacity-0 border-b-0 py-0 pointer-events-none' 
           : 'h-14 opacity-100'
-      }`}>
+      }`} style={{ borderColor: 'var(--border)' }}>
         <div className="flex items-center gap-2">
           <button 
             onClick={() => setSidebarOpen(!sidebarOpen)}
-            className="text-slate-400 hover:text-slate-200"
+            className="text-text-muted hover:text-text cursor-pointer"
           >
             <Menu size={20} />
           </button>
-          <h1 className="text-sm font-bold text-white tracking-wider">
-            TypeMaster <span className="text-cyber-blue text-glow-cyan">Pro</span>
+          <h1 className="text-sm font-bold tracking-wider" style={{ color: 'var(--text)' }}>
+            TypeMaster <span className="font-bold" style={{ color: 'var(--accent)', textShadow: '0 0 6px var(--accent)' }}>Pro</span>
           </h1>
         </div>
 
@@ -190,11 +186,14 @@ export default function Home() {
           {/* Mobile Cursor Style Toggle */}
           <button
             onClick={() => setCursorStyle(cursorStyle === 'cyber' ? 'simple' : 'cyber')}
-            className={`flex items-center gap-1.5 px-2 py-1 rounded-full text-[9px] font-bold border transition-all ${
+            className={`flex items-center gap-1.5 px-2 py-1 rounded-full text-[9px] font-bold border transition-all cursor-pointer ${
               cursorStyle === 'cyber' 
-                ? 'border-cyber-blue/30 bg-cyber-blue/5 text-cyber-blue' 
-                : 'border-white/10 bg-slate-900 text-slate-400'
+                ? 'bg-accent/5 text-accent' 
+                : 'bg-surface-2 text-text-muted'
             }`}
+            style={{ 
+              borderColor: cursorStyle === 'cyber' ? 'var(--accent)' : 'var(--border)' 
+            }}
             title="Toggle cursor theme style"
           >
             {cursorStyle === 'cyber' ? 'Cyber' : 'Simple'}
@@ -203,19 +202,23 @@ export default function Home() {
           {/* Mobile Cursor Blink Toggle */}
           <button
             onClick={() => setCaretBlinking(!caretBlinking)}
-            className={`flex items-center gap-1.5 px-2 py-1 rounded-full text-[9px] font-bold border transition-all ${
+            className={`flex items-center gap-1.5 px-2 py-1 rounded-full text-[9px] font-bold border transition-all cursor-pointer ${
               caretBlinking 
-                ? 'border-cyber-blue/30 bg-cyber-blue/5 text-cyber-blue' 
-                : 'border-white/10 bg-slate-900 text-slate-400'
+                ? 'bg-accent/5 text-accent' 
+                : 'bg-surface-2 text-text-muted'
             }`}
+            style={{ 
+              borderColor: caretBlinking ? 'var(--accent)' : 'var(--border)' 
+            }}
             title="Toggle caret blinking"
           >
             {caretBlinking ? 'Blink' : 'Steady'}
           </button>
 
           {/* Database indicator */}
-          <span className="text-[10px] bg-slate-900 border border-white/5 px-2.5 py-1 rounded text-slate-400 flex items-center gap-1">
-            <Database size={10} className="text-cyber-blue" />
+          <span className="text-[10px] border px-2.5 py-1 rounded flex items-center gap-1"
+                style={{ backgroundColor: 'var(--surface-2)', borderColor: 'var(--border)', color: 'var(--text-muted)' }}>
+            <Database size={10} style={{ color: 'var(--accent)' }} />
             {localMode ? 'Local' : 'Supabase'}
           </span>
         </div>
@@ -228,11 +231,12 @@ export default function Home() {
           <div className="fixed inset-0 bg-black/60" onClick={() => setSidebarOpen(false)} />
           
           {/* Sidebar */}
-          <div className="relative w-64 bg-slate-950 p-6 flex flex-col justify-between border-r border-white/5">
+          <div className="relative w-64 p-6 flex flex-col justify-between border-r"
+               style={{ backgroundColor: 'var(--surface)', borderColor: 'var(--border)' }}>
             <div className="space-y-6">
               <div className="flex justify-between items-center">
-                <h1 className="text-base font-bold text-white tracking-wider">TypeMaster Pro</h1>
-                <button onClick={() => setSidebarOpen(false)} className="text-slate-400 hover:text-slate-200">
+                <h1 className="text-base font-bold tracking-wider" style={{ color: 'var(--text)' }}>TypeMaster Pro</h1>
+                <button onClick={() => setSidebarOpen(false)} className="text-text-muted hover:text-text cursor-pointer">
                   <X size={18} />
                 </button>
               </div>
@@ -242,11 +246,14 @@ export default function Home() {
                   <button
                     key={item.id}
                     onClick={() => { setActiveTab(item.id); setSidebarOpen(false); }}
-                    className={`w-full px-3 py-2 rounded-lg text-xs font-semibold flex items-center gap-2.5 transition ${
+                    className={`w-full px-3 py-2 rounded-lg text-xs font-semibold flex items-center gap-2.5 transition border cursor-pointer ${
                       activeTab === item.id 
-                        ? 'bg-gradient-to-r from-cyber-blue/15 to-cyber-purple/15 text-cyber-blue border border-cyber-blue/20' 
-                        : 'text-slate-400 hover:text-slate-200'
+                        ? 'bg-selection text-accent' 
+                        : 'border-transparent text-text-muted hover:text-text hover:bg-surface-2'
                     }`}
+                    style={{
+                      borderColor: activeTab === item.id ? 'var(--accent)' : 'transparent'
+                    }}
                   >
                     {item.icon}
                     {item.label}
@@ -257,7 +264,7 @@ export default function Home() {
 
             <button
               onClick={() => { logOut(); setSidebarOpen(false); }}
-              className="px-3 py-2 rounded-lg text-xs font-semibold text-slate-500 hover:text-cyber-red transition flex items-center gap-2.5"
+              className="px-3 py-2 rounded-lg text-xs font-semibold transition flex items-center gap-2.5 border border-transparent text-text-muted hover:text-error hover:bg-error/10 hover:border-error/20 cursor-pointer"
             >
               <LogOut size={16} />
               Sign Out
@@ -270,13 +277,13 @@ export default function Home() {
       <main className={`flex-1 flex flex-col min-w-0 transition-all duration-500 ease-in-out ${isZenMode ? 'pt-0' : 'pt-14 lg:pt-0'}`}>
         
         {/* Header HUD panel */}
-        <header className={`hidden lg:flex items-center justify-between border-b border-white/5 px-8 shrink-0 transition-all duration-500 ease-in-out overflow-hidden ${
+        <header className={`hidden lg:flex items-center justify-between border-b px-8 shrink-0 transition-all duration-500 ease-in-out overflow-hidden ${
           isZenMode 
             ? 'h-0 opacity-0 border-b-0 py-0 pointer-events-none' 
             : 'h-14 opacity-100'
-        }`}>
+        }`} style={{ borderColor: 'var(--border)' }}>
           <div className="flex items-center gap-2">
-            <span className="text-xs text-slate-400 font-semibold uppercase tracking-wider capitalize">
+            <span className="text-xs font-semibold uppercase tracking-wider capitalize" style={{ color: 'var(--text-muted)' }}>
               {activeTab === 'dashboard' ? 'Overview' : activeTab.replace(/([A-Z])/g, ' $1')}
             </span>
           </div>
@@ -287,9 +294,13 @@ export default function Home() {
               onClick={() => setCursorStyle(cursorStyle === 'cyber' ? 'simple' : 'cyber')}
               className={`flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-semibold border transition-all duration-300 cursor-pointer select-none ${
                 cursorStyle === 'cyber' 
-                  ? 'border-cyber-blue/30 bg-cyber-blue/5 text-cyber-blue shadow-[0_0_8px_rgba(0,242,254,0.15)]' 
-                  : 'border-white/10 bg-slate-900 text-slate-400'
+                  ? 'bg-accent/5 text-accent' 
+                  : 'bg-surface-2 text-text-muted hover:text-text'
               }`}
+              style={{
+                borderColor: cursorStyle === 'cyber' ? 'var(--accent)' : 'var(--border)',
+                boxShadow: cursorStyle === 'cyber' ? '0 0 8px var(--accent)' : 'none'
+              }}
               title="Toggle glowing neon cursor vs simple vertical line cursor"
             >
               {cursorStyle === 'cyber' ? (
@@ -308,36 +319,41 @@ export default function Home() {
               onClick={() => setCaretBlinking(!caretBlinking)}
               className={`flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-semibold border transition-all duration-300 cursor-pointer select-none ${
                 caretBlinking 
-                  ? 'border-cyber-blue/30 bg-cyber-blue/5 text-cyber-blue shadow-[0_0_8px_rgba(0,242,254,0.15)]' 
-                  : 'border-white/10 bg-slate-900 text-slate-400'
+                  ? 'bg-accent/5 text-accent' 
+                  : 'bg-surface-2 text-text-muted hover:text-text'
               }`}
+              style={{
+                borderColor: caretBlinking ? 'var(--accent)' : 'var(--border)',
+                boxShadow: caretBlinking ? '0 0 8px var(--accent)' : 'none'
+              }}
               title="Toggle cursor blinking animation"
             >
               {caretBlinking ? (
                 <>
-                  <span className="w-1.5 h-1.5 rounded-full bg-cyber-blue animate-ping" />
+                  <span className="w-1.5 h-1.5 rounded-full bg-accent animate-ping" />
                   <span>Blinking</span>
                 </>
               ) : (
                 <>
-                  <span className="w-1.5 h-1.5 rounded-full bg-slate-500" />
+                  <span className="w-1.5 h-1.5 rounded-full bg-text-muted" />
                   <span>Steady</span>
                 </>
               )}
             </button>
 
             {/* Database indicator */}
-            <span className="text-[10px] bg-slate-900 border border-white/5 px-2.5 py-1 rounded-full text-slate-400 flex items-center gap-1.5 shadow-sm">
-              <span className={`w-1.5 h-1.5 rounded-full ${localMode ? 'bg-cyber-blue animate-pulse' : 'bg-cyber-green'}`} />
-              <DatabaseZap size={10} className="text-slate-400" />
+            <span className="text-[10px] border px-2.5 py-1 rounded-full flex items-center gap-1.5 shadow-sm"
+                  style={{ backgroundColor: 'var(--surface-2)', borderColor: 'var(--border)', color: 'var(--text-muted)' }}>
+              <span className={`w-1.5 h-1.5 rounded-full ${localMode ? 'bg-accent animate-pulse' : 'bg-success'}`} />
+              <DatabaseZap size={10} style={{ color: 'var(--text-muted)' }} />
               {localMode ? 'Local state engine active' : 'Supabase database synced'}
             </span>
 
             {/* User header XP preview */}
             <div className="flex items-center gap-2 text-xs">
-              <span className="text-slate-400 font-medium">Rank:</span>
-              <strong className="text-white flex items-center gap-1">
-                <Sparkles size={12} className="text-yellow-400" />
+              <span className="font-medium" style={{ color: 'var(--text-muted)' }}>Rank:</span>
+              <strong className="flex items-center gap-1" style={{ color: 'var(--text)' }}>
+                <Sparkles size={12} style={{ color: 'var(--accent)' }} />
                 Lvl {profile.level}
               </strong>
             </div>

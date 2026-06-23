@@ -2,10 +2,10 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { useApp } from '@/context/AppContext';
-import { saveSession, unlockAchievement, incrementPracticeTime } from '@/lib/services/db';
+import { saveSession, unlockAchievement, incrementPracticeTime, getSessions } from '@/lib/services/db';
 import { 
   Zap, Play, Pause, RotateCcw, Target, AlertTriangle, ArrowRight,
-  TrendingUp, Award, BarChart2, Sparkles
+  TrendingUp, Award, BarChart2, Sparkles, BookOpen, ShieldCheck
 } from 'lucide-react';
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
 
@@ -27,7 +27,43 @@ const INTERMEDIATE_WORDS = [
 ];
 
 export const IntermediatePractice: React.FC = () => {
-  const { user, addToast, refreshProfile, isZenMode, setIsZenMode, playClickSound } = useApp();
+  const { user, profile, addToast, refreshProfile, isZenMode, setIsZenMode, playClickSound } = useApp();
+
+  const [stats, setStats] = useState({
+    avgWpm: 0,
+    avgAccuracy: 0,
+    bestWpm: 0,
+    totalLessons: 0
+  });
+
+  useEffect(() => {
+    const loadStats = async () => {
+      if (user) {
+        try {
+          const sess = await getSessions(user.id);
+          const intermediateSess = sess.filter(s => s.levelType === 'intermediate');
+          const best = intermediateSess.length > 0 ? Math.max(...intermediateSess.map(s => s.wpm)) : 0;
+          
+          const avgW = intermediateSess.length > 0 
+            ? Math.round(intermediateSess.reduce((acc, s) => acc + s.wpm, 0) / intermediateSess.length) 
+            : 0;
+          const avgA = intermediateSess.length > 0 
+            ? Math.round(intermediateSess.reduce((acc, s) => acc + s.accuracy, 0) / intermediateSess.length) 
+            : 0;
+
+          setStats({
+            avgWpm: avgW || profile?.wpm || 0,
+            avgAccuracy: avgA || profile?.accuracy || 0,
+            bestWpm: best,
+            totalLessons: intermediateSess.length
+          });
+        } catch (err) {
+          console.error('Failed to load stats for intermediate landing:', err);
+        }
+      }
+    };
+    loadStats();
+  }, [user, profile]);
 
   // Test setup
   const [testMode, setTestMode] = useState<'time' | 'words'>('time');
@@ -570,23 +606,156 @@ export const IntermediatePractice: React.FC = () => {
             </button>
           </div>
         ) : !isPlaying ? (
-          /* Landing Screen */
-          <div className="py-12 flex flex-col items-center text-center max-w-lg mx-auto space-y-6">
-            <Zap className="w-12 h-12 text-purple-400 text-glow-purple" />
-            <div>
-              <h3 className="text-xl font-bold text-white">Intermediate Typing assessment</h3>
-              <p className="text-sm text-slate-400 mt-1">
-                Type simple words and short lowercase sentences. Improve typing rhythm and consistency.
-              </p>
+          /* Upgraded Premium Landing Screen */
+          <div className="w-full max-w-5xl mx-auto rounded-3xl overflow-hidden border flex flex-col md:flex-row shadow-[0_20px_50px_rgba(0,0,0,0.45)] transition-all duration-500 animate-fade-in"
+               style={{ backgroundColor: 'var(--surface)', borderColor: 'var(--border)' }}>
+            
+            {/* Left Content Area */}
+            <div className="p-8 md:p-12 flex-1 flex flex-col justify-between space-y-8">
+              
+              {/* Top Header Row */}
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2.5 select-none">
+                  <div className="w-8 h-8 rounded-lg flex items-center justify-center font-black text-sm text-bg bg-accent shadow-[0_0_12px_var(--accent)]">
+                    TM
+                  </div>
+                  <span className="text-sm font-bold tracking-wider" style={{ color: 'var(--text)' }}>
+                    TypeMaster
+                  </span>
+                </div>
+                
+                {/* Simulated Track Progress button */}
+                <span className="text-[10px] font-bold px-3 py-1.5 rounded-lg border flex items-center gap-1.5 cursor-default select-none transition-all"
+                      style={{ backgroundColor: 'var(--surface-2)', borderColor: 'var(--border)', color: 'var(--text-muted)' }}>
+                  <TrendingUp size={12} style={{ color: 'var(--accent)' }} />
+                  Track Progress Active
+                </span>
+              </div>
+
+              {/* Central Information */}
+              <div className="space-y-4">
+                <div className="flex items-center gap-1.5 text-[9px] font-bold tracking-widest uppercase" style={{ color: 'var(--accent)' }}>
+                  <span className="inline-block w-1.5 h-1.5 rotate-45 bg-accent" />
+                  Intermediate Assessment
+                </div>
+                
+                <h2 className="text-3xl md:text-4xl font-extrabold leading-tight tracking-wide font-sans" style={{ color: 'var(--text)' }}>
+                  Sharpen Your <span style={{ color: 'var(--accent)', textShadow: '0 0 10px var(--accent)' }}>Typing Skills</span>
+                </h2>
+                
+                <p className="text-sm leading-relaxed max-w-md" style={{ color: 'var(--text-muted)' }}>
+                  Type simple words and short lowercase sentences. Improve your typing rhythm and consistency.
+                </p>
+
+                <div className="pt-2">
+                  <button
+                    onClick={handleStart}
+                    className="px-8 py-3 bg-accent text-bg hover:opacity-90 transition-all font-bold rounded-xl text-sm flex items-center gap-2.5 shadow-[0_0_20px_var(--accent)] active:scale-[0.98] cursor-pointer"
+                  >
+                    <Play size={14} fill="currentColor" />
+                    Start Typing Test
+                  </button>
+                </div>
+              </div>
+
+              {/* Three Value Props Rows */}
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-6 border-t" style={{ borderColor: 'var(--border)' }}>
+                <div className="flex items-center gap-2.5">
+                  <div className="w-8 h-8 rounded-full flex items-center justify-center text-accent" style={{ backgroundColor: 'var(--selection)' }}>
+                    <Target size={14} />
+                  </div>
+                  <div>
+                    <h4 className="text-xs font-bold" style={{ color: 'var(--text)' }}>Improve Accuracy</h4>
+                    <p className="text-[10px]" style={{ color: 'var(--text-muted)' }}>Focus on correct typing</p>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-2.5">
+                  <div className="w-8 h-8 rounded-full flex items-center justify-center text-accent" style={{ backgroundColor: 'var(--selection)' }}>
+                    <Zap size={14} />
+                  </div>
+                  <div>
+                    <h4 className="text-xs font-bold" style={{ color: 'var(--text)' }}>Boost Speed</h4>
+                    <p className="text-[10px]" style={{ color: 'var(--text-muted)' }}>Type faster with practice</p>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-2.5">
+                  <div className="w-8 h-8 rounded-full flex items-center justify-center text-accent" style={{ backgroundColor: 'var(--selection)' }}>
+                    <BarChart2 size={14} />
+                  </div>
+                  <div>
+                    <h4 className="text-xs font-bold" style={{ color: 'var(--text)' }}>Track Progress</h4>
+                    <p className="text-[10px]" style={{ color: 'var(--text-muted)' }}>See your improvement</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Bottom HUD bar */}
+              <div className="space-y-3">
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 p-4 rounded-2xl border"
+                     style={{ backgroundColor: 'var(--surface-2)', borderColor: 'var(--border)' }}>
+                  
+                  <div className="flex flex-col justify-between">
+                    <span className="text-[9px] uppercase font-bold tracking-wider" style={{ color: 'var(--text-muted)' }}>WPM</span>
+                    <div className="flex items-baseline gap-1 mt-1">
+                      <span className="text-lg font-black" style={{ color: 'var(--text)' }}>{stats.avgWpm}</span>
+                      <span className="text-[8px] font-bold" style={{ color: 'var(--text-muted)' }}>avg</span>
+                    </div>
+                  </div>
+
+                  <div className="flex flex-col justify-between">
+                    <span className="text-[9px] uppercase font-bold tracking-wider" style={{ color: 'var(--text-muted)' }}>Accuracy</span>
+                    <div className="flex items-baseline gap-1 mt-1">
+                      <span className="text-lg font-black" style={{ color: 'var(--text)' }}>{stats.avgAccuracy}%</span>
+                      <span className="text-[8px] font-bold" style={{ color: 'var(--text-muted)' }}>avg</span>
+                    </div>
+                  </div>
+
+                  <div className="flex flex-col justify-between">
+                    <span className="text-[9px] uppercase font-bold tracking-wider" style={{ color: 'var(--text-muted)' }}>Best WPM</span>
+                    <div className="flex items-baseline gap-1 mt-1">
+                      <span className="text-lg font-black" style={{ color: 'var(--accent)' }}>{stats.bestWpm || '-'}</span>
+                      <span className="text-[8px] font-bold" style={{ color: 'var(--text-muted)' }}>peak</span>
+                    </div>
+                  </div>
+
+                  <div className="flex flex-col justify-between">
+                    <span className="text-[9px] uppercase font-bold tracking-wider" style={{ color: 'var(--text-muted)' }}>Sessions</span>
+                    <div className="flex items-baseline gap-1 mt-1">
+                      <span className="text-lg font-black" style={{ color: 'var(--text)' }}>{stats.totalLessons}</span>
+                      <span className="text-[8px] font-bold" style={{ color: 'var(--text-muted)' }}>done</span>
+                    </div>
+                  </div>
+
+                </div>
+
+                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 text-[9px]" style={{ color: 'var(--text-muted)' }}>
+                  <span className="italic">"The expert in anything was once a beginner." — Helen Hayes</span>
+                  <span className="flex items-center gap-1.5 font-bold">
+                    <ShieldCheck size={12} className="text-emerald-500" />
+                    Your data is safe and secure
+                  </span>
+                </div>
+              </div>
+
             </div>
 
-            <button
-              onClick={handleStart}
-              className="px-8 py-3 bg-gradient-to-r from-cyber-blue to-cyber-purple hover:opacity-95 text-white font-bold rounded-xl text-sm transition flex items-center gap-2 shadow-lg hover:shadow-[0_0_15px_rgba(0,242,254,0.3)] active:scale-[0.98]"
-            >
-              <Play size={16} fill="white" />
-              Start Typing Test
-            </button>
+            {/* Right Graphic Banner */}
+            <div className="hidden md:block md:w-5/12 relative border-l overflow-hidden animate-fade-in"
+                 style={{ borderColor: 'var(--border)' }}>
+              <img 
+                src="/keyboard_desk_setup.png" 
+                alt="Keyboard Desk Setup" 
+                className="w-full h-full object-cover absolute inset-0"
+              />
+              {/* Elegant floating badge on visual */}
+              <div className="absolute top-4 right-4 bg-slate-950/80 backdrop-blur-md px-3 py-1 rounded-full border border-white/10 flex items-center gap-1.5 shadow-md z-10">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                <span className="text-[8px] font-bold uppercase tracking-wider text-slate-200">Interactive Desk HUD</span>
+              </div>
+            </div>
+
           </div>
         ) : (
           /* Active typing engine container */

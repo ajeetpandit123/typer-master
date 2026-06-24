@@ -17,6 +17,9 @@ const jetbrainsMono = JetBrains_Mono({
 export const metadata: Metadata = {
   title: `${APP_NAME} | Typing Learning & Competition Platform`,
   description: `Improve typing speed and accuracy on ${APP_NAME}. Play multiplayer typing battles, practice coding exercises, and level up your skills.`,
+  icons: {
+    icon: '/icon.svg',
+  }
 };
 
 export default function RootLayout({

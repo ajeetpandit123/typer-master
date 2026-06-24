@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="32" height="32">
+  <!-- Rounded dark background matching our premium dark theme -->
+  <rect width="32" height="32" rx="7" fill="#070a13" />
+  
+  <!-- Sleek orange mechanical keyboard keycap layout -->
+  <path d="M5 8h22a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V10a2 2 0 0 1 2-2zm2 4v2h2v-2H7zm4 0v2h2v-2h-2zm4 0v2h2v-2h-2zm4 0v2h2v-2h-2zm4 0v2h2v-2h-2zm-16 5v2h2v-2H7zm4 0v2h10v-2H11zm12 0v2h2v-2h-2z" fill="#f97316" />
+</svg>

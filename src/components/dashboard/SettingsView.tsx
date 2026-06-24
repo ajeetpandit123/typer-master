@@ -14,7 +14,7 @@ import {
   Sliders, Paintbrush, Volume2, Monitor, Layout, 
   Sparkles, Keyboard, Check, VolumeX, Eye,
   Palette, RefreshCw, Copy, Save, Edit3, Trash2, 
-  Download, Upload, Info, AlertTriangle, Settings, Code, BookOpen
+  Download, Upload, Info, AlertTriangle, Settings, Code, BookOpen, LogOut
 } from 'lucide-react';
 
 const TEST_SENTENCES = [
@@ -80,7 +80,8 @@ export const SettingsView: React.FC = () => {
     soundVolume, setSoundVolume,
     playClickSound,
     caretBlinking, setCaretBlinking,
-    cursorStyle, setCursorStyle
+    cursorStyle, setCursorStyle,
+    user, profile, localMode, logOut
   } = useApp();
 
   const [testText, setTestText] = useState('');
@@ -1135,6 +1136,36 @@ export const SettingsView: React.FC = () => {
                 Clear Playground
               </button>
             </div>
+          </div>
+
+          {/* Account Session Card */}
+          <div className="p-6 rounded-2xl border space-y-4"
+               style={{ backgroundColor: 'var(--surface)', borderColor: 'var(--border)' }}>
+            <h3 className="text-sm font-bold uppercase tracking-wider flex items-center gap-2 border-b pb-2.5"
+                style={{ color: 'var(--text)', borderColor: 'var(--border)' }}>
+              <LogOut size={16} style={{ color: 'var(--error)' }} />
+              Account Session
+            </h3>
+            
+            <div className="space-y-1">
+              <span className="text-[9px] uppercase font-bold" style={{ color: 'var(--text-muted)' }}>Logged in as</span>
+              <p className="text-xs font-bold truncate" style={{ color: 'var(--text)' }}>
+                {profile?.username || user?.email || (localMode ? 'Guest Typist' : 'Anonymous')}
+              </p>
+              {!localMode && user?.email && (
+                <p className="text-[10px]" style={{ color: 'var(--text-muted)' }}>
+                  {user.email}
+                </p>
+              )}
+            </div>
+
+            <button
+              onClick={logOut}
+              className="w-full py-2.5 rounded-xl border text-xs font-bold flex items-center justify-center gap-1.5 transition active:scale-[0.98] cursor-pointer shadow-sm hover:bg-rose-500/10"
+              style={{ backgroundColor: 'transparent', borderColor: 'var(--error)', color: 'var(--error)' }}
+            >
+              <LogOut size={14} /> Log Out from Keystra
+            </button>
           </div>
 
         </div>

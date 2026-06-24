@@ -17,11 +17,13 @@ import { AdminView } from '@/components/dashboard/AdminView';
 import { ExamPractice } from '@/components/typing/ExamPractice';
 import { SettingsView } from '@/components/dashboard/SettingsView';
 import { PasswordResetModal } from '@/components/layout/PasswordResetModal';
+import { MyWords } from '@/components/typing/MyWords';
 
 import { 
   Trophy, Zap, Target, Hourglass, ShieldAlert, Award, 
-  BookOpen, MessageSquare, Code, Sword, LogOut, Settings, 
-  Menu, X, Sparkles, Database, DatabaseZap, FileText
+  BookOpen, MessageSquare, Code, Sword, Settings, 
+  Menu, X, Sparkles, Database, DatabaseZap, FileText,
+  Flame
 } from 'lucide-react';
 
 export default function Home() {
@@ -82,6 +84,8 @@ export default function Home() {
         return <AdminView />;
       case 'settings':
         return <SettingsView />;
+      case 'my_words':
+        return <MyWords onBack={() => navigateTo('dashboard')} />;
       default:
         return <DashboardView onNavigate={(tab) => navigateTo(tab)} />;
     }
@@ -96,6 +100,7 @@ export default function Home() {
     { id: 'challenge', label: 'Challenge Mode', icon: <Trophy size={16} /> },
     { id: 'coding', label: 'Coding Practice', icon: <Code size={16} /> },
     { id: 'exam', label: 'Exam Simulator', icon: <FileText size={16} /> },
+    { id: 'my_words', label: 'My Words', icon: <FileText size={16} /> },
     { id: 'battle', label: 'Multiplayer Battle', icon: <Sword size={16} /> },
     { id: 'leaderboard', label: 'Leaderboard', icon: <Award size={16} />, header: 'Rankings' },
     { id: 'admin', label: 'Admin Dashboard', icon: <Database size={16} /> },
@@ -129,10 +134,10 @@ export default function Home() {
                 boxShadow: '0 0 12px var(--accent)' 
               }}
             >
-              TM
+              KS
             </div>
             <h1 className="text-lg font-bold tracking-wider" style={{ color: 'var(--text)' }}>
-              {APP_NAME.split(' ')[0]} <span style={{ color: 'var(--accent)', textShadow: '0 0 6px var(--accent)' }}>{APP_NAME.split(' ').slice(1).join(' ')}</span>
+              Key<span style={{ color: 'var(--accent)', textShadow: '0 0 6px var(--accent)' }}>stra</span>
             </h1>
           </div>
 
@@ -172,15 +177,6 @@ export default function Home() {
             })}
           </nav>
         </div>
-
-        {/* Sidebar Footer Logout */}
-        <button
-          onClick={logOut}
-          className="px-3 py-2 rounded-lg text-xs font-semibold transition flex items-center gap-2.5 border border-transparent text-text-muted hover:text-error hover:bg-error/10 hover:border-error/20"
-        >
-          <LogOut size={16} />
-          Sign Out
-        </button>
       </aside>
 
       {/* 2. Mobile Nav Header Bar */}
@@ -197,49 +193,28 @@ export default function Home() {
             <Menu size={20} />
           </button>
           <h1 className="text-sm font-bold tracking-wider" style={{ color: 'var(--text)' }}>
-            {APP_NAME.split(' ')[0]} <span className="font-bold" style={{ color: 'var(--accent)', textShadow: '0 0 6px var(--accent)' }}>{APP_NAME.split(' ').slice(1).join(' ')}</span>
+            Key<span className="font-bold" style={{ color: 'var(--accent)', textShadow: '0 0 6px var(--accent)' }}>stra</span>
           </h1>
         </div>
 
-        <div className="flex items-center gap-1.5">
-          {/* Mobile Cursor Style Toggle */}
-          <button
-            onClick={() => setCursorStyle(cursorStyle === 'cyber' ? 'simple' : 'cyber')}
-            className={`flex items-center gap-1.5 px-2 py-1 rounded-full text-[9px] font-bold border transition-all cursor-pointer ${
-              cursorStyle === 'cyber' 
-                ? 'bg-accent/5 text-accent' 
-                : 'bg-surface-2 text-text-muted'
-            }`}
-            style={{ 
-              borderColor: cursorStyle === 'cyber' ? 'var(--accent)' : 'var(--border)' 
-            }}
-            title="Toggle cursor theme style"
-          >
-            {cursorStyle === 'cyber' ? 'Cyber' : 'Simple'}
-          </button>
+        <div className="flex items-center gap-2.5">
+          {/* Mobile Streak Indicator */}
+          <div className="flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold border"
+               style={{ backgroundColor: 'var(--surface-2)', borderColor: 'var(--border)', color: 'var(--text)' }}>
+            <Flame size={11} className="text-orange-500" />
+            <span>{profile.streak}d</span>
+          </div>
 
-          {/* Mobile Cursor Blink Toggle */}
-          <button
-            onClick={() => setCaretBlinking(!caretBlinking)}
-            className={`flex items-center gap-1.5 px-2 py-1 rounded-full text-[9px] font-bold border transition-all cursor-pointer ${
-              caretBlinking 
-                ? 'bg-accent/5 text-accent' 
-                : 'bg-surface-2 text-text-muted'
-            }`}
-            style={{ 
-              borderColor: caretBlinking ? 'var(--accent)' : 'var(--border)' 
-            }}
-            title="Toggle caret blinking"
+          {/* Mobile Profile Trigger */}
+          <button 
+            onClick={() => navigateTo('settings')}
+            className="flex items-center gap-1.5 px-2 py-0.5 rounded-full border bg-surface hover:bg-surface-2 transition duration-200 border-border cursor-pointer select-none"
           >
-            {caretBlinking ? 'Blink' : 'Steady'}
+            <img src={profile.avatarUrl} alt="Avatar" className="w-4 h-4 rounded-full border border-border" />
+            <span className="text-[10px] font-bold" style={{ color: 'var(--text)' }}>
+              {profile.username}
+            </span>
           </button>
-
-          {/* Database indicator */}
-          <span className="text-[10px] border px-2.5 py-1 rounded flex items-center gap-1"
-                style={{ backgroundColor: 'var(--surface-2)', borderColor: 'var(--border)', color: 'var(--text-muted)' }}>
-            <Database size={10} style={{ color: 'var(--accent)' }} />
-            {localMode ? 'Local' : 'Supabase'}
-          </span>
         </div>
       </div>
 
@@ -280,14 +255,6 @@ export default function Home() {
                 ))}
               </nav>
             </div>
-
-            <button
-              onClick={() => { logOut(); setSidebarOpen(false); }}
-              className="px-3 py-2 rounded-lg text-xs font-semibold transition flex items-center gap-2.5 border border-transparent text-text-muted hover:text-error hover:bg-error/10 hover:border-error/20 cursor-pointer"
-            >
-              <LogOut size={16} />
-              Sign Out
-            </button>
           </div>
         </div>
       )}
@@ -307,75 +274,40 @@ export default function Home() {
             </span>
           </div>
 
-          <div className="flex items-center gap-3">
-            {/* Cursor Style Toggle */}
-            <button
-              onClick={() => setCursorStyle(cursorStyle === 'cyber' ? 'simple' : 'cyber')}
-              className={`flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-semibold border transition-all duration-300 cursor-pointer select-none ${
-                cursorStyle === 'cyber' 
-                  ? 'bg-accent/5 text-accent' 
-                  : 'bg-surface-2 text-text-muted hover:text-text'
-              }`}
-              style={{
-                borderColor: cursorStyle === 'cyber' ? 'var(--accent)' : 'var(--border)',
-                boxShadow: cursorStyle === 'cyber' ? '0 0 8px var(--accent)' : 'none'
-              }}
-              title="Toggle glowing neon cursor vs simple vertical line cursor"
-            >
-              {cursorStyle === 'cyber' ? (
-                <>
-                  <span>Cyber Cursor</span>
-                </>
-              ) : (
-                <>
-                  <span>Simple Cursor</span>
-                </>
-              )}
-            </button>
+          <div className="flex items-center gap-4">
+            {/* Streak Indicator */}
+            <div className="flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-bold border select-none"
+                 style={{ backgroundColor: 'var(--surface-2)', borderColor: 'var(--border)', color: 'var(--text)' }}>
+              <Flame size={13} className="text-orange-500 animate-pulse" />
+              <span>Streak: <span style={{ color: 'var(--accent)' }}>{profile.streak}d</span></span>
+            </div>
 
-            {/* Cursor Blink Toggle */}
-            <button
-              onClick={() => setCaretBlinking(!caretBlinking)}
-              className={`flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-semibold border transition-all duration-300 cursor-pointer select-none ${
-                caretBlinking 
-                  ? 'bg-accent/5 text-accent' 
-                  : 'bg-surface-2 text-text-muted hover:text-text'
-              }`}
-              style={{
-                borderColor: caretBlinking ? 'var(--accent)' : 'var(--border)',
-                boxShadow: caretBlinking ? '0 0 8px var(--accent)' : 'none'
-              }}
-              title="Toggle cursor blinking animation"
-            >
-              {caretBlinking ? (
-                <>
-                  <span className="w-1.5 h-1.5 rounded-full bg-accent animate-ping" />
-                  <span>Blinking</span>
-                </>
-              ) : (
-                <>
-                  <span className="w-1.5 h-1.5 rounded-full bg-text-muted" />
-                  <span>Steady</span>
-                </>
-              )}
-            </button>
+            {/* XP Indicator */}
+            <div className="flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-bold border select-none"
+                 style={{ backgroundColor: 'var(--surface-2)', borderColor: 'var(--border)', color: 'var(--text)' }}>
+              <Zap size={13} style={{ color: 'var(--accent)' }} />
+              <span>{profile.xp} XP</span>
+            </div>
 
-            {/* Database indicator */}
-            <span className="text-[10px] border px-2.5 py-1 rounded-full flex items-center gap-1.5 shadow-sm"
-                  style={{ backgroundColor: 'var(--surface-2)', borderColor: 'var(--border)', color: 'var(--text-muted)' }}>
-              <span className={`w-1.5 h-1.5 rounded-full ${localMode ? 'bg-accent animate-pulse' : 'bg-success'}`} />
-              <DatabaseZap size={10} style={{ color: 'var(--text-muted)' }} />
-              {localMode ? 'Local state engine active' : 'Supabase database synced'}
-            </span>
-
-            {/* User header XP preview */}
-            <div className="flex items-center gap-2 text-xs">
-              <span className="font-medium" style={{ color: 'var(--text-muted)' }}>Rank:</span>
+            {/* User Rank Indicator (remains as usual) */}
+            <div className="flex items-center gap-2 text-xs select-none">
+              <span className="font-semibold" style={{ color: 'var(--text-muted)' }}>Rank:</span>
               <strong className="flex items-center gap-1" style={{ color: 'var(--text)' }}>
                 <Sparkles size={12} style={{ color: 'var(--accent)' }} />
                 Lvl {profile.level}
               </strong>
             </div>
+
+            {/* Profile Button */}
+            <button 
+              onClick={() => navigateTo('settings')}
+              className="flex items-center gap-2 px-3 py-1 rounded-full border bg-surface hover:bg-surface-2 transition-all duration-200 border-border cursor-pointer select-none group"
+            >
+              <img src={profile.avatarUrl} alt="Avatar" className="w-5.5 h-5.5 rounded-full border border-border group-hover:border-accent transition duration-200" />
+              <span className="text-xs font-bold" style={{ color: 'var(--text)' }}>
+                {profile.username}
+              </span>
+            </button>
           </div>
         </header>
 

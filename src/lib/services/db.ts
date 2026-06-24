@@ -586,17 +586,25 @@ export const getLeaderboard = async (): Promise<LeaderboardEntry[]> => {
     const hasStats = profile.wpm > 0;
     
     let baseList = [...MOCK_LEADERBOARD];
-    if (hasStats) {
-      const userWins = getLocalData<number>('battle_wins', 0);
-      const userEntry: LeaderboardEntry = {
-        username: profile.username,
-        avatarUrl: profile.avatarUrl,
-        wpm: profile.wpm,
-        accuracy: profile.accuracy,
-        level: profile.level,
-        wins: userWins
-      };
-      // Insert user and sort
+    
+    // Check if user is already in the mock list (to prevent duplication)
+    const existingIdx = baseList.findIndex(e => e.username.toLowerCase() === profile.username.toLowerCase());
+    
+    const userWins = getLocalData<number>('battle_wins', 0);
+    const userEntry: LeaderboardEntry = {
+      username: profile.username,
+      avatarUrl: profile.avatarUrl,
+      wpm: profile.wpm,
+      accuracy: profile.accuracy,
+      level: profile.level,
+      wins: userWins
+    };
+    
+    if (existingIdx >= 0) {
+      if (hasStats) {
+        baseList[existingIdx] = userEntry;
+      }
+    } else if (hasStats) {
       baseList.push(userEntry);
     }
     
@@ -606,7 +614,7 @@ export const getLeaderboard = async (): Promise<LeaderboardEntry[]> => {
   // For Supabase, query all profiles sorted by max WPM
   const { data, error } = await supabase!
     .from('profiles')
-    .select('username, avatar_url, wpm, accuracy, level')
+    .select('id, username, avatar_url, wpm, accuracy, level')
     .order('wpm', { ascending: false })
     .limit(10);
 
@@ -615,12 +623,31 @@ export const getLeaderboard = async (): Promise<LeaderboardEntry[]> => {
     return MOCK_LEADERBOARD;
   }
 
+  // Fetch battle victory counts for these profiles
+  const profileIds = data.map((d: any) => d.id).filter(Boolean);
+  let winsMap: Record<string, number> = {};
+  if (profileIds.length > 0) {
+    const { data: winsData, error: winsError } = await supabase!
+      .from('room_players')
+      .select('user_id')
+      .in('user_id', profileIds)
+      .eq('is_winner', true);
+
+    if (!winsError && winsData) {
+      winsData.forEach((w: any) => {
+        if (w.user_id) {
+          winsMap[w.user_id] = (winsMap[w.user_id] || 0) + 1;
+        }
+      });
+    }
+  }
+
   return data.map((d: any) => ({
     username: d.username,
     avatarUrl: d.avatar_url || 'https://api.dicebear.com/7.x/pixel-art/svg?seed=' + d.username,
     wpm: d.wpm,
     accuracy: Number(d.accuracy),
     level: d.level,
-    wins: 0 // In real Supabase, could map to a wins count from matches table
+    wins: winsMap[d.id] || 0
   }));
 };

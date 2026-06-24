@@ -279,6 +279,7 @@ export const IntermediatePractice: React.FC<{ onBack?: () => void }> = ({ onBack
 
   const handleFinished = async (finalSeconds: number) => {
     setIsPlaying(false);
+    setIsZenMode(false);
     if (timerRef.current) clearInterval(timerRef.current);
     timerRef.current = null;
     setShowResults(true);
@@ -546,72 +547,7 @@ export const IntermediatePractice: React.FC<{ onBack?: () => void }> = ({ onBack
 
       {/* 2. Main Typing Canvas */}
       <div className={`relative overflow-hidden flex flex-col transition-all duration-500 ${isZenMode ? 'border-0 bg-transparent shadow-none p-0 w-full' : 'glass-card p-6 rounded-2xl'}`}>
-        {showResults ? (
-          /* Results Panel */
-          <div className="py-6 space-y-8">
-            <div className="text-center">
-              <div className="inline-block px-3 py-1 rounded-full text-xs font-semibold bg-cyber-green/10 text-cyber-green border border-cyber-green/20 mb-2">
-                Test Complete
-              </div>
-              <h3 className="text-xl font-bold text-white">Intermediate Assessment Completed</h3>
-            </div>
-
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 w-full">
-              <div className="glass-card bg-slate-950/40 p-4 rounded-xl border border-white/5 text-center">
-                <span className="text-xs text-slate-400 uppercase tracking-wider font-semibold">Speed (WPM)</span>
-                <span className="text-3xl font-extrabold text-cyber-blue text-glow-cyan mt-1 block">
-                  {calculateLiveWpm(rawTypedText.trim().length, elapsedTime)}
-                </span>
-              </div>
-              <div className="glass-card bg-slate-950/40 p-4 rounded-xl border border-white/5 text-center">
-                <span className="text-xs text-slate-400 uppercase tracking-wider font-semibold">Accuracy</span>
-                <span className={`text-3xl font-extrabold mt-1 block ${accuracy >= 95 ? 'text-cyber-green' : 'text-cyber-amber'}`}>
-                  {accuracy}%
-                </span>
-              </div>
-              <div className="glass-card bg-slate-950/40 p-4 rounded-xl border border-white/5 text-center">
-                <span className="text-xs text-slate-400 uppercase tracking-wider font-semibold">Consistency</span>
-                <span className="text-3xl font-extrabold text-purple-400 mt-1 block">
-                  {wpmHistory.length > 2 
-                    ? `${Math.max(40, Math.min(100, Math.round(90 - (wpmHistory.reduce((s, h) => s + Math.abs(h.wpm - currentWpm), 0) / wpmHistory.length))))}%`
-                    : '92%'}
-                </span>
-              </div>
-              <div className="glass-card bg-slate-950/40 p-4 rounded-xl border border-white/5 text-center">
-                <span className="text-xs text-slate-400 uppercase tracking-wider font-semibold">Practice Time</span>
-                <span className="text-3xl font-extrabold text-white mt-1 block">{elapsedTime}s</span>
-              </div>
-            </div>
-
-            {/* Sparkline speed history chart */}
-            {wpmHistory.length > 0 && (
-              <div className="border border-white/5 bg-slate-950/40 p-5 rounded-xl">
-                <h4 className="text-xs font-bold text-slate-400 mb-4 flex items-center gap-1.5">
-                  <TrendingUp size={14} className="text-cyber-blue" />
-                  Speed Fluctuations Over Time
-                </h4>
-                <div className="h-44 w-full">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <LineChart data={wpmHistory}>
-                      <XAxis dataKey="time" stroke="#475569" fontSize={9} tickFormatter={(t) => `${t}s`} />
-                      <YAxis stroke="#475569" fontSize={9} />
-                      <Tooltip contentStyle={{ backgroundColor: '#0f1322', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '8px' }} />
-                      <Line type="monotone" dataKey="wpm" stroke="#00f2fe" strokeWidth={2.5} dot={{ fill: '#00f2fe' }} />
-                    </LineChart>
-                  </ResponsiveContainer>
-                </div>
-              </div>
-            )}
-
-            <button
-              onClick={handleStart}
-              className="w-full py-3 bg-gradient-to-r from-cyber-blue to-cyber-purple hover:opacity-95 text-white font-bold rounded-lg text-sm transition flex items-center justify-center gap-2 shadow-md"
-            >
-              <RotateCcw size={16} />
-              Take Another Test
-            </button>
-          </div>
-        ) : !isPlaying ? (
+        {!isPlaying ? (
           /* Upgraded Premium Landing Screen */
           <div className={`w-full mx-auto flex flex-col md:flex-row transition-all duration-500 animate-fade-in ${
             isZenMode 
@@ -937,6 +873,90 @@ export const IntermediatePractice: React.FC<{ onBack?: () => void }> = ({ onBack
           </div>
         )}
       </div>
+
+      {/* Modals */}
+      {showResults && (
+        <div 
+          onClick={(e) => { if (e.target === e.currentTarget) { setShowResults(false); setIsZenMode(false); } }}
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 backdrop-blur-md p-4 animate-fade-in text-left"
+        >
+          <div className="glass-card max-w-2xl w-full p-6 rounded-2xl border border-white/10 shadow-2xl relative bg-slate-900/90 text-slate-100 max-h-[90vh] overflow-y-auto">
+            <button 
+              onClick={() => { setShowResults(false); setIsZenMode(false); }}
+              className="absolute top-4 right-4 text-slate-400 hover:text-white text-lg font-bold cursor-pointer"
+            >
+              ✕
+            </button>
+            <div className="py-2 space-y-6">
+              <div className="text-center">
+                <div className="inline-block px-3 py-1 rounded-full text-xs font-semibold bg-cyber-green/10 text-cyber-green border border-cyber-green/20 mb-2">
+                  Test Complete
+                </div>
+                <h3 className="text-xl font-bold text-white">Intermediate Assessment Completed</h3>
+              </div>
+
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 w-full">
+                <div className="glass-card bg-slate-950/40 p-4 rounded-xl border border-white/5 text-center">
+                  <span className="text-xs text-slate-400 uppercase tracking-wider font-semibold">Speed (WPM)</span>
+                  <span className="text-3xl font-extrabold text-cyber-blue text-glow-cyan mt-1 block">
+                    {calculateLiveWpm(rawTypedText.trim().length, elapsedTime)}
+                  </span>
+                </div>
+                <div className="glass-card bg-slate-950/40 p-4 rounded-xl border border-white/5 text-center">
+                  <span className="text-xs text-slate-400 uppercase tracking-wider font-semibold">Accuracy</span>
+                  <span className={`text-3xl font-extrabold mt-1 block ${accuracy >= 95 ? 'text-cyber-green' : 'text-cyber-amber'}`}>
+                    {accuracy}%
+                  </span>
+                </div>
+                <div className="glass-card bg-slate-950/40 p-4 rounded-xl border border-white/5 text-center">
+                  <span className="text-xs text-slate-400 uppercase tracking-wider font-semibold">Consistency</span>
+                  <span className="text-3xl font-extrabold text-purple-400 mt-1 block">
+                    {wpmHistory.length > 2 
+                      ? `${Math.max(40, Math.min(100, Math.round(90 - (wpmHistory.reduce((s, h) => s + Math.abs(h.wpm - currentWpm), 0) / wpmHistory.length))))}%`
+                      : '92%'}
+                  </span>
+                </div>
+                <div className="glass-card bg-slate-950/40 p-4 rounded-xl border border-white/5 text-center">
+                  <span className="text-xs text-slate-400 uppercase tracking-wider font-semibold">Practice Time</span>
+                  <span className="text-3xl font-extrabold text-white mt-1 block">{elapsedTime}s</span>
+                </div>
+              </div>
+
+              {/* Sparkline speed history chart */}
+              {wpmHistory.length > 0 && (
+                <div className="border border-white/5 bg-slate-950/40 p-5 rounded-xl">
+                  <h4 className="text-xs font-bold text-slate-400 mb-4 flex items-center gap-1.5">
+                    <TrendingUp size={14} className="text-cyber-blue" />
+                    Speed Fluctuations Over Time
+                  </h4>
+                  <div className="h-44 w-full">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <LineChart data={wpmHistory}>
+                        <XAxis dataKey="time" stroke="#475569" fontSize={9} tickFormatter={(t) => `${t}s`} />
+                        <YAxis stroke="#475569" fontSize={9} />
+                        <Tooltip contentStyle={{ backgroundColor: '#0f1322', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '8px' }} />
+                        <Line type="monotone" dataKey="wpm" stroke="#00f2fe" strokeWidth={2.5} dot={{ fill: '#00f2fe' }} />
+                      </LineChart>
+                    </ResponsiveContainer>
+                  </div>
+                </div>
+              )}
+
+              <button
+                onClick={() => {
+                  setShowResults(false);
+                  setIsZenMode(false);
+                  handleStart();
+                }}
+                className="w-full py-3 bg-gradient-to-r from-cyber-blue to-cyber-purple hover:opacity-95 text-white font-bold rounded-lg text-sm transition flex items-center justify-center gap-2 shadow-md cursor-pointer"
+              >
+                <RotateCcw size={16} />
+                Take Another Test
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Modals */}
       {showProgressModal && (

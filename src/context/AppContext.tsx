@@ -10,6 +10,7 @@ import {
 import { supabase, isSupabaseConfigured } from '@/lib/services/supabaseClient';
 import { playKeystrokeSound } from '@/lib/services/soundSynth';
 import { Theme, PRESET_THEMES } from '@/lib/services/themeColors';
+import { APP_NAME } from '@/lib/config';
 
 export interface ToastMessage {
   id: string;
@@ -30,6 +31,8 @@ interface AppContextType {
   setCursorStyle: (val: 'cyber' | 'simple') => void;
   isZenMode: boolean;
   setIsZenMode: (val: boolean) => void;
+  isResettingPassword: boolean;
+  setIsResettingPassword: (val: boolean) => void;
   themeMode: 'dark' | 'light';
   setThemeMode: (val: 'dark' | 'light') => void;
   accentColor: string;
@@ -62,6 +65,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [localMode, setLocalMode] = useState<boolean>(true);
   const [toasts, setToasts] = useState<ToastMessage[]>([]);
   const [isZenMode, setIsZenMode] = useState<boolean>(false);
+  const [isResettingPassword, setIsResettingPassword] = useState<boolean>(false);
 
   // Monkeytype Theme Engine States
   const [customThemes, setCustomThemes] = useState<Theme[]>(() => {
@@ -306,6 +310,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         // Listen for changes
         const { data: { subscription } } = supabase!.auth.onAuthStateChange(
           async (event, currentSession) => {
+            if (event === 'PASSWORD_RECOVERY') {
+              setIsResettingPassword(true);
+            }
             if (currentSession?.user) {
               setUser(currentSession.user);
               const uProfile = await getProfile(currentSession.user.id);
@@ -382,7 +389,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       
       setUser(mockUser);
       setProfile(defaultProfile);
-      addToast('Account Created!', `Welcome to TypeMaster Pro, ${username}!`, 'success');
+      addToast('Account Created!', `Welcome to ${APP_NAME}, ${username}!`, 'success');
     }
   };
 
@@ -422,6 +429,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         setCursorStyle,
         isZenMode,
         setIsZenMode,
+        isResettingPassword,
+        setIsResettingPassword,
         themeMode,
         setThemeMode,
         accentColor,

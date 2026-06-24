@@ -149,6 +149,7 @@ export const CodingPractice: React.FC<{ onBack?: () => void }> = ({ onBack }) =>
 
   const handleFinished = async (finalSeconds: number, finalTyped: string) => {
     setIsPlaying(false);
+    setIsZenMode(false);
     if (timerRef.current) clearInterval(timerRef.current);
     timerRef.current = null;
     setShowResults(true);
@@ -338,79 +339,7 @@ export const CodingPractice: React.FC<{ onBack?: () => void }> = ({ onBack }) =>
 
       {/* 2. Main Typing Area */}
       <div className={`relative overflow-hidden flex flex-col transition-all duration-500 ${isZenMode ? 'border-0 bg-transparent shadow-none p-0 w-full' : 'glass-card p-6 rounded-2xl'}`}>
-        {showResults ? (
-          /* Results Dashboard */
-          <div className="py-6 space-y-6">
-            <div className="text-center">
-              <span className="inline-block px-3 py-1 rounded-full text-xs font-semibold bg-blue-500/15 text-blue-400 border border-blue-500/30 mb-2">
-                Coding Exercise Complete
-              </span>
-              <h3 className="text-xl font-bold text-white">{lesson.title} ({lesson.language.toUpperCase()})</h3>
-            </div>
-
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 w-full bg-slate-950/40 p-4 border border-white/5 rounded-xl">
-              <div className="text-center">
-                <span className="text-xs text-slate-400 uppercase tracking-wider font-semibold">Coding Speed</span>
-                <span className="text-3xl font-extrabold text-cyber-blue text-glow-cyan mt-1 block">{currentWpm} WPM</span>
-              </div>
-              <div className="text-center">
-                <span className="text-xs text-slate-400 uppercase tracking-wider font-semibold">Accuracy</span>
-                <span className="text-3xl font-extrabold text-cyber-green mt-1 block">{accuracy}%</span>
-              </div>
-              <div className="text-center">
-                <span className="text-xs text-slate-400 uppercase tracking-wider font-semibold">Symbol Accuracy</span>
-                <span className="text-3xl font-extrabold text-purple-400 mt-1 block">{symbolAccuracy}%</span>
-              </div>
-              <div className="text-center">
-                <span className="text-xs text-slate-400 uppercase tracking-wider font-semibold">Duration</span>
-                <span className="text-3xl font-extrabold text-white mt-1 block">{elapsedTime}s</span>
-              </div>
-            </div>
-
-            <div className="flex gap-3">
-              <button
-                onClick={handleStart}
-                className="flex-1 py-3 border border-white/10 hover:border-white/20 text-white font-bold rounded-lg text-sm transition flex items-center justify-center gap-1.5"
-              >
-                <RotateCcw size={14} />
-                Retry Module
-              </button>
-              {selectedLessonIdx + 1 < filteredLessons.length ? (
-                <button
-                  onClick={() => {
-                    setSelectedLessonIdx(prev => prev + 1);
-                    setShowResults(false);
-                    setIsPlaying(false);
-                  }}
-                  className="flex-1 py-3 bg-gradient-to-r from-cyber-blue to-cyber-purple hover:opacity-95 text-white font-bold rounded-lg text-sm transition flex items-center justify-center gap-1.5 shadow-md"
-                >
-                  Next Module
-                  <ArrowRight size={14} />
-                </button>
-              ) : (
-                <button
-                  onClick={() => setShowResults(false)}
-                  className="flex-1 py-3 bg-slate-900 hover:bg-slate-800 text-white font-bold rounded-lg text-sm transition"
-                >
-                  Back to Selection
-                </button>
-              )}
-            </div>
-            {onBack && (
-              <div className="flex justify-center pt-2">
-                <button
-                  onClick={() => {
-                    setIsZenMode(false);
-                    onBack();
-                  }}
-                  className="text-xs text-cyber-red hover:text-cyber-red/80 font-semibold underline transition cursor-pointer"
-                >
-                  Exit Practice
-                </button>
-              </div>
-            )}
-          </div>
-        ) : !isPlaying ? (
+        {!isPlaying ? (
           /* Start Screen */
           <div className="py-12 flex flex-col items-center text-center max-w-lg mx-auto space-y-6">
             <Terminal className="w-12 h-12 text-blue-400 text-glow-blue" />
@@ -619,6 +548,105 @@ export const CodingPractice: React.FC<{ onBack?: () => void }> = ({ onBack }) =>
           </div>
         </div>
       )}
+
+      {/* Results Modal */}
+      {showResults && (
+        <div 
+          onClick={(e) => { if (e.target === e.currentTarget) { setShowResults(false); setIsZenMode(false); } }}
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 backdrop-blur-md p-4 animate-fade-in text-left"
+        >
+          <div className="glass-card max-w-2xl w-full p-6 rounded-2xl border border-white/10 shadow-2xl relative bg-slate-900/90 text-slate-100 max-h-[90vh] overflow-y-auto">
+            <button 
+              onClick={() => { setShowResults(false); setIsZenMode(false); }}
+              className="absolute top-4 right-4 text-slate-400 hover:text-white text-lg font-bold cursor-pointer"
+            >
+              ✕
+            </button>
+            <div className="py-2 space-y-6">
+              <div className="text-center">
+                <span className="inline-block px-3 py-1 rounded-full text-xs font-semibold bg-blue-500/15 text-blue-400 border border-blue-500/30 mb-2">
+                  Coding Exercise Complete
+                </span>
+                <h3 className="text-xl font-bold text-white">{lesson.title} ({lesson.language.toUpperCase()})</h3>
+              </div>
+
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 w-full bg-slate-950/40 p-4 border border-white/5 rounded-xl text-center">
+                <div>
+                  <span className="text-xs text-slate-400 uppercase tracking-wider font-semibold">Coding Speed</span>
+                  <span className="text-3xl font-extrabold text-cyber-blue text-glow-cyan mt-1 block">{currentWpm} WPM</span>
+                </div>
+                <div>
+                  <span className="text-xs text-slate-400 uppercase tracking-wider font-semibold">Accuracy</span>
+                  <span className="text-3xl font-extrabold text-cyber-green mt-1 block">{accuracy}%</span>
+                </div>
+                <div>
+                  <span className="text-xs text-slate-400 uppercase tracking-wider font-semibold">Symbol Accuracy</span>
+                  <span className="text-3xl font-extrabold text-purple-400 mt-1 block">{symbolAccuracy}%</span>
+                </div>
+                <div>
+                  <span className="text-xs text-slate-400 uppercase tracking-wider font-semibold">Duration</span>
+                  <span className="text-3xl font-extrabold text-white mt-1 block">{elapsedTime}s</span>
+                </div>
+              </div>
+
+              <div className="flex gap-3">
+                <button
+                  onClick={() => {
+                    setShowResults(false);
+                    setIsZenMode(false);
+                    handleStart();
+                  }}
+                  className="flex-1 py-3 border border-white/10 hover:border-white/20 text-white font-bold rounded-lg text-sm transition flex items-center justify-center gap-1.5 cursor-pointer"
+                >
+                  <RotateCcw size={14} />
+                  Retry Module
+                </button>
+                {selectedLessonIdx + 1 < filteredLessons.length ? (
+                  <button
+                    onClick={() => {
+                      setSelectedLessonIdx(prev => prev + 1);
+                      setShowResults(false);
+                      setIsZenMode(false);
+                      setIsPlaying(false);
+                    }}
+                    className="flex-1 py-3 bg-gradient-to-r from-cyber-blue to-cyber-purple hover:opacity-95 text-white font-bold rounded-lg text-sm transition flex items-center justify-center gap-1.5 shadow-md cursor-pointer"
+                  >
+                    Next Module
+                    <ArrowRight size={14} />
+                  </button>
+                ) : (
+                  <button
+                    onClick={() => {
+                      setShowResults(false);
+                      setIsZenMode(false);
+                    }}
+                    className="flex-1 py-3 bg-slate-900 hover:bg-slate-800 text-white font-bold rounded-lg text-sm transition cursor-pointer"
+                  >
+                    Back to Selection
+                  </button>
+                )}
+              </div>
+              {onBack && (
+                <div className="flex justify-center pt-2">
+                  <button
+                    onClick={() => {
+                      setShowResults(false);
+                      setIsZenMode(false);
+                      onBack();
+                    }}
+                    className="text-xs text-cyber-red hover:text-cyber-red/80 font-semibold underline transition cursor-pointer"
+                  >
+                    Exit Practice
+                  </button>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
+
+
+

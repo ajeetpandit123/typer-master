@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Outfit, JetBrains_Mono } from "next/font/google";
 import { AppProvider } from "@/context/AppContext";
+import { APP_NAME } from "@/lib/config";
 import "./globals.css";
 
 const outfit = Outfit({
@@ -14,8 +15,8 @@ const jetbrainsMono = JetBrains_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "TypeMaster Pro | Typing Learning & Competition Platform",
-  description: "Improve typing speed and accuracy from beginner to advanced. Play multiplayer typing battles, practice coding exercises, and level up your skills.",
+  title: `${APP_NAME} | Typing Learning & Competition Platform`,
+  description: `Improve typing speed and accuracy on ${APP_NAME}. Play multiplayer typing battles, practice coding exercises, and level up your skills.`,
 };
 
 export default function RootLayout({

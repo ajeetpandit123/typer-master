@@ -34,7 +34,7 @@ export const LeaderboardView: React.FC = () => {
 
   // Split top 3 for podium
   const podiumEntries = entries.slice(0, 3);
-  const tableEntries = entries.slice(3);
+  const tableEntries = entries.slice(0, 10);
 
   // Re-order podium as: 2nd place (left), 1st place (center), 3rd place (right)
   const sortedPodium = [];
@@ -151,34 +151,49 @@ export const LeaderboardView: React.FC = () => {
           </thead>
           <tbody className="divide-y divide-white/5">
             {tableEntries.length > 0 ? (
-              tableEntries.map((entry, idx) => (
-                <tr 
-                  key={entry.username} 
-                  className="hover:bg-white/5 transition duration-150"
-                >
-                  <td className="p-4 font-bold text-slate-400">
-                    #{idx + 4}
-                  </td>
-                  <td className="p-4">
-                    <div className="flex items-center gap-3">
-                      <img src={entry.avatarUrl} alt="Avatar" className="w-8 h-8 rounded-full border border-white/5" />
-                      <span className="font-bold text-white">{entry.username}</span>
-                    </div>
-                  </td>
-                  <td className="p-4 text-center text-slate-300">
-                    {entry.level}
-                  </td>
-                  <td className="p-4 text-center font-bold text-cyber-blue">
-                    {entry.wpm} WPM
-                  </td>
-                  <td className="p-4 text-center text-cyber-green">
-                    {entry.accuracy}%
-                  </td>
-                  <td className="p-4 text-center text-slate-400">
-                    {entry.wins || 0}
-                  </td>
-                </tr>
-              ))
+              tableEntries.map((entry, idx) => {
+                const rank = idx + 1;
+                const getRankBadge = () => {
+                  if (rank === 1) return '🥇';
+                  if (rank === 2) return '🥈';
+                  if (rank === 3) return '🥉';
+                  return `#${rank}`;
+                };
+
+                return (
+                  <tr 
+                    key={entry.username} 
+                    className="hover:bg-white/5 transition duration-150"
+                  >
+                    <td className={`p-4 font-bold ${
+                      rank === 1 ? 'text-cyber-amber text-sm' :
+                      rank === 2 ? 'text-slate-300 text-sm' :
+                      rank === 3 ? 'text-amber-600 text-sm' :
+                      'text-slate-400 text-xs'
+                    }`}>
+                      {getRankBadge()}
+                    </td>
+                    <td className="p-4">
+                      <div className="flex items-center gap-3">
+                        <img src={entry.avatarUrl} alt="Avatar" className="w-8 h-8 rounded-full border border-white/5" />
+                        <span className="font-bold text-white">{entry.username}</span>
+                      </div>
+                    </td>
+                    <td className="p-4 text-center text-slate-300">
+                      {entry.level}
+                    </td>
+                    <td className="p-4 text-center font-bold text-cyber-blue">
+                      {entry.wpm} WPM
+                    </td>
+                    <td className="p-4 text-center text-cyber-green">
+                      {entry.accuracy}%
+                    </td>
+                    <td className="p-4 text-center text-slate-400">
+                      {entry.wins || 0}
+                    </td>
+                  </tr>
+                );
+              })
             ) : (
               podiumEntries.length === 0 && (
                 <tr>

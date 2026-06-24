@@ -115,6 +115,7 @@ export const AdvancedPractice: React.FC<{ onBack?: () => void }> = ({ onBack }) 
 
   const handleFinished = async (finalSeconds: number) => {
     setIsPlaying(false);
+    setIsZenMode(false);
     if (timerRef.current) clearInterval(timerRef.current);
     timerRef.current = null;
     setShowResults(true);
@@ -307,115 +308,7 @@ export const AdvancedPractice: React.FC<{ onBack?: () => void }> = ({ onBack }) 
 
       {/* 2. Typing Sandbox */}
       <div className={`relative overflow-hidden flex flex-col transition-all duration-500 ${isZenMode ? 'border-0 bg-transparent shadow-none p-0 w-full' : 'glass-card p-6 rounded-2xl'}`}>
-        {showResults ? (
-          /* Advanced results board */
-          <div className="py-6 space-y-8">
-            <div className="text-center">
-              <span className="inline-block px-3 py-1 rounded-full text-xs font-semibold bg-cyber-pink/15 text-cyber-pink border border-cyber-pink/30 mb-2">
-                Advanced Metrics Analysis
-              </span>
-              <h3 className="text-xl font-bold text-white">Advanced Typing Summary</h3>
-            </div>
-
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 w-full">
-              <div className="glass-card bg-slate-950/40 p-4 rounded-xl border border-white/5 text-center">
-                <span className="text-xs text-slate-400 uppercase tracking-wider font-semibold">Speed (WPM)</span>
-                <span className="text-3xl font-extrabold text-cyber-blue text-glow-cyan mt-1 block">
-                  {currentWpm}
-                </span>
-              </div>
-              <div className="glass-card bg-slate-950/40 p-4 rounded-xl border border-white/5 text-center">
-                <span className="text-xs text-slate-400 uppercase tracking-wider font-semibold">Accuracy</span>
-                <span className="text-3xl font-extrabold text-cyber-green mt-1 block">
-                  {accuracy}%
-                </span>
-              </div>
-              <div className="glass-card bg-slate-950/40 p-4 rounded-xl border border-white/5 text-center">
-                <span className="text-xs text-slate-400 uppercase tracking-wider font-semibold">Errors Made</span>
-                <span className="text-3xl font-extrabold text-cyber-red mt-1 block">
-                  {targetText.length - targetText.split('').filter((c, i) => rawTypedText[i] === c).length}
-                </span>
-              </div>
-              <div className="glass-card bg-slate-950/40 p-4 rounded-xl border border-white/5 text-center">
-                <span className="text-xs text-slate-400 uppercase tracking-wider font-semibold">Time Elapsed</span>
-                <span className="text-3xl font-extrabold text-white mt-1 block">{elapsedTime}s</span>
-              </div>
-            </div>
-
-            {/* Key Latency and error graphs */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {/* Latency Graph */}
-              <div className="border border-white/5 bg-slate-950/40 p-5 rounded-xl">
-                <h4 className="text-xs font-bold text-slate-400 mb-4 flex items-center gap-1.5">
-                  <BarChart3 size={14} className="text-cyber-blue" />
-                  Key Latency Analysis (Keys / Second)
-                </h4>
-                <div className="h-44 w-full">
-                  {chartData.length > 0 ? (
-                    <ResponsiveContainer width="100%" height="100%">
-                      <BarChart data={chartData}>
-                        <XAxis dataKey="key" stroke="#475569" fontSize={9} />
-                        <YAxis stroke="#475569" fontSize={9} />
-                        <Tooltip contentStyle={{ backgroundColor: '#0f1322', border: '1px solid rgba(255,255,255,0.08)' }} />
-                        <Bar dataKey="speed" fill="#00f2fe" radius={[4, 4, 0, 0]} />
-                      </BarChart>
-                    </ResponsiveContainer>
-                  ) : (
-                    <div className="h-full flex items-center justify-center text-slate-500 text-xs">
-                      No character latency details available.
-                    </div>
-                  )}
-                </div>
-              </div>
-
-              {/* Character Errors List */}
-              <div className="border border-white/5 bg-slate-950/40 p-5 rounded-xl">
-                <h4 className="text-xs font-bold text-slate-400 mb-4 flex items-center gap-1.5">
-                  <AlertCircle size={14} className="text-cyber-pink" />
-                  Mistake Details (Key Typos)
-                </h4>
-                <div className="space-y-2 overflow-y-auto max-h-44 pr-1">
-                  {Object.values(charSpeeds).filter(s => s.errors > 0).length > 0 ? (
-                    Object.values(charSpeeds)
-                      .filter(s => s.errors > 0)
-                      .sort((a, b) => b.errors - a.errors)
-                      .map((stat, idx) => (
-                        <div key={idx} className="flex justify-between items-center bg-slate-900/60 p-2 rounded-lg text-xs border border-white/5">
-                          <span className="font-bold text-white">Character &apos;{stat.char}&apos;</span>
-                          <span className="text-cyber-red font-semibold">{stat.errors} typos</span>
-                        </div>
-                      ))
-                  ) : (
-                    <div className="h-full flex items-center justify-center text-slate-500 text-xs py-8">
-                      Flawless! Zero errors recorded during this run.
-                    </div>
-                  )}
-                </div>
-              </div>
-            </div>
-
-            <button
-              onClick={handleStart}
-              className="w-full py-3 bg-gradient-to-r from-cyber-blue to-cyber-purple hover:opacity-95 text-white font-bold rounded-lg text-sm transition flex items-center justify-center gap-2 shadow-md"
-            >
-              <RotateCcw size={16} />
-              Restart Assessment
-            </button>
-            {onBack && (
-              <div className="flex justify-center pt-2">
-                <button
-                  onClick={() => {
-                    setIsZenMode(false);
-                    onBack();
-                  }}
-                  className="text-xs text-cyber-red hover:text-cyber-red/80 font-semibold underline transition cursor-pointer"
-                >
-                  Exit Practice
-                </button>
-              </div>
-            )}
-          </div>
-        ) : !isPlaying ? (
+        {!isPlaying ? (
           /* Start Screen */
           <div className="py-12 flex flex-col items-center text-center max-w-lg mx-auto space-y-6">
             <ShieldAlert className="w-12 h-12 text-rose-400 text-glow-rose" />
@@ -546,6 +439,119 @@ export const AdvancedPractice: React.FC<{ onBack?: () => void }> = ({ onBack }) 
           </div>
         )}
       </div>
+
+      {showResults && (
+        <div 
+          onClick={(e) => { if (e.target === e.currentTarget) { setShowResults(false); setIsZenMode(false); } }}
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 backdrop-blur-md p-4 animate-fade-in text-left"
+        >
+          <div className="glass-card max-w-2xl w-full p-6 rounded-2xl border border-white/10 shadow-2xl relative bg-slate-900/90 text-slate-100 max-h-[90vh] overflow-y-auto">
+            <button 
+              onClick={() => { setShowResults(false); setIsZenMode(false); }}
+              className="absolute top-4 right-4 text-slate-400 hover:text-white text-lg font-bold cursor-pointer"
+            >
+              ✕
+            </button>
+            <div className="py-2 space-y-6">
+              <div className="text-center">
+                <span className="inline-block px-3 py-1 rounded-full text-xs font-semibold bg-cyber-pink/15 text-cyber-pink border border-cyber-pink/30 mb-2">
+                  Advanced Metrics Analysis
+                </span>
+                <h3 className="text-xl font-bold text-white">Advanced Typing Summary</h3>
+              </div>
+
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 w-full">
+                <div className="glass-card bg-slate-950/40 p-4 rounded-xl border border-white/5 text-center">
+                  <span className="text-xs text-slate-400 uppercase tracking-wider font-semibold">Speed (WPM)</span>
+                  <span className="text-3xl font-extrabold text-cyber-blue text-glow-cyan mt-1 block">
+                    {currentWpm}
+                  </span>
+                </div>
+                <div className="glass-card bg-slate-950/40 p-4 rounded-xl border border-white/5 text-center">
+                  <span className="text-xs text-slate-400 uppercase tracking-wider font-semibold">Accuracy</span>
+                  <span className="text-3xl font-extrabold text-cyber-green mt-1 block">
+                    {accuracy}%
+                  </span>
+                </div>
+                <div className="glass-card bg-slate-950/40 p-4 rounded-xl border border-white/5 text-center">
+                  <span className="text-xs text-slate-400 uppercase tracking-wider font-semibold">Errors Made</span>
+                  <span className="text-3xl font-extrabold text-cyber-red mt-1 block">
+                    {targetText.length - targetText.split('').filter((c, i) => rawTypedText[i] === c).length}
+                  </span>
+                </div>
+                <div className="glass-card bg-slate-950/40 p-4 rounded-xl border border-white/5 text-center">
+                  <span className="text-xs text-slate-400 uppercase tracking-wider font-semibold">Time Elapsed</span>
+                  <span className="text-3xl font-extrabold text-white mt-1 block">{elapsedTime}s</span>
+                </div>
+              </div>
+
+              {/* Key Latency and error graphs */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {/* Latency Graph */}
+                <div className="border border-white/5 bg-slate-950/40 p-5 rounded-xl">
+                  <h4 className="text-xs font-bold text-slate-400 mb-4 flex items-center gap-1.5">
+                    <BarChart3 size={14} className="text-cyber-blue" />
+                    Key Latency Analysis (Keys / Second)
+                  </h4>
+                  <div className="h-44 w-full">
+                    {chartData.length > 0 ? (
+                      <ResponsiveContainer width="100%" height="100%">
+                        <BarChart data={chartData}>
+                          <XAxis dataKey="key" stroke="#475569" fontSize={9} />
+                          <YAxis stroke="#475569" fontSize={9} />
+                          <Tooltip contentStyle={{ backgroundColor: '#0f1322', border: '1px solid rgba(255,255,255,0.08)' }} />
+                          <Bar dataKey="speed" fill="#00f2fe" radius={[4, 4, 0, 0]} />
+                        </BarChart>
+                      </ResponsiveContainer>
+                    ) : (
+                      <div className="h-full flex items-center justify-center text-slate-500 text-xs">
+                        No character latency details available.
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* Character Errors List */}
+                <div className="border border-white/5 bg-slate-950/40 p-5 rounded-xl">
+                  <h4 className="text-xs font-bold text-slate-400 mb-4 flex items-center gap-1.5">
+                    <AlertCircle size={14} className="text-cyber-pink" />
+                    Mistake Details (Key Typos)
+                  </h4>
+                  <div className="space-y-2 overflow-y-auto max-h-44 pr-1">
+                    {Object.values(charSpeeds).filter(s => s.errors > 0).length > 0 ? (
+                      Object.values(charSpeeds)
+                        .filter(s => s.errors > 0)
+                        .sort((a, b) => b.errors - a.errors)
+                        .map((stat, idx) => (
+                          <div key={idx} className="flex justify-between items-center bg-slate-900/60 p-2 rounded-lg text-xs border border-white/5">
+                            <span className="font-bold text-white">Character &apos;{stat.char}&apos;</span>
+                            <span className="text-cyber-red font-semibold">{stat.errors} typos</span>
+                          </div>
+                        ))
+                    ) : (
+                      <div className="h-full flex items-center justify-center text-slate-500 text-xs py-8">
+                        Flawless! Zero errors recorded during this run.
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              <button
+                onClick={() => {
+                  setShowResults(false);
+                  setIsZenMode(false);
+                  handleStart();
+                }}
+                className="w-full py-3 bg-gradient-to-r from-cyber-blue to-cyber-purple hover:opacity-95 text-white font-bold rounded-lg text-sm transition flex items-center justify-center gap-2 shadow-md cursor-pointer"
+              >
+                <RotateCcw size={16} />
+                Restart Assessment
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

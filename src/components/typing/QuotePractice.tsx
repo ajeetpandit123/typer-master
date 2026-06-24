@@ -250,158 +250,176 @@ export const QuotePractice: React.FC<{ onBack?: () => void }> = ({ onBack }) => 
 
       {/* 2. Typing Area */}
       <div className={`relative overflow-hidden flex flex-col transition-all duration-500 ${isZenMode ? 'border-0 bg-transparent shadow-none p-0 w-full' : 'glass-card p-6 rounded-2xl'}`}>
-        {showResults ? (
-          /* Results Panel */
-          <div className="py-6 space-y-6">
-            <div className="text-center">
-              <span className="inline-block px-3 py-1 rounded-full text-xs font-semibold bg-cyber-amber/15 text-cyber-amber border border-cyber-amber/30 mb-2">
-                Quote Completed
+        {/* Active Typing Engine */}
+        <div className="space-y-6">
+          {/* Live Stats */}
+          <div className={`flex justify-between items-center transition-all duration-300 ${isZenMode ? 'px-0 py-0 border-0 bg-transparent text-slate-500 text-lg' : 'bg-slate-950/30 px-4 py-2 border border-white/5 rounded-xl'}`}>
+            <div className="flex items-center gap-2">
+              <span className={isZenMode ? 'text-sm uppercase tracking-wider text-slate-500 font-semibold' : 'text-xs text-slate-400 font-medium'}>Category:</span>
+              <span className={isZenMode ? 'text-3xl font-black text-yellow-400 uppercase tracking-wider' : 'text-xs font-bold text-yellow-400 uppercase tracking-wider'}>
+                {activeQuote?.category}
               </span>
-              <h3 className="text-xl font-bold text-white">Assessment Complete</h3>
-              {activeQuote && (
-                <p className="text-xs text-slate-400 italic mt-2">
-                  &ldquo;{activeQuote.text}&rdquo; &mdash; {activeQuote.author}
-                </p>
-              )}
             </div>
-
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 w-full bg-slate-950/40 p-5 border border-white/5 rounded-xl">
-              <div className="text-center">
-                <span className="text-xs text-slate-400 uppercase tracking-wider font-semibold">Speed</span>
-                <span className="text-3xl font-extrabold text-cyber-blue text-glow-cyan mt-1 block">{currentWpm} WPM</span>
-              </div>
-              <div className="text-center">
-                <span className="text-xs text-slate-400 uppercase tracking-wider font-semibold">Accuracy</span>
-                <span className="text-3xl font-extrabold text-cyber-green mt-1 block">{accuracy}%</span>
-              </div>
-              <div className="text-center">
-                <span className="text-xs text-slate-400 uppercase tracking-wider font-semibold">Time</span>
-                <span className="text-3xl font-extrabold text-white mt-1 block">{elapsedTime}s</span>
-              </div>
-              <div className="text-center">
-                <span className="text-xs text-slate-400 uppercase tracking-wider font-semibold">Mistakes</span>
-                <span className="text-3xl font-extrabold text-cyber-red mt-1 block">
-                  {activeQuote ? activeQuote.text.length - activeQuote.text.split('').filter((c, i) => rawTypedText[i] === c).length : 0}
-                </span>
-              </div>
+            <div className="flex items-center gap-2">
+              <span className={isZenMode ? 'text-sm uppercase tracking-wider text-slate-500 font-semibold' : 'text-xs text-slate-400'}>Speed:</span>
+              <span className={isZenMode ? 'text-3xl font-black text-cyber-blue text-glow-cyan' : 'text-xs font-bold text-cyber-blue'}>{isStarted ? currentWpm : 0} WPM</span>
             </div>
+            <div className="flex items-center gap-2">
+              <span className={isZenMode ? 'text-sm uppercase tracking-wider text-slate-500 font-semibold' : 'text-xs text-slate-400'}>Accuracy:</span>
+              <span className={isZenMode ? 'text-3xl font-black text-cyber-green' : 'text-xs font-bold text-cyber-green'}>{accuracy}%</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <span className={isZenMode ? 'text-sm uppercase tracking-wider text-slate-500 font-semibold' : 'text-xs text-slate-400'}>Time:</span>
+              <span className={isZenMode ? 'text-3xl font-black text-white' : 'text-xs font-bold text-white'}>{elapsedTime}s</span>
+            </div>
+          </div>
 
-            <button
-              onClick={loadNewQuote}
-              className="w-full py-3 bg-gradient-to-r from-cyber-blue to-cyber-purple hover:opacity-95 text-white font-bold rounded-lg text-sm transition flex items-center justify-center gap-2 shadow-md"
-            >
-              <RotateCcw size={16} />
-              Load Next Quote
-            </button>
-            {onBack && (
-              <div className="flex justify-center pt-2">
+          {/* Quote block layout */}
+          <div 
+            onClick={() => { if (textInputRef.current) textInputRef.current.focus(); }}
+            className={`w-full transition-all duration-500 select-none cursor-text overflow-hidden relative whitespace-pre-wrap ${
+              isZenMode 
+                ? 'border-0 bg-transparent p-0 min-h-48 max-h-96 text-2xl md:text-3xl leading-loose font-mono' 
+                : 'border border-white/10 rounded-2xl bg-slate-950/50 p-8 min-h-36 max-h-56 overflow-y-auto text-lg leading-relaxed'
+            }`}
+          >
+            {renderTextHighlights()}
+            
+            {!isStarted && (
+              <div className={`absolute flex items-center gap-1.5 text-slate-400 bg-slate-900 border border-white/5 px-2.5 py-1.5 rounded-lg animate-pulse ${
+                isZenMode ? 'right-0 bottom-0 text-xs' : 'right-3 bottom-3 text-[10px]'
+              }`}>
+                <Sparkles size={12} className="text-yellow-400" />
+                Type the first letter to begin timer
+              </div>
+            )}
+          </div>
+
+          {/* Ghost input area */}
+          <textarea
+            ref={textInputRef}
+            value={rawTypedText}
+            onChange={handleStartTyping}
+            onKeyDown={(e) => playClickSound(e.key)}
+            className="absolute w-0 h-0 opacity-0 pointer-events-none"
+            autoCapitalize="off"
+            autoComplete="off"
+            autoCorrect="off"
+            spellCheck="false"
+          />
+
+          {/* Controls */}
+          {activeQuote && (
+            <div className="flex justify-between items-center text-xs text-slate-400 mt-4">
+              <span>Author: <strong className="text-white">{activeQuote.author}</strong></span>
+              <div className="flex gap-2 items-center">
                 <button
-                  onClick={() => {
-                    setIsZenMode(false);
-                    onBack();
-                  }}
-                  className="text-xs text-cyber-red hover:text-cyber-red/80 font-semibold underline transition cursor-pointer"
+                  onClick={loadNewQuote}
+                  className="px-4 py-2 bg-white/5 border border-white/10 hover:bg-white/10 text-white rounded-lg font-bold transition flex items-center gap-1.5 cursor-pointer"
                 >
-                  Exit Practice
+                  <RotateCcw size={12} />
+                  New Quote
                 </button>
-              </div>
-            )}
-          </div>
-        ) : (
-          /* Active Typing Engine */
-          <div className="space-y-6">
-            {/* Live Stats */}
-            <div className={`flex justify-between items-center transition-all duration-300 ${isZenMode ? 'px-0 py-0 border-0 bg-transparent text-slate-500 text-lg' : 'bg-slate-950/30 px-4 py-2 border border-white/5 rounded-xl'}`}>
-              <div className="flex items-center gap-2">
-                <span className={isZenMode ? 'text-sm uppercase tracking-wider text-slate-500 font-semibold' : 'text-xs text-slate-400 font-medium'}>Category:</span>
-                <span className={isZenMode ? 'text-3xl font-black text-yellow-400 uppercase tracking-wider' : 'text-xs font-bold text-yellow-400 uppercase tracking-wider'}>
-                  {activeQuote?.category}
-                </span>
-              </div>
-              <div className="flex items-center gap-2">
-                <span className={isZenMode ? 'text-sm uppercase tracking-wider text-slate-500 font-semibold' : 'text-xs text-slate-400'}>Speed:</span>
-                <span className={isZenMode ? 'text-3xl font-black text-cyber-blue text-glow-cyan' : 'text-xs font-bold text-cyber-blue'}>{isStarted ? currentWpm : 0} WPM</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <span className={isZenMode ? 'text-sm uppercase tracking-wider text-slate-500 font-semibold' : 'text-xs text-slate-400'}>Accuracy:</span>
-                <span className={isZenMode ? 'text-3xl font-black text-cyber-green' : 'text-xs font-bold text-cyber-green'}>{accuracy}%</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <span className={isZenMode ? 'text-sm uppercase tracking-wider text-slate-500 font-semibold' : 'text-xs text-slate-400'}>Time:</span>
-                <span className={isZenMode ? 'text-3xl font-black text-white' : 'text-xs font-bold text-white'}>{elapsedTime}s</span>
+                <button
+                  onClick={() => setIsZenMode(!isZenMode)}
+                  className="px-4 py-2 bg-white/5 border border-cyber-blue/30 hover:bg-cyber-blue/10 text-cyber-blue rounded-lg font-bold transition flex items-center gap-1.5 shadow-sm cursor-pointer"
+                  title="Toggle distraction-free full-screen layout"
+                >
+                  {isZenMode ? 'Exit Full Screen' : 'Full Screen Mode'}
+                </button>
+                {onBack && (
+                  <button
+                    onClick={() => {
+                      setIsZenMode(false);
+                      onBack();
+                    }}
+                    className="px-4 py-2 bg-white/5 border border-cyber-red/30 hover:bg-cyber-red/10 text-cyber-red rounded-lg font-bold transition flex items-center gap-1.5 shadow-sm cursor-pointer"
+                  >
+                    Exit Practice
+                  </button>
+                )}
               </div>
             </div>
+          )}
+        </div>
+      </div>
 
-            {/* Quote block layout */}
-            <div 
-              onClick={() => { if (textInputRef.current) textInputRef.current.focus(); }}
-              className={`w-full transition-all duration-500 select-none cursor-text overflow-hidden relative whitespace-pre-wrap ${
-                isZenMode 
-                  ? 'border-0 bg-transparent p-0 min-h-48 max-h-96 text-2xl md:text-3xl leading-loose font-mono' 
-                  : 'border border-white/10 rounded-2xl bg-slate-950/50 p-8 min-h-36 max-h-56 overflow-y-auto text-lg leading-relaxed'
-              }`}
+      {/* Results Modal */}
+      {showResults && (
+        <div 
+          onClick={(e) => { if (e.target === e.currentTarget) { setShowResults(false); setIsZenMode(false); } }}
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 backdrop-blur-md p-4 animate-fade-in text-left"
+        >
+          <div className="glass-card max-w-2xl w-full p-6 rounded-2xl border border-white/10 shadow-2xl relative bg-slate-900/90 text-slate-100 max-h-[90vh] overflow-y-auto">
+            <button 
+              onClick={() => { setShowResults(false); setIsZenMode(false); }}
+              className="absolute top-4 right-4 text-slate-400 hover:text-white text-lg font-bold cursor-pointer"
             >
-              {renderTextHighlights()}
-              
-              {!isStarted && (
-                <div className={`absolute flex items-center gap-1.5 text-slate-400 bg-slate-900 border border-white/5 px-2.5 py-1.5 rounded-lg animate-pulse ${
-                  isZenMode ? 'right-0 bottom-0 text-xs' : 'right-3 bottom-3 text-[10px]'
-                }`}>
-                  <Sparkles size={12} className="text-yellow-400" />
-                  Type the first letter to begin timer
+              ✕
+            </button>
+            <div className="py-2 space-y-6">
+              <div className="text-center">
+                <span className="inline-block px-3 py-1 rounded-full text-xs font-semibold bg-cyber-amber/15 text-cyber-amber border border-cyber-amber/30 mb-2">
+                  Quote Completed
+                </span>
+                <h3 className="text-xl font-bold text-white">Assessment Complete</h3>
+                {activeQuote && (
+                  <p className="text-xs text-slate-400 italic mt-2">
+                    &ldquo;{activeQuote.text}&rdquo; &mdash; {activeQuote.author}
+                  </p>
+                )}
+              </div>
+
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 w-full bg-slate-950/40 p-5 border border-white/5 rounded-xl">
+                <div className="text-center">
+                  <span className="text-xs text-slate-400 uppercase tracking-wider font-semibold">Speed</span>
+                  <span className="text-3xl font-extrabold text-cyber-blue text-glow-cyan mt-1 block">{currentWpm} WPM</span>
+                </div>
+                <div className="text-center">
+                  <span className="text-xs text-slate-400 uppercase tracking-wider font-semibold">Accuracy</span>
+                  <span className="text-3xl font-extrabold text-cyber-green mt-1 block">{accuracy}%</span>
+                </div>
+                <div className="text-center">
+                  <span className="text-xs text-slate-400 uppercase tracking-wider font-semibold">Time</span>
+                  <span className="text-3xl font-extrabold text-white mt-1 block">{elapsedTime}s</span>
+                </div>
+                <div className="text-center">
+                  <span className="text-xs text-slate-400 uppercase tracking-wider font-semibold">Mistakes</span>
+                  <span className="text-3xl font-extrabold text-cyber-red mt-1 block">
+                    {activeQuote ? activeQuote.text.length - activeQuote.text.split('').filter((c, i) => rawTypedText[i] === c).length : 0}
+                  </span>
+                </div>
+              </div>
+
+              <button
+                onClick={() => {
+                  setShowResults(false);
+                  setIsZenMode(false);
+                  loadNewQuote();
+                }}
+                className="w-full py-3 bg-gradient-to-r from-cyber-blue to-cyber-purple hover:opacity-95 text-white font-bold rounded-lg text-sm transition flex items-center justify-center gap-2 shadow-md cursor-pointer"
+              >
+                <RotateCcw size={16} />
+                Load Next Quote
+              </button>
+              {onBack && (
+                <div className="flex justify-center pt-2">
+                  <button
+                    onClick={() => {
+                      setShowResults(false);
+                      setIsZenMode(false);
+                      onBack();
+                    }}
+                    className="text-xs text-cyber-red hover:text-cyber-red/80 font-semibold underline transition cursor-pointer"
+                  >
+                    Exit Practice
+                  </button>
                 </div>
               )}
             </div>
-
-            {/* Ghost input area */}
-            <textarea
-              ref={textInputRef}
-              value={rawTypedText}
-              onChange={handleStartTyping}
-              onKeyDown={(e) => playClickSound(e.key)}
-              className="absolute w-0 h-0 opacity-0 pointer-events-none"
-              autoCapitalize="off"
-              autoComplete="off"
-              autoCorrect="off"
-              spellCheck="false"
-            />
-
-            {/* Controls */}
-            {activeQuote && (
-              <div className="flex justify-between items-center text-xs text-slate-400 mt-4">
-                <span>Author: <strong className="text-white">{activeQuote.author}</strong></span>
-                <div className="flex gap-2 items-center">
-                  <button
-                    onClick={loadNewQuote}
-                    className="px-4 py-2 bg-white/5 border border-white/10 hover:bg-white/10 text-white rounded-lg font-bold transition flex items-center gap-1.5 cursor-pointer"
-                  >
-                    <RotateCcw size={12} />
-                    New Quote
-                  </button>
-                  <button
-                    onClick={() => setIsZenMode(!isZenMode)}
-                    className="px-4 py-2 bg-white/5 border border-cyber-blue/30 hover:bg-cyber-blue/10 text-cyber-blue rounded-lg font-bold transition flex items-center gap-1.5 shadow-sm cursor-pointer"
-                    title="Toggle distraction-free full-screen layout"
-                  >
-                    {isZenMode ? 'Exit Full Screen' : 'Full Screen Mode'}
-                  </button>
-                  {onBack && (
-                    <button
-                      onClick={() => {
-                        setIsZenMode(false);
-                        onBack();
-                      }}
-                      className="px-4 py-2 bg-white/5 border border-cyber-red/30 hover:bg-cyber-red/10 text-cyber-red rounded-lg font-bold transition flex items-center gap-1.5 shadow-sm cursor-pointer"
-                    >
-                      Exit Practice
-                    </button>
-                  )}
-                </div>
-              </div>
-            )}
           </div>
-        )}
-      </div>
+        </div>
+      )}
     </div>
   );
 };

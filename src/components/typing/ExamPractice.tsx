@@ -218,6 +218,7 @@ export const ExamPractice: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
 
   const handleFinished = async (finalSeconds: number, isTimeout: boolean) => {
     setIsPlaying(false);
+    setIsZenMode(false);
     if (timerRef.current) clearInterval(timerRef.current);
     timerRef.current = null;
     setShowResults(true);
@@ -384,84 +385,7 @@ export const ExamPractice: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
 
       {/* 2. Main Practice Panel */}
       <div className={`relative overflow-hidden flex flex-col transition-all duration-500 ${isZenMode ? 'border-0 bg-transparent shadow-none p-0 w-full' : 'glass-card p-6 rounded-2xl'}`}>
-        {showResults ? (
-          /* Results Certificate View */
-          <div className="py-6 flex flex-col items-center text-center max-w-lg mx-auto w-full space-y-6">
-            <div className={`w-16 h-16 rounded-full flex items-center justify-center border-2 ${
-              passed 
-                ? 'bg-cyber-green/10 border-cyber-green/40 text-cyber-green shadow-[0_0_15px_rgba(16,185,129,0.3)]' 
-                : 'bg-cyber-red/10 border-cyber-red/40 text-cyber-red shadow-[0_0_15px_rgba(244,63,94,0.3)]'
-            }`}>
-              {passed ? <CheckCircle2 size={36} /> : <XCircle size={36} />}
-            </div>
-
-            <div>
-              <h3 className="text-xl font-bold text-white tracking-wide">
-                {passed ? 'Exam Completed Successfully!' : 'Requirements Not Met'}
-              </h3>
-              <p className="text-xs text-slate-400 mt-1 uppercase tracking-wider font-mono">
-                {activePresetName}
-              </p>
-              {!passed && (
-                <p className="text-xs text-cyber-red font-semibold bg-cyber-red/5 border border-cyber-red/20 px-3 py-2 rounded-lg mt-3">
-                  {failReason}
-                </p>
-              )}
-            </div>
-
-            {/* Metric breakdown */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 w-full bg-slate-950/40 p-5 border border-white/5 rounded-xl">
-              <div className="text-center p-1">
-                <span className="text-[10px] text-slate-400 uppercase tracking-wider font-semibold">Speed Achieved</span>
-                <span className={`text-2xl font-extrabold mt-1 block ${passed ? 'text-cyber-blue text-glow-cyan' : 'text-slate-300'}`}>
-                  {currentWpm} WPM
-                </span>
-              </div>
-              <div className="text-center p-1">
-                <span className="text-[10px] text-slate-400 uppercase tracking-wider font-semibold">Accuracy</span>
-                <span className={`text-2xl font-extrabold mt-1 block ${accuracy >= 90 ? 'text-cyber-green' : 'text-cyber-amber'}`}>
-                  {accuracy}%
-                </span>
-                <span className="text-[8px] text-slate-500">Req: 90%</span>
-              </div>
-              <div className="text-center p-1">
-                <span className="text-[10px] text-slate-400 uppercase tracking-wider font-semibold">Words Typed</span>
-                <span className="text-2xl font-extrabold text-white mt-1 block">
-                  {wordsTyped} / {activeWords}
-                </span>
-                <span className="text-[8px] text-slate-500">5 chars = 1 word</span>
-              </div>
-              <div className="text-center p-1">
-                <span className="text-[10px] text-slate-400 uppercase tracking-wider font-semibold">Time Spent</span>
-                <span className="text-2xl font-extrabold text-white mt-1 block">
-                  {formatTime(elapsedTime)}
-                </span>
-                <span className="text-[8px] text-slate-500">Limit: {formatTime(activeTimeLimit)}</span>
-              </div>
-            </div>
-
-            <button
-              onClick={handleLaunchExam}
-              className="w-full py-3 bg-gradient-to-r from-cyber-blue to-cyber-purple hover:opacity-95 text-white font-bold rounded-lg text-sm transition flex items-center justify-center gap-2 shadow-md hover:shadow-[0_0_12px_rgba(0,242,254,0.25)]"
-            >
-              <RotateCcw size={16} />
-              Attempt Another Exam
-            </button>
-            {onBack && (
-              <div className="flex justify-center pt-2">
-                <button
-                  onClick={() => {
-                    setIsZenMode(false);
-                    onBack();
-                  }}
-                  className="text-xs text-cyber-red hover:text-cyber-red/80 font-semibold underline transition cursor-pointer"
-                >
-                  Exit Practice
-                </button>
-              </div>
-            )}
-          </div>
-        ) : !isPlaying ? (
+        {!isPlaying ? (
           /* Selection Landing Screen */
           <div className="py-6 space-y-6">
             {!isCustomMode ? (
@@ -671,6 +595,106 @@ export const ExamPractice: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
           </div>
         )}
       </div>
+
+      {/* Results Modal */}
+      {showResults && (
+        <div 
+          onClick={(e) => { if (e.target === e.currentTarget) { setShowResults(false); setIsZenMode(false); } }}
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 backdrop-blur-md p-4 animate-fade-in text-left"
+        >
+          <div className="glass-card max-w-lg w-full p-6 rounded-2xl border border-white/10 shadow-2xl relative bg-slate-900/90 text-slate-100 max-h-[90vh] overflow-y-auto">
+            <button 
+              onClick={() => { setShowResults(false); setIsZenMode(false); }}
+              className="absolute top-4 right-4 text-slate-400 hover:text-white text-lg font-bold cursor-pointer"
+            >
+              ✕
+            </button>
+            
+            <div className="py-6 flex flex-col items-center text-center w-full space-y-6">
+              <div className={`w-16 h-16 rounded-full flex items-center justify-center border-2 ${
+                passed 
+                  ? 'bg-cyber-green/10 border-cyber-green/40 text-cyber-green shadow-[0_0_15px_rgba(16,185,129,0.3)]' 
+                  : 'bg-cyber-red/10 border-cyber-red/40 text-cyber-red shadow-[0_0_15px_rgba(244,63,94,0.3)]'
+              }`}>
+                {passed ? <CheckCircle2 size={36} /> : <XCircle size={36} />}
+              </div>
+
+              <div>
+                <h3 className="text-xl font-bold text-white tracking-wide">
+                  {passed ? 'Exam Completed Successfully!' : 'Requirements Not Met'}
+                </h3>
+                <p className="text-xs text-slate-400 mt-1 uppercase tracking-wider font-mono">
+                  {activePresetName}
+                </p>
+                {!passed && (
+                  <p className="text-xs text-cyber-red font-semibold bg-cyber-red/5 border border-cyber-red/20 px-3 py-2 rounded-lg mt-3">
+                    {failReason}
+                  </p>
+                )}
+              </div>
+
+              {/* Metric breakdown */}
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 w-full bg-slate-950/40 p-5 border border-white/5 rounded-xl text-center">
+                <div className="p-1">
+                  <span className="text-[10px] text-slate-400 uppercase tracking-wider font-semibold block">Speed Achieved</span>
+                  <span className={`text-2xl font-extrabold mt-1 block ${passed ? 'text-cyber-blue text-glow-cyan' : 'text-slate-300'}`}>
+                    {currentWpm} WPM
+                  </span>
+                </div>
+                <div className="p-1">
+                  <span className="text-[10px] text-slate-400 uppercase tracking-wider font-semibold block">Accuracy</span>
+                  <span className={`text-2xl font-extrabold mt-1 block ${accuracy >= 90 ? 'text-cyber-green' : 'text-cyber-amber'}`}>
+                    {accuracy}%
+                  </span>
+                  <span className="text-[8px] text-slate-500">Req: 90%</span>
+                </div>
+                <div className="p-1">
+                  <span className="text-[10px] text-slate-400 uppercase tracking-wider font-semibold block">Words Typed</span>
+                  <span className="text-2xl font-extrabold text-white mt-1 block">
+                    {wordsTyped} / {activeWords}
+                  </span>
+                  <span className="text-[8px] text-slate-500">5 chars = 1 word</span>
+                </div>
+                <div className="p-1">
+                  <span className="text-[10px] text-slate-400 uppercase tracking-wider font-semibold block">Time Spent</span>
+                  <span className="text-2xl font-extrabold text-white mt-1 block">
+                    {formatTime(elapsedTime)}
+                  </span>
+                  <span className="text-[8px] text-slate-500">Limit: {formatTime(activeTimeLimit)}</span>
+                </div>
+              </div>
+
+              <button
+                onClick={() => {
+                  setShowResults(false);
+                  setIsZenMode(false);
+                  handleLaunchExam();
+                }}
+                className="w-full py-3 bg-gradient-to-r from-cyber-blue to-cyber-purple hover:opacity-95 text-white font-bold rounded-lg text-sm transition flex items-center justify-center gap-2 shadow-md hover:shadow-[0_0_12px_rgba(0,242,254,0.25)] cursor-pointer"
+              >
+                <RotateCcw size={16} />
+                Attempt Another Exam
+              </button>
+              {onBack && (
+                <div className="flex justify-center pt-2">
+                  <button
+                    onClick={() => {
+                      setShowResults(false);
+                      setIsZenMode(false);
+                      onBack();
+                    }}
+                    className="text-xs text-cyber-red hover:text-cyber-red/80 font-semibold underline transition cursor-pointer"
+                  >
+                    Exit Practice
+                  </button>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
+
+

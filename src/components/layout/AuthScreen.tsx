@@ -3,6 +3,7 @@
 import React, { useState } from 'react';
 import { useApp } from '@/context/AppContext';
 import { supabase } from '@/lib/services/supabaseClient';
+import { APP_NAME } from '@/lib/config';
 import { Lock, Mail, User, Eye, EyeOff } from 'lucide-react';
 
 const ChromeIcon = ({ className, size = 14 }: { className?: string; size?: number }) => (
@@ -67,14 +68,28 @@ export const AuthScreen: React.FC = () => {
             password,
           });
           if (error) throw error;
-          addToast('Login Successful', 'Welcome back to TypeMaster Pro!', 'success');
+          addToast('Login Successful', `Welcome back to ${APP_NAME}!`, 'success');
         } else {
           if (!username) {
             addToast('Validation Error', 'Please enter a username', 'error');
             setLoading(false);
             return;
           }
-          const { error } = await supabase!.auth.signUp({
+
+          // Check if username is already taken in profiles table to avoid PostgreSQL constraint violation
+          const { data: existingUser, error: usernameError } = await supabase!
+            .from('profiles')
+            .select('username')
+            .eq('username', username)
+            .maybeSingle();
+
+          if (existingUser) {
+            addToast('Registration Failed', 'This username is already taken. Please choose another one.', 'error');
+            setLoading(false);
+            return;
+          }
+
+          const { data, error } = await supabase!.auth.signUp({
             email,
             password,
             options: {
@@ -84,6 +99,14 @@ export const AuthScreen: React.FC = () => {
             }
           });
           if (error) throw error;
+
+          // Check if email already exists (Supabase returns empty identities array to prevent user enumeration)
+          if (data?.user && (!data.user.identities || data.user.identities.length === 0)) {
+            addToast('Registration Failed', 'This email is already registered. Please sign in instead.', 'error');
+            setLoading(false);
+            return;
+          }
+
           addToast('Registration Successful', 'Please check your email to confirm registration.', 'success');
         }
       } catch (err: any) {
@@ -118,19 +141,42 @@ export const AuthScreen: React.FC = () => {
     }
   };
 
-  const handleForgotPassword = (e: React.FormEvent) => {
+  const handleForgotPassword = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!email) {
       addToast('Error', 'Please enter your email address first.', 'error');
       return;
     }
     
-    addToast(
-      'Reset Instructions Sent',
-      `Password reset link has been dispatched to ${email}.`,
-      'success'
-    );
-    setForgotPassword(false);
+    setLoading(true);
+    if (localMode) {
+      setTimeout(() => {
+        addToast(
+          'Reset Instructions Sent',
+          `Password reset link has been dispatched to ${email}.`,
+          'success'
+        );
+        setForgotPassword(false);
+        setLoading(false);
+      }, 800);
+    } else {
+      try {
+        const { error } = await supabase!.auth.resetPasswordForEmail(email, {
+          redirectTo: `${window.location.origin}`,
+        });
+        if (error) throw error;
+        addToast(
+          'Reset Instructions Sent',
+          `Password reset link has been dispatched to ${email}.`,
+          'success'
+        );
+        setForgotPassword(false);
+      } catch (err: any) {
+        addToast('Reset Failed', err.message, 'error');
+      } finally {
+        setLoading(false);
+      }
+    }
   };
 
   return (
@@ -146,7 +192,7 @@ export const AuthScreen: React.FC = () => {
             {localMode ? '⚡ Local Offline Mode' : '🔗 Connected to Supabase'}
           </div>
           <h1 className="text-3xl font-extrabold text-white tracking-tight">
-            TypeMaster <span className="text-cyber-blue text-glow-cyan">Pro</span>
+            {APP_NAME.split(' ')[0]} <span className="text-cyber-blue text-glow-cyan">{APP_NAME.split(' ').slice(1).join(' ')}</span>
           </h1>
           <p className="text-sm text-slate-400 mt-2">
             The premium typing learning & battle arena
@@ -180,9 +226,14 @@ export const AuthScreen: React.FC = () => {
 
             <button
               type="submit"
-              className="w-full py-3 bg-gradient-to-r from-cyber-blue to-cyber-purple hover:from-cyber-blue/90 hover:to-cyber-purple/90 text-white font-bold rounded-lg text-sm shadow-md transition-all active:scale-[0.98]"
+              disabled={loading}
+              className="w-full py-3 bg-gradient-to-r from-cyber-blue to-cyber-purple hover:from-cyber-blue/90 hover:to-cyber-purple/90 text-white font-bold rounded-lg text-sm shadow-md transition-all active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
             >
-              Send Reset Code
+              {loading ? (
+                <span className="inline-block w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
+              ) : (
+                'Send Reset Code'
+              )}
             </button>
 
             <button

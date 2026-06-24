@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react';
 import { useApp } from '@/context/AppContext';
+import { APP_NAME } from '@/lib/config';
 import { AuthScreen } from '@/components/layout/AuthScreen';
 import { DashboardView } from '@/components/dashboard/DashboardView';
 import { BeginnerPractice } from '@/components/typing/BeginnerPractice';
@@ -15,6 +16,7 @@ import { LeaderboardView } from '@/components/dashboard/LeaderboardView';
 import { AdminView } from '@/components/dashboard/AdminView';
 import { ExamPractice } from '@/components/typing/ExamPractice';
 import { SettingsView } from '@/components/dashboard/SettingsView';
+import { PasswordResetModal } from '@/components/layout/PasswordResetModal';
 
 import { 
   Trophy, Zap, Target, Hourglass, ShieldAlert, Award, 
@@ -23,7 +25,7 @@ import {
 } from 'lucide-react';
 
 export default function Home() {
-  const { user, profile, loading, localMode, logOut, caretBlinking, setCaretBlinking, cursorStyle, setCursorStyle, isZenMode, setIsZenMode } = useApp();
+  const { user, profile, loading, localMode, logOut, caretBlinking, setCaretBlinking, cursorStyle, setCursorStyle, isZenMode, setIsZenMode, isResettingPassword } = useApp();
   const [activeTab, setActiveTab] = useState<string>('dashboard');
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
@@ -40,7 +42,9 @@ export default function Home() {
       <div className="min-h-screen flex items-center justify-center bg-cyber-dark">
         <div className="relative">
           <div className="w-16 h-16 border-4 border-cyber-blue border-t-transparent rounded-full animate-spin"></div>
-          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-xs font-black text-cyber-blue">TM</div>
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-xs font-black text-cyber-blue">
+            {APP_NAME.split(' ').map(w => w[0]).join('')}
+          </div>
         </div>
       </div>
     );
@@ -105,6 +109,9 @@ export default function Home() {
         : 'min-h-screen w-full'
     }`}>
       
+      {/* Password Reset Modal Overlay */}
+      <PasswordResetModal />
+      
       {/* 1. Desktop Sidebar */}
       <aside className={`hidden lg:flex flex-col border-r border-border bg-surface justify-between shrink-0 transition-all duration-500 ease-in-out ${
         isZenMode 
@@ -125,7 +132,7 @@ export default function Home() {
               TM
             </div>
             <h1 className="text-lg font-bold tracking-wider" style={{ color: 'var(--text)' }}>
-              TypeMaster <span style={{ color: 'var(--accent)', textShadow: '0 0 6px var(--accent)' }}>Pro</span>
+              {APP_NAME.split(' ')[0]} <span style={{ color: 'var(--accent)', textShadow: '0 0 6px var(--accent)' }}>{APP_NAME.split(' ').slice(1).join(' ')}</span>
             </h1>
           </div>
 
@@ -190,7 +197,7 @@ export default function Home() {
             <Menu size={20} />
           </button>
           <h1 className="text-sm font-bold tracking-wider" style={{ color: 'var(--text)' }}>
-            TypeMaster <span className="font-bold" style={{ color: 'var(--accent)', textShadow: '0 0 6px var(--accent)' }}>Pro</span>
+            {APP_NAME.split(' ')[0]} <span className="font-bold" style={{ color: 'var(--accent)', textShadow: '0 0 6px var(--accent)' }}>{APP_NAME.split(' ').slice(1).join(' ')}</span>
           </h1>
         </div>
 
@@ -247,7 +254,7 @@ export default function Home() {
                style={{ backgroundColor: 'var(--surface)', borderColor: 'var(--border)' }}>
             <div className="space-y-6">
               <div className="flex justify-between items-center">
-                <h1 className="text-base font-bold tracking-wider" style={{ color: 'var(--text)' }}>TypeMaster Pro</h1>
+                <h1 className="text-base font-bold tracking-wider" style={{ color: 'var(--text)' }}>{APP_NAME}</h1>
                 <button onClick={() => setSidebarOpen(false)} className="text-text-muted hover:text-text cursor-pointer">
                   <X size={18} />
                 </button>

@@ -268,194 +268,109 @@ export const ChallengePractice: React.FC<{ onBack?: () => void }> = ({ onBack })
       {selectedChallenge ? (
         /* Active gameplay console */
         <div className={`relative overflow-hidden flex flex-col transition-all duration-500 ${isZenMode ? 'border-0 bg-transparent shadow-none p-0 w-full' : 'glass-card p-6 rounded-2xl'}`}>
-          {showResults ? (
-            /* Results Panel */
-            <div className="py-6 flex flex-col items-center text-center max-w-lg mx-auto space-y-6 w-full">
-              <div className={`w-16 h-16 rounded-full flex items-center justify-center border ${
-                passed 
-                  ? 'bg-cyber-green/10 border-cyber-green/30 text-cyber-green shadow-[0_0_15px_rgba(16,185,129,0.35)]' 
-                  : 'bg-cyber-red/10 border-cyber-red/30 text-cyber-red shadow-[0_0_15px_rgba(244,63,94,0.35)]'
-              }`}>
-                {passed ? <CheckCircle size={36} /> : <XCircle size={36} />}
+          {/* Active gameplay sandbox */}
+          <div className={`relative transition-all duration-500 ${isZenMode ? 'space-y-12' : 'space-y-6'}`}>
+            {/* Stats headers */}
+            <div className={`flex justify-between items-center transition-all duration-300 ${isZenMode ? 'px-0 py-0 border-0 bg-transparent text-slate-500 text-lg' : 'bg-slate-950/30 px-4 py-2.5 border border-white/5 rounded-xl text-xs'}`}>
+              <div className="flex items-center gap-1.5">
+                <Zap size={isZenMode ? 18 : 14} className="text-cyber-blue text-glow-cyan" />
+                <span className={isZenMode ? 'text-sm uppercase tracking-wider text-slate-500 font-semibold' : 'text-slate-400 font-medium'}>Target:</span>
+                <span className={isZenMode ? 'text-3xl font-black text-cyber-blue text-glow-cyan' : 'font-bold text-white'}>{selectedChallenge.targetWpm} WPM</span>
+                <span className={isZenMode ? 'text-sm font-semibold text-slate-400 ml-1' : 'text-slate-500'}>({currentWpm} WPM)</span>
               </div>
-
-              <div>
-                <h3 className="text-xl font-bold text-white">
-                  {passed ? 'Level Completed successfully!' : 'Requirements Not Met'}
-                </h3>
-                <p className="text-sm text-slate-400 mt-1">
-                  Challenge Level {selectedChallenge.level}
-                </p>
-                {!passed && (
-                  <p className="text-xs text-cyber-red font-semibold bg-cyber-red/5 border border-cyber-red/20 px-3 py-2 rounded-lg mt-3">
-                    {failReason}
-                  </p>
-                )}
+              <div className="flex items-center gap-1.5">
+                <Target size={isZenMode ? 18 : 14} className="text-cyber-green" />
+                <span className={isZenMode ? 'text-sm uppercase tracking-wider text-slate-500 font-semibold' : 'text-slate-400 font-medium'}>Accuracy:</span>
+                <span className={isZenMode ? 'text-3xl font-black text-cyber-green' : 'font-bold text-white'}>{selectedChallenge.targetAccuracy}%</span>
+                <span className={isZenMode ? 'text-sm font-semibold text-slate-400 ml-1' : 'text-slate-500'}>({accuracy}%)</span>
               </div>
+              <div className="flex items-center gap-1.5">
+                <Clock size={isZenMode ? 18 : 14} className="text-cyber-red" />
+                <span className={isZenMode ? 'text-sm uppercase tracking-wider text-slate-500 font-semibold' : 'text-slate-400 font-medium'}>Timer:</span>
+                <span className={isZenMode ? 'text-3xl font-black text-white' : `font-bold ${timeLeft <= 10 ? 'text-cyber-red animate-pulse' : 'text-white'}`}>
+                  {timeLeft}s
+                </span>
+              </div>
+            </div>
 
-              {/* Stats card */}
-              <div className="grid grid-cols-2 gap-4 w-full bg-slate-950/40 p-4 rounded-xl border border-white/5">
-                <div className="text-center p-2 border-r border-white/5">
-                  <span className="text-xs text-slate-400 font-semibold block">Speed achieved</span>
-                  <span className={`text-2xl font-extrabold mt-1 block ${passed ? 'text-cyber-blue text-glow-cyan' : 'text-slate-400'}`}>
-                    {currentWpm} WPM
-                  </span>
-                  <span className="text-[10px] text-slate-500">Target: {selectedChallenge.targetWpm} WPM</span>
+            {/* Text Highlights Box */}
+            <div 
+              onClick={() => { if (textInputRef.current) textInputRef.current.focus(); }}
+              className={`w-full transition-all duration-500 select-none cursor-text overflow-hidden relative whitespace-pre-wrap ${
+                isZenMode 
+                  ? 'border-0 bg-transparent p-0 min-h-48 max-h-96 text-2xl md:text-3xl leading-loose font-mono' 
+                  : 'border border-white/10 rounded-2xl bg-slate-950/50 p-8 min-h-32 max-h-56 overflow-y-auto text-lg leading-relaxed'
+              }`}
+            >
+              {renderTextHighlights()}
+
+              {!isStarted && (
+                <div className={`absolute flex items-center gap-1.5 text-slate-400 bg-slate-900 border border-white/5 px-2.5 py-1.5 rounded-lg animate-pulse select-none pointer-events-none ${
+                  isZenMode ? 'right-0 bottom-0 text-xs' : 'right-3 bottom-3 text-[10px]'
+                }`}>
+                  <Sparkles size={12} className="text-yellow-400 animate-spin" style={{ animationDuration: '3s' }} />
+                  Type the first letter to begin level timer
                 </div>
-                <div className="text-center p-2">
-                  <span className="text-xs text-slate-400 font-semibold block">Accuracy achieved</span>
-                  <span className={`text-2xl font-extrabold mt-1 block ${passed ? 'text-cyber-green' : 'text-slate-400'}`}>
-                    {accuracy}%
-                  </span>
-                  <span className="text-[10px] text-slate-500">Target: {selectedChallenge.targetAccuracy}%</span>
-                </div>
-              </div>
+              )}
+            </div>
 
-              <div className="flex gap-3 w-full">
+            {/* Ghost input area */}
+            <textarea
+              ref={textInputRef}
+              value={rawTypedText}
+              onChange={handleTextChange}
+              onKeyDown={(e) => playClickSound(e.key)}
+              className="absolute w-0 h-0 opacity-0 pointer-events-none"
+              autoCapitalize="off"
+              autoComplete="off"
+              autoCorrect="off"
+              spellCheck="false"
+            />
+
+            <div className="flex justify-between items-center">
+              <div className="flex gap-2">
                 <button
                   onClick={() => startChallenge(selectedChallenge)}
-                  className="flex-1 py-3 border border-white/10 hover:border-white/20 text-white font-bold rounded-lg text-sm transition flex items-center justify-center gap-1.5"
+                  className="px-4 py-2 bg-white/5 border border-white/10 hover:bg-white/10 text-white rounded-lg text-xs font-bold transition flex items-center gap-1.5 cursor-pointer"
                 >
-                  <RotateCcw size={14} />
-                  Retry Level
+                  <RotateCcw size={12} />
+                  Restart Level
                 </button>
-                {passed && selectedChallenge.level < 20 ? (
-                  <button
-                    onClick={() => startChallenge(CHALLENGES[selectedChallenge.level])}
-                    className="flex-1 py-3 bg-gradient-to-r from-cyber-blue to-cyber-purple hover:opacity-95 text-white font-bold rounded-lg text-sm transition flex items-center justify-center gap-1.5 shadow-md"
-                  >
-                    Next Level
-                    <ArrowRight size={14} />
-                  </button>
-                ) : (
-                  <button
-                    onClick={() => setSelectedChallenge(null)}
-                    className="flex-1 py-3 bg-slate-900 hover:bg-slate-800 text-white font-bold rounded-lg text-sm transition"
-                  >
-                    Exit Level
-                  </button>
-                )}
+                <button
+                  onClick={() => setIsZenMode(!isZenMode)}
+                  className="px-4 py-2 bg-white/5 border border-cyber-blue/30 hover:bg-cyber-blue/10 text-cyber-blue rounded-lg text-xs font-bold transition flex items-center gap-1.5 shadow-sm cursor-pointer"
+                  title="Toggle distraction-free full-screen layout"
+                >
+                  {isZenMode ? 'Exit Full Screen' : 'Full Screen Mode'}
+                </button>
               </div>
 
-              {onBack && (
-                <div className="flex justify-center pt-2">
+              <div className="flex items-center gap-4">
+                {onBack && (
                   <button
                     onClick={() => {
                       setIsZenMode(false);
                       onBack();
                     }}
-                    className="text-xs text-cyber-red hover:text-cyber-red/80 font-semibold underline transition cursor-pointer"
+                    className="text-xs text-cyber-red hover:text-cyber-red/80 font-semibold underline cursor-pointer"
                   >
                     Exit Practice
                   </button>
-                </div>
-              )}
-            </div>
-          ) : (
-            /* Active gameplay sandbox */
-            <div className={`relative transition-all duration-500 ${isZenMode ? 'space-y-12' : 'space-y-6'}`}>
-              {/* Stats headers */}
-              <div className={`flex justify-between items-center transition-all duration-300 ${isZenMode ? 'px-0 py-0 border-0 bg-transparent text-slate-500 text-lg' : 'bg-slate-950/30 px-4 py-2.5 border border-white/5 rounded-xl text-xs'}`}>
-                <div className="flex items-center gap-1.5">
-                  <Zap size={isZenMode ? 18 : 14} className="text-cyber-blue text-glow-cyan" />
-                  <span className={isZenMode ? 'text-sm uppercase tracking-wider text-slate-500 font-semibold' : 'text-slate-400 font-medium'}>Target:</span>
-                  <span className={isZenMode ? 'text-3xl font-black text-cyber-blue text-glow-cyan' : 'font-bold text-white'}>{selectedChallenge.targetWpm} WPM</span>
-                  <span className={isZenMode ? 'text-sm font-semibold text-slate-400 ml-1' : 'text-slate-500'}>({currentWpm} WPM)</span>
-                </div>
-                <div className="flex items-center gap-1.5">
-                  <Target size={isZenMode ? 18 : 14} className="text-cyber-green" />
-                  <span className={isZenMode ? 'text-sm uppercase tracking-wider text-slate-500 font-semibold' : 'text-slate-400 font-medium'}>Accuracy:</span>
-                  <span className={isZenMode ? 'text-3xl font-black text-cyber-green' : 'font-bold text-white'}>{selectedChallenge.targetAccuracy}%</span>
-                  <span className={isZenMode ? 'text-sm font-semibold text-slate-400 ml-1' : 'text-slate-500'}>({accuracy}%)</span>
-                </div>
-                <div className="flex items-center gap-1.5">
-                  <Clock size={isZenMode ? 18 : 14} className="text-cyber-red" />
-                  <span className={isZenMode ? 'text-sm uppercase tracking-wider text-slate-500 font-semibold' : 'text-slate-400 font-medium'}>Timer:</span>
-                  <span className={isZenMode ? 'text-3xl font-black text-white' : `font-bold ${timeLeft <= 10 ? 'text-cyber-red animate-pulse' : 'text-white'}`}>
-                    {timeLeft}s
-                  </span>
-                </div>
-              </div>
-
-              {/* Text Highlights Box */}
-              <div 
-                onClick={() => { if (textInputRef.current) textInputRef.current.focus(); }}
-                className={`w-full transition-all duration-500 select-none cursor-text overflow-hidden relative whitespace-pre-wrap ${
-                  isZenMode 
-                    ? 'border-0 bg-transparent p-0 min-h-48 max-h-96 text-2xl md:text-3xl leading-loose font-mono' 
-                    : 'border border-white/10 rounded-2xl bg-slate-950/50 p-8 min-h-32 max-h-56 overflow-y-auto text-lg leading-relaxed'
-                }`}
-              >
-                {renderTextHighlights()}
-
-                {!isStarted && (
-                  <div className={`absolute flex items-center gap-1.5 text-slate-400 bg-slate-900 border border-white/5 px-2.5 py-1.5 rounded-lg animate-pulse select-none pointer-events-none ${
-                    isZenMode ? 'right-0 bottom-0 text-xs' : 'right-3 bottom-3 text-[10px]'
-                  }`}>
-                    <Sparkles size={12} className="text-yellow-400 animate-spin" style={{ animationDuration: '3s' }} />
-                    Type the first letter to begin level timer
-                  </div>
                 )}
-              </div>
-
-              {/* Ghost input area */}
-              <textarea
-                ref={textInputRef}
-                value={rawTypedText}
-                onChange={handleTextChange}
-                onKeyDown={(e) => playClickSound(e.key)}
-                className="absolute w-0 h-0 opacity-0 pointer-events-none"
-                autoCapitalize="off"
-                autoComplete="off"
-                autoCorrect="off"
-                spellCheck="false"
-              />
-
-              <div className="flex justify-between items-center">
-                <div className="flex gap-2">
-                  <button
-                    onClick={() => startChallenge(selectedChallenge)}
-                    className="px-4 py-2 bg-white/5 border border-white/10 hover:bg-white/10 text-white rounded-lg text-xs font-bold transition flex items-center gap-1.5 cursor-pointer"
-                  >
-                    <RotateCcw size={12} />
-                    Restart Level
-                  </button>
-                  <button
-                    onClick={() => setIsZenMode(!isZenMode)}
-                    className="px-4 py-2 bg-white/5 border border-cyber-blue/30 hover:bg-cyber-blue/10 text-cyber-blue rounded-lg text-xs font-bold transition flex items-center gap-1.5 shadow-sm cursor-pointer"
-                    title="Toggle distraction-free full-screen layout"
-                  >
-                    {isZenMode ? 'Exit Full Screen' : 'Full Screen Mode'}
-                  </button>
-                </div>
-
-                <div className="flex items-center gap-4">
-                  {onBack && (
-                    <button
-                      onClick={() => {
-                        setIsZenMode(false);
-                        onBack();
-                      }}
-                      className="text-xs text-cyber-red hover:text-cyber-red/80 font-semibold underline cursor-pointer"
-                    >
-                      Exit Practice
-                    </button>
-                  )}
-                  <button
-                    onClick={() => {
-                      if (isPlaying && elapsedTime > 0 && user) {
-                        incrementPracticeTime(user.id, elapsedTime);
-                      }
-                      setSelectedChallenge(null);
-                    }}
-                    className="text-xs text-slate-500 hover:text-slate-300 font-semibold"
-                  >
-                    Exit Level
-                  </button>
-                </div>
+                <button
+                  onClick={() => {
+                    if (isPlaying && elapsedTime > 0 && user) {
+                      incrementPracticeTime(user.id, elapsedTime);
+                    }
+                    setSelectedChallenge(null);
+                  }}
+                  className="text-xs text-slate-500 hover:text-slate-300 font-semibold"
+                >
+                  Exit Level
+                </button>
               </div>
             </div>
-          )}
+          </div>
         </div>
       ) : (
         /* Progress cards grid list */
@@ -515,6 +430,121 @@ export const ChallengePractice: React.FC<{ onBack?: () => void }> = ({ onBack })
           })}
         </div>
       )}
+
+      {/* Results Modal */}
+      {showResults && selectedChallenge && (
+        <div 
+          onClick={(e) => { if (e.target === e.currentTarget) { setShowResults(false); setIsZenMode(false); } }}
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 backdrop-blur-md p-4 animate-fade-in text-left"
+        >
+          <div className="glass-card max-w-lg w-full p-6 rounded-2xl border border-white/10 shadow-2xl relative bg-slate-900/90 text-slate-100 max-h-[90vh] overflow-y-auto">
+            <button 
+              onClick={() => { setShowResults(false); setIsZenMode(false); }}
+              className="absolute top-4 right-4 text-slate-400 hover:text-white text-lg font-bold cursor-pointer"
+            >
+              ✕
+            </button>
+            
+            <div className="py-6 flex flex-col items-center text-center space-y-6 w-full">
+              <div className={`w-16 h-16 rounded-full flex items-center justify-center border ${
+                passed 
+                  ? 'bg-cyber-green/10 border-cyber-green/30 text-cyber-green shadow-[0_0_15px_rgba(16,185,129,0.35)]' 
+                  : 'bg-cyber-red/10 border-cyber-red/30 text-cyber-red shadow-[0_0_15px_rgba(244,63,94,0.35)]'
+              }`}>
+                {passed ? <CheckCircle size={36} /> : <XCircle size={36} />}
+              </div>
+
+              <div>
+                <h3 className="text-xl font-bold text-white">
+                  {passed ? 'Level Completed successfully!' : 'Requirements Not Met'}
+                </h3>
+                <p className="text-sm text-slate-400 mt-1">
+                  Challenge Level {selectedChallenge.level}
+                </p>
+                {!passed && (
+                  <p className="text-xs text-cyber-red font-semibold bg-cyber-red/5 border border-cyber-red/20 px-3 py-2 rounded-lg mt-3">
+                    {failReason}
+                  </p>
+                )}
+              </div>
+
+              {/* Stats card */}
+              <div className="grid grid-cols-2 gap-4 w-full bg-slate-950/40 p-4 rounded-xl border border-white/5">
+                <div className="text-center p-2 border-r border-white/5">
+                  <span className="text-xs text-slate-400 font-semibold block">Speed achieved</span>
+                  <span className={`text-2xl font-extrabold mt-1 block ${passed ? 'text-cyber-blue text-glow-cyan' : 'text-slate-400'}`}>
+                    {currentWpm} WPM
+                  </span>
+                  <span className="text-[10px] text-slate-500">Target: {selectedChallenge.targetWpm} WPM</span>
+                </div>
+                <div className="text-center p-2">
+                  <span className="text-xs text-slate-400 font-semibold block">Accuracy achieved</span>
+                  <span className={`text-2xl font-extrabold mt-1 block ${passed ? 'text-cyber-green' : 'text-slate-400'}`}>
+                    {accuracy}%
+                  </span>
+                  <span className="text-[10px] text-slate-500">Target: {selectedChallenge.targetAccuracy}%</span>
+                </div>
+              </div>
+
+              <div className="flex gap-3 w-full">
+                <button
+                  onClick={() => {
+                    setShowResults(false);
+                    setIsZenMode(false);
+                    startChallenge(selectedChallenge);
+                  }}
+                  className="flex-1 py-3 border border-white/10 hover:border-white/20 text-white font-bold rounded-lg text-sm transition flex items-center justify-center gap-1.5 cursor-pointer"
+                >
+                  <RotateCcw size={14} />
+                  Retry Level
+                </button>
+                {passed && selectedChallenge.level < 20 ? (
+                  <button
+                    onClick={() => {
+                      setShowResults(false);
+                      setIsZenMode(false);
+                      startChallenge(CHALLENGES[selectedChallenge.level]);
+                    }}
+                    className="flex-1 py-3 bg-gradient-to-r from-cyber-blue to-cyber-purple hover:opacity-95 text-white font-bold rounded-lg text-sm transition flex items-center justify-center gap-1.5 shadow-md cursor-pointer"
+                  >
+                    Next Level
+                    <ArrowRight size={14} />
+                  </button>
+                ) : (
+                  <button
+                    onClick={() => {
+                      setShowResults(false);
+                      setIsZenMode(false);
+                      setSelectedChallenge(null);
+                    }}
+                    className="flex-1 py-3 bg-slate-900 hover:bg-slate-800 text-white font-bold rounded-lg text-sm transition cursor-pointer"
+                  >
+                    Exit Level
+                  </button>
+                )}
+              </div>
+
+              {onBack && (
+                <div className="flex justify-center pt-2">
+                  <button
+                    onClick={() => {
+                      setShowResults(false);
+                      setIsZenMode(false);
+                      onBack();
+                    }}
+                    className="text-xs text-cyber-red hover:text-cyber-red/80 font-semibold underline transition cursor-pointer"
+                  >
+                    Exit Practice
+                  </button>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
+
+
+

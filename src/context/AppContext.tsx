@@ -283,52 +283,55 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   // Sync auth state
   useEffect(() => {
     let unsubscribeFn: (() => void) | undefined;
+    const mode = isLocalMode();
+    setLocalMode(mode);
 
-    const initAuth = async () => {
-      const mode = isLocalMode();
-      setLocalMode(mode);
+    // Failsafe backup: Check if URL hash indicates we are returning from a password recovery link
+    if (typeof window !== 'undefined' && window.location.hash.includes('type=recovery')) {
+      setIsResettingPassword(true);
+    }
 
-      try {
-        const currentUser = await getActiveUser();
-        if (currentUser) {
-          setUser(currentUser);
-          const uProfile = await getProfile(currentUser.id);
-          setProfile(uProfile);
-        } else {
-          setUser(null);
-          setProfile(null);
-        }
-      } catch (err) {
-        console.error('Error initializing auth:', err);
-        setUser(null);
-        setProfile(null);
-      } finally {
-        setLoading(false);
-      }
-
-      if (!mode) {
-        // Listen for changes
-        const { data: { subscription } } = supabase!.auth.onAuthStateChange(
-          async (event, currentSession) => {
-            if (event === 'PASSWORD_RECOVERY') {
-              setIsResettingPassword(true);
-            }
-            if (currentSession?.user) {
-              setUser(currentSession.user);
-              const uProfile = await getProfile(currentSession.user.id);
-              setProfile(uProfile);
-            } else {
-              setUser(null);
-              setProfile(null);
-            }
-            setLoading(false);
+    if (mode) {
+      // Local mode auth initialization
+      const initLocalAuth = async () => {
+        try {
+          const currentUser = await getActiveUser();
+          if (currentUser) {
+            setUser(currentUser);
+            const uProfile = await getProfile(currentUser.id);
+            setProfile(uProfile);
+          } else {
+            setUser(null);
+            setProfile(null);
           }
-        );
-        unsubscribeFn = () => subscription.unsubscribe();
-      }
-    };
-
-    initAuth();
+        } catch (err) {
+          console.error('Error initializing local auth:', err);
+        } finally {
+          setLoading(false);
+        }
+      };
+      initLocalAuth();
+    } else {
+      // Online mode: register auth state change listener immediately (synchronously)
+      // to avoid missing early hash events (like PASSWORD_RECOVERY) during async operations
+      const { data: { subscription } } = supabase!.auth.onAuthStateChange(
+        async (event, currentSession) => {
+          if (event === 'PASSWORD_RECOVERY') {
+            setIsResettingPassword(true);
+          }
+          if (currentSession?.user) {
+            setUser(currentSession.user);
+            const uProfile = await getProfile(currentSession.user.id);
+            setProfile(uProfile);
+          } else {
+            setUser(null);
+            setProfile(null);
+          }
+          setLoading(false);
+        }
+      );
+      unsubscribeFn = () => subscription.unsubscribe();
+    }
 
     return () => {
       if (unsubscribeFn) unsubscribeFn();

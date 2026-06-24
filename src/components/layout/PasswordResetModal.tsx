@@ -39,8 +39,10 @@ export const PasswordResetModal: React.FC = () => {
       addToast('Success', 'Your password has been successfully reset. You can now login using your new password.', 'success');
       setIsResettingPassword(false);
       
-      // Optionally sign them out to force logging in with new credentials, or keep them signed in
-      // Let's keep them signed in but successfully close the modal.
+      // Clean up the URL hash to prevent showing the modal again on reload
+      if (typeof window !== 'undefined') {
+        window.history.replaceState(null, '', window.location.pathname);
+      }
     } catch (err: any) {
       addToast('Reset Failed', err.message || 'Could not update password.', 'error');
     } finally {
@@ -142,7 +144,13 @@ export const PasswordResetModal: React.FC = () => {
             
             <button
               type="button"
-              onClick={logOut}
+              onClick={() => {
+                logOut();
+                setIsResettingPassword(false);
+                if (typeof window !== 'undefined') {
+                  window.history.replaceState(null, '', window.location.pathname);
+                }
+              }}
               className="w-full py-2 text-center text-xs text-slate-400 hover:text-red-400 transition"
             >
               Cancel & Log Out

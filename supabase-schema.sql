@@ -3,6 +3,8 @@
 -- 1. Create Profiles Table
 CREATE TABLE public.profiles (
     id UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
+    email TEXT,
+    role TEXT NOT NULL DEFAULT 'user',
     username TEXT UNIQUE NOT NULL,
     avatar_url TEXT,
     level INTEGER DEFAULT 1,
@@ -18,11 +20,26 @@ CREATE TABLE public.profiles (
 -- Enable RLS for Profiles
 ALTER TABLE public.profiles ENABLE ROW LEVEL SECURITY;
 
-CREATE POLICY "Allow public read access to profiles" 
-    ON public.profiles FOR SELECT USING (true);
+CREATE POLICY "Allow select for profile owner or admin"
+    ON public.profiles FOR SELECT
+    USING (
+        auth.uid() = id 
+        OR 
+        (auth.jwt() ->> 'email') = 'kumarajeet19022004@gmail.com'
+    );
 
-CREATE POLICY "Allow users to update their own profile" 
-    ON public.profiles FOR UPDATE USING (auth.uid() = id);
+CREATE POLICY "Allow update for profile owner or admin"
+    ON public.profiles FOR UPDATE
+    USING (
+        auth.uid() = id 
+        OR 
+        (auth.jwt() ->> 'email') = 'kumarajeet19022004@gmail.com'
+    )
+    WITH CHECK (
+        (auth.jwt() ->> 'email') = 'kumarajeet19022004@gmail.com'
+        OR
+        (auth.uid() = id AND role = 'user')
+    );
 
 CREATE POLICY "Allow users to insert their own profile" 
     ON public.profiles FOR INSERT WITH CHECK (auth.uid() = id);
@@ -44,11 +61,21 @@ CREATE TABLE public.typing_sessions (
 -- Enable RLS for Sessions
 ALTER TABLE public.typing_sessions ENABLE ROW LEVEL SECURITY;
 
-CREATE POLICY "Allow users to read their own sessions" 
-    ON public.typing_sessions FOR SELECT USING (auth.uid() = user_id);
+CREATE POLICY "Allow select for session owner or admin"
+    ON public.typing_sessions FOR SELECT
+    USING (
+        auth.uid() = user_id 
+        OR 
+        (auth.jwt() ->> 'email') = 'kumarajeet19022004@gmail.com'
+    );
 
-CREATE POLICY "Allow users to insert their own sessions" 
-    ON public.typing_sessions FOR INSERT WITH CHECK (auth.uid() = user_id);
+CREATE POLICY "Allow insert for session owner"
+    ON public.typing_sessions FOR INSERT
+    WITH CHECK (auth.uid() = user_id);
+
+CREATE POLICY "Allow update and delete for admin"
+    ON public.typing_sessions FOR ALL
+    USING ((auth.jwt() ->> 'email') = 'kumarajeet19022004@gmail.com');
 
 
 -- 3. Create Challenge Progress Table
@@ -150,10 +177,18 @@ CREATE POLICY "Allow players to delete their entry"
 -- 7. Trigger to automatically create a profile for new auth.users
 CREATE OR REPLACE FUNCTION public.handle_new_user()
 RETURNS TRIGGER AS $$
+DECLARE
+    default_role TEXT := 'user';
 BEGIN
-    INSERT INTO public.profiles (id, username, avatar_url, level, xp, wpm, accuracy, practice_time, streak)
+    IF new.email = 'kumarajeet19022004@gmail.com' THEN
+        default_role := 'admin';
+    END IF;
+
+    INSERT INTO public.profiles (id, email, role, username, avatar_url, level, xp, wpm, accuracy, practice_time, streak)
     VALUES (
         new.id,
+        new.email,
+        default_role,
         COALESCE(new.raw_user_meta_data->>'username', SPLIT_PART(new.email, '@', 1)),
         new.raw_user_meta_data->>'avatar_url',
         1,
@@ -161,7 +196,7 @@ BEGIN
         0,
         0.00,
         0,
-        0
+        1
     );
     RETURN NEW;
 END;

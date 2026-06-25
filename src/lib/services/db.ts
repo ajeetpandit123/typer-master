@@ -11,6 +11,8 @@ export interface UserProfile {
   practiceTime: number; // in seconds
   streak: number;
   lastActive: string;
+  email?: string;
+  role: 'user' | 'admin';
 }
 
 export interface TypingSession {
@@ -49,7 +51,9 @@ const DEFAULT_PROFILE: UserProfile = {
   accuracy: 0,
   practiceTime: 0,
   streak: 1,
-  lastActive: new Date().toISOString()
+  lastActive: new Date().toISOString(),
+  email: 'guest@typemaster.pro',
+  role: 'user'
 };
 
 // ---------------- LOCAL STORAGE DATA HELPERS ----------------
@@ -144,6 +148,19 @@ export const getProfile = async (userId: string): Promise<UserProfile> => {
 
   if (isLocalMode() || !isUuid(userId)) {
     profile = getLocalData<UserProfile>('profile', DEFAULT_PROFILE);
+    
+    // Auto-heal missing role or email properties from previous sessions
+    const storedEmail = typeof window !== 'undefined' 
+      ? (localStorage.getItem('typemaster_user_email') || 'guest@typemaster.pro') 
+      : 'guest@typemaster.pro';
+      
+    if (!profile.role || !profile.email) {
+      profile.email = storedEmail;
+      profile.role = storedEmail === 'kumarajeet19022004@gmail.com' ? 'admin' : 'user';
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('typemaster_profile', JSON.stringify(profile));
+      }
+    }
   } else {
     const { data, error } = await supabase!
       .from('profiles')
@@ -179,9 +196,13 @@ export const getProfile = async (userId: string): Promise<UserProfile> => {
           }
 
           const avatarUrl = authUser?.user_metadata?.avatar_url || 'https://api.dicebear.com/7.x/pixel-art/svg?seed=' + username;
+          const userEmail = authUser?.email || '';
+          const userRole = userEmail === 'kumarajeet19022004@gmail.com' ? 'admin' : 'user';
 
           const newProfileData = {
             id: userId,
+            email: userEmail,
+            role: userRole,
             username,
             avatar_url: avatarUrl,
             level: 1,
@@ -201,7 +222,7 @@ export const getProfile = async (userId: string): Promise<UserProfile> => {
 
           if (insertErr) {
             console.error('Failed to auto-create profile:', insertErr);
-            profile = { ...DEFAULT_PROFILE, id: userId };
+            profile = { ...DEFAULT_PROFILE, id: userId, email: userEmail, role: userRole };
           } else {
             profile = {
               id: inserted.id,
@@ -213,7 +234,9 @@ export const getProfile = async (userId: string): Promise<UserProfile> => {
               accuracy: Number(inserted.accuracy),
               practiceTime: inserted.practice_time,
               streak: inserted.streak,
-              lastActive: inserted.last_active
+              lastActive: inserted.last_active,
+              email: inserted.email || '',
+              role: (inserted.role as 'user' | 'admin') || 'user'
             };
           }
         } catch (authErr) {
@@ -240,7 +263,9 @@ export const getProfile = async (userId: string): Promise<UserProfile> => {
         accuracy: Number(data.accuracy),
         practiceTime: data.practice_time,
         streak: data.streak,
-        lastActive: data.last_active
+        lastActive: data.last_active,
+        email: data.email || '',
+        role: (data.role as 'user' | 'admin') || 'user'
       };
     }
   }
@@ -281,6 +306,8 @@ export const updateProfile = async (userId: string, updates: Partial<UserProfile
   if (updates.accuracy !== undefined) mappedUpdates.accuracy = updates.accuracy;
   if (updates.practiceTime !== undefined) mappedUpdates.practice_time = updates.practiceTime;
   if (updates.streak !== undefined) mappedUpdates.streak = updates.streak;
+  if (updates.email !== undefined) mappedUpdates.email = updates.email;
+  if (updates.role !== undefined) mappedUpdates.role = updates.role;
   mappedUpdates.last_active = new Date().toISOString();
 
   const { data, error } = await supabase!
@@ -305,7 +332,9 @@ export const updateProfile = async (userId: string, updates: Partial<UserProfile
     accuracy: Number(data.accuracy),
     practiceTime: data.practice_time,
     streak: data.streak,
-    lastActive: data.last_active
+    lastActive: data.last_active,
+    email: data.email || '',
+    role: (data.role as 'user' | 'admin') || 'user'
   };
 };
 

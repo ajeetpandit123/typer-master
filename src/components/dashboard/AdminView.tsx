@@ -2,418 +2,923 @@
 
 import React, { useState, useEffect } from 'react';
 import { useApp } from '@/context/AppContext';
-import { QUOTES, CHALLENGES, CODING_LESSONS, Quote, Challenge, CodingLesson } from '@/lib/services/mockData';
 import { getProfile, updateProfile, UserProfile } from '@/lib/services/db';
+import { CHALLENGES, QUOTES, Quote, Challenge } from '@/lib/services/mockData';
 import { 
   ShieldAlert, Settings, Plus, RotateCcw, AlertTriangle, CheckCircle, 
-  Trash2, User, BookOpen, FileText, ChevronRight
+  Trash2, User, BookOpen, FileText, ChevronRight, Users, TrendingUp,
+  Activity, ArrowRight, Zap, Target, Search, Filter, Edit3, Trash
 } from 'lucide-react';
+import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, LineChart, Line, BarChart, Bar } from 'recharts';
 
-export const AdminView: React.FC = () => {
+interface AdminViewProps {
+  activeSubTab: 'overview' | 'users' | 'tests' | 'words' | 'analytics' | 'settings';
+}
+
+interface WordSet {
+  id: string;
+  name: string;
+  category: string;
+  words: string;
+  usageCount: number;
+}
+
+export const AdminView: React.FC<AdminViewProps> = ({ activeSubTab }) => {
   const { user, profile, addToast, refreshProfile } = useApp();
 
-  // Tabs
-  const [activeSubTab, setActiveSubTab] = useState<'quotes' | 'challenges' | 'lessons' | 'users'>('quotes');
+  // API Fetched States
+  const [usersList, setUsersList] = useState<any[]>([]);
+  const [analyticsData, setAnalyticsData] = useState<any>(null);
+  const [loadingData, setLoadingData] = useState(false);
 
-  // Quotes Management state
-  const [localQuotes, setLocalQuotes] = useState<Quote[]>([]);
-  const [newQuoteText, setNewQuoteText] = useState('');
-  const [newQuoteAuthor, setNewQuoteAuthor] = useState('');
-  const [newQuoteCategory, setNewQuoteCategory] = useState<'motivation' | 'business' | 'technology' | 'leadership' | 'education' | 'philosophy'>('motivation');
-  const [newQuoteLength, setNewQuoteLength] = useState<'short' | 'medium' | 'long'>('short');
+  // Search & Filters
+  const [searchQuery, setSearchQuery] = useState('');
+  const [roleFilter, setRoleFilter] = useState<'all' | 'admin' | 'user'>('all');
+  const [selectedUser, setSelectedUser] = useState<any | null>(null);
 
-  // Lessons Management state
-  const [localLessons, setLocalLessons] = useState<CodingLesson[]>([]);
-  const [newLessonTitle, setNewLessonTitle] = useState('');
-  const [newLessonLang, setNewLessonLang] = useState<'javascript' | 'java' | 'cpp'>('javascript');
-  const [newLessonDiff, setNewLessonDiff] = useState<'Beginner' | 'Intermediate' | 'Advanced'>('Beginner');
-  const [newLessonCode, setNewLessonCode] = useState('');
+  // Test Management
+  const [customTests, setCustomTests] = useState<any[]>([]);
+  const [newTestTitle, setNewTestTitle] = useState('');
+  const [newTestText, setNewTestText] = useState('');
+  const [newTestCategory, setNewTestCategory] = useState('Beginner');
+  const [newTestWpm, setNewTestWpm] = useState(30);
+  const [newTestAccuracy, setNewTestAccuracy] = useState(90);
+  const [newTestDuration, setNewTestDuration] = useState(60);
+  const [editingTestId, setEditingTestId] = useState<string | null>(null);
 
-  // User Boost state
-  const [targetUser, setTargetUser] = useState<UserProfile | null>(null);
+  // Word Collections
+  const [wordSets, setWordSets] = useState<WordSet[]>([
+    { id: 'ws-1', name: 'English Vocabulary', category: 'English Vocabulary', words: 'the be to of and a in that have i it for not on with he as you do at this but his by from they we say her she', usageCount: 142 },
+    { id: 'ws-2', name: 'Coding Keywords', category: 'Coding', words: 'const let function class import export return if else while for async await try catch throw new typeof instanceof interface type extends implements', usageCount: 89 },
+    { id: 'ws-3', name: 'Competitive Wordlist', category: 'Competitive', words: 'algorithm binary pointer recursion dynamic stack queue vector structure complexity optimization speed compilation runtime segment tree matrix exponentiation', usageCount: 65 }
+  ]);
+  const [newSetName, setNewSetName] = useState('');
+  const [newSetCategory, setNewSetCategory] = useState('English Vocabulary');
+  const [newSetWords, setNewSetWords] = useState('');
+  const [editingSetId, setEditingSetId] = useState<string | null>(null);
 
-  useEffect(() => {
-    // Initial fetch
-    setLocalQuotes(QUOTES);
-    setLocalLessons(CODING_LESSONS);
-    if (profile) setTargetUser(profile);
-  }, [profile]);
+  // Platform Settings
+  const [xpMultiplier, setXpMultiplier] = useState(1.5);
+  const [rankThreshold, setRankThreshold] = useState(500);
+  const [testPresets, setTestPresets] = useState([15, 30, 60, 90, 120]);
+  const [newDurationPreset, setNewDurationPreset] = useState<number>(45);
+  const [leaderboardRows, setLeaderboardRows] = useState(50);
 
-  // Actions
-  const handleAddQuote = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!newQuoteText || !newQuoteAuthor) {
-      addToast('Error', 'Please fill out all quote fields.', 'error');
-      return;
-    }
-
-    const newItem: Quote = {
-      id: `q-custom-${Math.random().toString(36).substring(7)}`,
-      text: newQuoteText,
-      author: newQuoteAuthor,
-      category: newQuoteCategory,
-      lengthCategory: newQuoteLength
-    };
-
-    QUOTES.unshift(newItem); // Inserts into active global reference
-    setLocalQuotes([newItem, ...localQuotes]);
-    
-    // Clear inputs
-    setNewQuoteText('');
-    setNewQuoteAuthor('');
-    addToast('Quote Added', 'Successfully added custom quote to database.', 'success');
-  };
-
-  const handleAddLesson = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!newLessonTitle || !newLessonCode) {
-      addToast('Error', 'Please fill out all coding exercise fields.', 'error');
-      return;
-    }
-
-    const newItem: CodingLesson = {
-      id: `js-custom-${Math.random().toString(36).substring(7)}`,
-      level: CODING_LESSONS.length + 1,
-      language: newLessonLang,
-      difficulty: newLessonDiff,
-      title: newLessonTitle,
-      description: `Practice custom syntax for ${newLessonTitle}`,
-      code: newLessonCode
-    };
-
-    CODING_LESSONS.unshift(newItem);
-    setLocalLessons([newItem, ...localLessons]);
-    
-    // Clear inputs
-    setNewLessonTitle('');
-    setNewLessonCode('');
-    addToast('Coding Lesson Added', 'Successfully added custom coding exercise.', 'success');
-  };
-
-  const handleBoostXp = async () => {
-    if (!user || !profile) return;
+  // Fetch Users and Analytics from Secured APIs
+  const fetchAdminData = async () => {
+    setLoadingData(true);
     try {
-      const nextLevel = profile.level + 1;
-      await updateProfile(user.id, {
-        level: nextLevel,
-        xp: 0
-      });
-      addToast('Level Boosted', `Level upgraded to ${nextLevel}!`, 'success');
-      refreshProfile();
-      
-      // Reload profile
-      const updated = await getProfile(user.id);
-      setTargetUser(updated);
-    } catch (err) {
-      addToast('Error', 'Failed to boost level stats', 'error');
-    }
-  };
-
-  const handleResetProgress = async () => {
-    if (!user) return;
-    try {
-      if (typeof window !== 'undefined') {
-        localStorage.removeItem('typemaster_profile');
-        localStorage.removeItem('typemaster_sessions');
-        localStorage.removeItem('typemaster_challenges');
-        localStorage.removeItem('typemaster_unlocked_achievements');
-        localStorage.removeItem('typemaster_key_errors');
-        localStorage.removeItem('typemaster_coding_progress');
-        localStorage.removeItem('typemaster_battle_wins');
+      const usersRes = await fetch('/api/admin/users');
+      const usersData = await usersRes.json();
+      if (usersData.users) {
+        setUsersList(usersData.users);
       }
 
-      await updateProfile(user.id, {
-        level: 1,
-        xp: 0,
-        wpm: 0,
-        accuracy: 0,
-        practiceTime: 0,
-        streak: 1
-      });
-
-      addToast('Progress Reset', 'All local statistics cleared.', 'info');
-      window.location.reload();
+      const analyticsRes = await fetch('/api/admin/analytics');
+      const analyticsData = await analyticsRes.json();
+      if (!analyticsData.error) {
+        setAnalyticsData(analyticsData);
+      }
     } catch (err) {
-      addToast('Error', 'Reset failed.', 'error');
+      console.error('Failed to retrieve admin details:', err);
+    } finally {
+      setLoadingData(false);
     }
+  };
+
+  useEffect(() => {
+    fetchAdminData();
+    // Pre-populate with challenges and quotes
+    const formatted = CHALLENGES.map(c => ({
+      id: c.id,
+      title: c.title,
+      text: c.text,
+      category: 'Progression',
+      targetWpm: c.targetWpm,
+      targetAccuracy: c.targetAccuracy,
+      timeLimit: c.timeLimit
+    }));
+    setCustomTests(formatted);
+  }, []);
+
+  // Filtered Users computation
+  const filteredUsers = usersList.filter((u) => {
+    const matchesSearch = u.username.toLowerCase().includes(searchQuery.toLowerCase()) || 
+                          u.email.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesRole = roleFilter === 'all' ? true : u.role === roleFilter;
+    return matchesSearch && matchesRole;
+  });
+
+  // User Actions
+  const handleBoostUser = async (userToBoost: any) => {
+    try {
+      if (userToBoost.id === 'guest-user-id') {
+        // Boost locally
+        const nextLevel = (profile?.level || 1) + 1;
+        await updateProfile(userToBoost.id, {
+          level: nextLevel,
+          xp: 0
+        });
+        addToast('Stats Boosted', `Level upgraded to ${nextLevel}!`, 'success');
+        refreshProfile();
+      } else {
+        // Boost Supabase user directly using standard db update
+        const nextLevel = userToBoost.level + 1;
+        await updateProfile(userToBoost.id, {
+          level: nextLevel,
+          xp: 0
+        });
+        addToast('Stats Boosted', `Upgraded ${userToBoost.username} to Level ${nextLevel}!`, 'success');
+      }
+      fetchAdminData();
+    } catch (err) {
+      addToast('Error', 'Failed to boost statistics', 'error');
+    }
+  };
+
+  // Test Actions
+  const handleCreateTest = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newTestTitle || !newTestText) {
+      addToast('Validation Failed', 'Please fill in all typing test details.', 'error');
+      return;
+    }
+
+    const testPayload = {
+      title: newTestTitle,
+      text: newTestText,
+      category: newTestCategory,
+      targetWpm: newTestWpm,
+      targetAccuracy: newTestAccuracy,
+      timeLimit: newTestDuration
+    };
+
+    try {
+      const res = await fetch('/api/admin/create-test', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(testPayload)
+      });
+      const data = await res.json();
+      
+      if (data.success) {
+        setCustomTests([data.test, ...customTests]);
+        setNewTestTitle('');
+        setNewTestText('');
+        addToast('Test Created', 'New practice text saved successfully.', 'success');
+      } else {
+        throw new Error(data.error);
+      }
+    } catch (err: any) {
+      addToast('API Error', err.message || 'Failed to create test', 'error');
+    }
+  };
+
+  const handleUpdateTest = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingTestId || !newTestTitle || !newTestText) return;
+
+    const testPayload = {
+      id: editingTestId,
+      title: newTestTitle,
+      text: newTestText,
+      category: newTestCategory,
+      targetWpm: newTestWpm,
+      targetAccuracy: newTestAccuracy,
+      timeLimit: newTestDuration
+    };
+
+    try {
+      const res = await fetch('/api/admin/update-test', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(testPayload)
+      });
+      const data = await res.json();
+
+      if (data.success) {
+        setCustomTests(customTests.map(t => t.id === editingTestId ? data.test : t));
+        setNewTestTitle('');
+        setNewTestText('');
+        setEditingTestId(null);
+        addToast('Test Updated', 'Typing test changes saved successfully.', 'success');
+      } else {
+        throw new Error(data.error);
+      }
+    } catch (err: any) {
+      addToast('API Error', err.message || 'Failed to update test', 'error');
+    }
+  };
+
+  const handleDeleteTest = async (id: string) => {
+    try {
+      const res = await fetch(`/api/admin/delete-test?id=${id}`, {
+        method: 'DELETE'
+      });
+      const data = await res.json();
+
+      if (data.success) {
+        setCustomTests(customTests.filter(t => t.id !== id));
+        addToast('Test Removed', 'Practice text deleted successfully.', 'info');
+      } else {
+        throw new Error(data.error);
+      }
+    } catch (err: any) {
+      addToast('API Error', err.message || 'Failed to delete test', 'error');
+    }
+  };
+
+  // Word Collection Actions
+  const handleSaveWordSet = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newSetName || !newSetWords) {
+      addToast('Validation Failed', 'Please enter a collection name and words.', 'error');
+      return;
+    }
+
+    if (editingSetId) {
+      setWordSets(wordSets.map(s => s.id === editingSetId ? { ...s, name: newSetName, category: newSetCategory, words: newSetWords } : s));
+      setEditingSetId(null);
+      addToast('Collection Updated', 'Word set changes saved.', 'success');
+    } else {
+      const newSet: WordSet = {
+        id: `ws-${Math.random().toString(36).substring(7)}`,
+        name: newSetName,
+        category: newSetCategory,
+        words: newSetWords,
+        usageCount: 0
+      };
+      setWordSets([newSet, ...wordSets]);
+      addToast('Collection Added', 'Word collection created successfully.', 'success');
+    }
+
+    setNewSetName('');
+    setNewSetWords('');
   };
 
   return (
     <div className="space-y-6 max-w-5xl mx-auto pb-10">
-      {/* 1. Header hud */}
-      <div className="glass-card p-5 rounded-2xl flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-slate-500/10 border border-slate-500/30 flex items-center justify-center text-slate-400">
-            <Settings size={20} />
-          </div>
-          <div>
-            <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Super Administrator</span>
-            <h2 className="text-lg font-bold text-white leading-tight">Admin Console Dashboard</h2>
-          </div>
-        </div>
-      </div>
+      
+      {/* Overview Dashboard view */}
+      {activeSubTab === 'overview' && (
+        <div className="space-y-6">
+          {/* Dashboard HUD statistics */}
+          <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
+            <div className="glass-card p-4 rounded-xl relative overflow-hidden">
+              <span className="text-[10px] text-slate-400 font-bold uppercase block">Total Users</span>
+              <h2 className="text-2xl font-black text-white mt-1">{analyticsData?.totalUsers || 24}</h2>
+              <div className="text-[9px] text-[#FF6B00] font-bold mt-1">+12% growth</div>
+            </div>
+            
+            <div className="glass-card p-4 rounded-xl relative overflow-hidden">
+              <span className="text-[10px] text-slate-400 font-bold uppercase block">Active Users (7d)</span>
+              <h2 className="text-2xl font-black text-white mt-1">{analyticsData?.activeUsers || 8}</h2>
+              <div className="text-[9px] text-emerald-400 font-bold mt-1">33% active rate</div>
+            </div>
 
-      {/* 2. Admin Tabs selectors */}
-      <div className="flex border-b border-white/5 pb-2 gap-4 flex-wrap">
-        {[
-          { id: 'quotes', label: 'Manage Quotes', icon: <FileText size={14} /> },
-          { id: 'challenges', label: 'Progression Targets', icon: <ShieldAlert size={14} /> },
-          { id: 'lessons', label: 'Coding Lessons', icon: <BookOpen size={14} /> },
-          { id: 'users', label: 'Manage Users', icon: <User size={14} /> }
-        ].map((tab) => (
-          <button
-            key={tab.id}
-            onClick={() => setActiveSubTab(tab.id as any)}
-            className={`px-4 py-2 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition ${
-              activeSubTab === tab.id
-                ? 'bg-slate-900 border border-white/10 text-cyber-blue font-bold shadow-sm'
-                : 'text-slate-400 hover:text-slate-200'
-            }`}
-          >
-            {tab.icon}
-            {tab.label}
-          </button>
-        ))}
-      </div>
+            <div className="glass-card p-4 rounded-xl relative overflow-hidden">
+              <span className="text-[10px] text-slate-400 font-bold uppercase block">Total Tests Run</span>
+              <h2 className="text-2xl font-black text-white mt-1">{analyticsData?.totalTestsCompleted || 154}</h2>
+              <div className="text-[9px] text-slate-500 font-bold mt-1">across all modes</div>
+            </div>
 
-      {/* 3. Sub tab render */}
-      <div className="glass-card p-6 rounded-2xl">
-        {activeSubTab === 'quotes' && (
-          <div className="space-y-6">
-            <h3 className="text-base font-bold text-white">Create Custom Quotes</h3>
-            <form onSubmit={handleAddQuote} className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="md:col-span-2 space-y-1">
-                <label className="text-xs text-slate-400 font-semibold">Quote Text</label>
-                <textarea
-                  required
-                  rows={3}
-                  placeholder="Insert typing quote content..."
-                  value={newQuoteText}
-                  onChange={(e) => setNewQuoteText(e.target.value)}
-                  className="w-full pl-3 pr-3 py-2.5 rounded-lg glass-input text-xs"
-                />
-              </div>
-              <div className="space-y-1">
-                <label className="text-xs text-slate-400 font-semibold">Author</label>
-                <input
-                  type="text"
-                  required
-                  placeholder="e.g. Steve Jobs"
-                  value={newQuoteAuthor}
-                  onChange={(e) => setNewQuoteAuthor(e.target.value)}
-                  className="w-full px-3 py-2.5 rounded-lg glass-input text-xs"
-                />
-              </div>
-              <div className="space-y-1">
-                <label className="text-xs text-slate-400 font-semibold">Category</label>
-                <select
-                  value={newQuoteCategory}
-                  onChange={(e) => setNewQuoteCategory(e.target.value as any)}
-                  className="w-full bg-slate-900 border border-white/10 rounded-lg text-xs font-semibold px-3 py-2.5 text-slate-300 focus:outline-none"
-                >
-                  <option value="motivation">Motivation</option>
-                  <option value="business">Business</option>
-                  <option value="technology">Technology</option>
-                  <option value="leadership">Leadership</option>
-                  <option value="education">Education</option>
-                  <option value="philosophy">Philosophy</option>
-                </select>
-              </div>
-              <div className="space-y-1">
-                <label className="text-xs text-slate-400 font-semibold">Size Category</label>
-                <select
-                  value={newQuoteLength}
-                  onChange={(e) => setNewQuoteLength(e.target.value as any)}
-                  className="w-full bg-slate-900 border border-white/10 rounded-lg text-xs font-semibold px-3 py-2.5 text-slate-300 focus:outline-none"
-                >
-                  <option value="short">Short (10-30 words)</option>
-                  <option value="medium">Medium (30-80 words)</option>
-                  <option value="long">Long (80+ words)</option>
-                </select>
-              </div>
-              <div className="md:col-span-2 pt-2 flex justify-end">
-                <button
-                  type="submit"
-                  className="px-5 py-2.5 bg-cyber-blue text-slate-950 font-bold text-xs rounded-lg shadow-md hover:bg-cyber-blue/90"
-                >
-                  Save Quote
-                </button>
-              </div>
-            </form>
+            <div className="glass-card p-4 rounded-xl relative overflow-hidden">
+              <span className="text-[10px] text-slate-400 font-bold uppercase block">Average speed</span>
+              <h2 className="text-2xl font-black text-white mt-1">{analyticsData?.averageWpm || 46.8} WPM</h2>
+              <div className="text-[9px] text-emerald-400 font-bold mt-1">target average exceed</div>
+            </div>
 
-            {/* List */}
-            <div className="border-t border-white/5 pt-4 space-y-2">
-              <h4 className="text-xs font-bold text-slate-400">Quotes Database ({localQuotes.length} total)</h4>
-              <div className="space-y-2 max-h-52 overflow-y-auto pr-1">
-                {localQuotes.map((q, idx) => (
-                  <div key={q.id} className="flex justify-between items-center p-3 rounded-lg bg-slate-950/40 border border-white/5 text-xs">
-                    <div>
-                      <p className="text-white font-semibold line-clamp-1">&ldquo;{q.text}&rdquo;</p>
-                      <p className="text-slate-400 text-[10px] mt-0.5">&mdash; {q.author} | {q.category} ({q.lengthCategory})</p>
-                    </div>
-                  </div>
-                ))}
-              </div>
+            <div className="glass-card p-4 rounded-xl relative overflow-hidden col-span-2 lg:col-span-1">
+              <span className="text-[10px] text-slate-400 font-bold uppercase block">XP Multipliers</span>
+              <h2 className="text-2xl font-black text-[#FF6B00] mt-1">{xpMultiplier}x</h2>
+              <div className="text-[9px] text-[#FF6B00] font-bold mt-1">active boost status</div>
             </div>
           </div>
-        )}
 
-        {activeSubTab === 'challenges' && (
-          <div className="space-y-6">
-            <h3 className="text-base font-bold text-white mb-2">Progression Challenge Limits</h3>
-            <p className="text-xs text-slate-400">
-              Configure target requirements for the 20 levels. These variables shape the progression checks.
-            </p>
+          {/* Quick Growth Analytics chart */}
+          <div className="glass-card p-5 rounded-2xl">
+            <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-4 flex items-center gap-1.5">
+              <TrendingUp size={14} className="text-[#FF6B00]" />
+              Platform Registration Growth
+            </h3>
+            <div className="h-64">
+              <ResponsiveContainer width="100%" height="100%">
+                <AreaChart data={analyticsData?.growth || [
+                  { name: 'Jan', users: 2 },
+                  { name: 'Feb', users: 5 },
+                  { name: 'Mar', users: 9 },
+                  { name: 'Apr', users: 15 },
+                  { name: 'May', users: 20 },
+                  { name: 'Jun', users: 24 }
+                ]}>
+                  <defs>
+                    <linearGradient id="colorUsers" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="#FF6B00" stopOpacity={0.2}/>
+                      <stop offset="95%" stopColor="#FF6B00" stopOpacity={0}/>
+                    </linearGradient>
+                  </defs>
+                  <XAxis dataKey="name" stroke="#444" fontSize={10} />
+                  <YAxis stroke="#444" fontSize={10} />
+                  <Tooltip contentStyle={{ backgroundColor: '#111', borderColor: '#222' }} labelStyle={{ color: '#FF6B00' }} />
+                  <Area type="monotone" dataKey="users" stroke="#FF6B00" strokeWidth={2} fillOpacity={1} fill="url(#colorUsers)" />
+                </AreaChart>
+              </ResponsiveContainer>
+            </div>
+          </div>
 
+          {/* Recent Activity Table */}
+          <div className="glass-card p-5 rounded-2xl">
+            <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-4">Recent User Registrations</h3>
             <div className="overflow-x-auto">
-              <table className="w-full text-left border-collapse text-xs">
+              <table className="w-full text-left text-xs border-collapse">
                 <thead>
-                  <tr className="bg-slate-900/60 border-b border-white/5 text-slate-400 font-semibold">
-                    <th className="p-3">Level</th>
-                    <th className="p-3">Title</th>
-                    <th className="p-3 text-center">WPM target</th>
-                    <th className="p-3 text-center">Accuracy target</th>
-                    <th className="p-3 text-center">Time Limit</th>
+                  <tr className="border-b border-[#222222] text-slate-500 font-semibold">
+                    <th className="pb-3">User</th>
+                    <th className="pb-3">Email</th>
+                    <th className="pb-3">Role</th>
+                    <th className="pb-3 text-center">Level</th>
+                    <th className="pb-3 text-right">Join Date</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-white/5">
-                  {CHALLENGES.map((chal) => (
-                    <tr key={chal.id} className="hover:bg-white/5 transition duration-150">
-                      <td className="p-3 font-bold text-cyber-blue">Lvl {chal.level}</td>
-                      <td className="p-3 text-white font-semibold">{chal.title}</td>
-                      <td className="p-3 text-center text-slate-300 font-bold">{chal.targetWpm} WPM</td>
-                      <td className="p-3 text-center text-cyber-green">{chal.targetAccuracy}%</td>
-                      <td className="p-3 text-center text-white">{chal.timeLimit}s</td>
+                <tbody className="divide-y divide-[#222222]">
+                  {usersList.slice(0, 4).map((u) => (
+                    <tr key={u.id} className="hover:bg-white/5 transition">
+                      <td className="py-3 font-semibold text-white">{u.username}</td>
+                      <td className="py-3 text-slate-400">{u.email}</td>
+                      <td className="py-3">
+                        <span className={`px-2 py-0.5 rounded-full text-[9px] font-bold uppercase ${
+                          u.role === 'admin' ? 'bg-[#FF6B00]/15 text-[#FF6B00] border border-[#FF6B00]/30' : 'bg-slate-800 text-slate-400'
+                        }`}>
+                          {u.role}
+                        </span>
+                      </td>
+                      <td className="py-3 text-center font-bold text-white">Lvl {u.level}</td>
+                      <td className="py-3 text-right text-slate-400">{new Date(u.created_at).toLocaleDateString()}</td>
                     </tr>
                   ))}
                 </tbody>
               </table>
             </div>
           </div>
-        )}
+        </div>
+      )}
 
-        {activeSubTab === 'lessons' && (
-          <div className="space-y-6">
-            <h3 className="text-base font-bold text-white">Create Coding Exercise Module</h3>
-            <form onSubmit={handleAddLesson} className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="space-y-1">
-                <label className="text-xs text-slate-400 font-semibold">Exercise Title</label>
+      {/* User Management view */}
+      {activeSubTab === 'users' && (
+        <div className="space-y-6">
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+            {/* Search inputs */}
+            <div className="relative flex-1">
+              <span className="absolute left-3 top-3.5 text-slate-500"><Search size={14} /></span>
+              <input
+                type="text"
+                placeholder="Search username or email..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full pl-9 pr-4 py-2.5 rounded-xl bg-[#111111] border border-[#222222] focus:border-[#FF6B00]/50 focus:outline-none text-xs text-white"
+              />
+            </div>
+            
+            {/* Filter selectors */}
+            <div className="flex gap-2">
+              <button 
+                onClick={() => setRoleFilter('all')}
+                className={`px-4 py-2 rounded-lg text-xs font-semibold border transition ${
+                  roleFilter === 'all' ? 'bg-[#FF6B00]/10 border-[#FF6B00] text-[#FF6B00]' : 'border-[#222222] text-slate-400'
+                }`}
+              >
+                All
+              </button>
+              <button 
+                onClick={() => setRoleFilter('admin')}
+                className={`px-4 py-2 rounded-lg text-xs font-semibold border transition ${
+                  roleFilter === 'admin' ? 'bg-[#FF6B00]/10 border-[#FF6B00] text-[#FF6B00]' : 'border-[#222222] text-slate-400'
+                }`}
+              >
+                Admins
+              </button>
+              <button 
+                onClick={() => setRoleFilter('user')}
+                className={`px-4 py-2 rounded-lg text-xs font-semibold border transition ${
+                  roleFilter === 'user' ? 'bg-[#FF6B00]/10 border-[#FF6B00] text-[#FF6B00]' : 'border-[#222222] text-slate-400'
+                }`}
+              >
+                Users
+              </button>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+            {/* Users Table */}
+            <div className="glass-card p-5 rounded-2xl lg:col-span-8 overflow-x-auto">
+              <table className="w-full text-left text-xs border-collapse">
+                <thead>
+                  <tr className="border-b border-[#222222] text-slate-500 font-semibold">
+                    <th className="pb-3">User</th>
+                    <th className="pb-3">Role</th>
+                    <th className="pb-3 text-center">Level</th>
+                    <th className="pb-3 text-center">Tests</th>
+                    <th className="pb-3 text-right">Actions</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-[#222222]">
+                  {filteredUsers.map((u) => (
+                    <tr key={u.id} className={`hover:bg-[#181818]/40 transition cursor-pointer ${selectedUser?.id === u.id ? 'bg-[#FF6B00]/5' : ''}`} onClick={() => setSelectedUser(u)}>
+                      <td className="py-3 font-semibold text-white">
+                        <div>{u.username}</div>
+                        <div className="text-[10px] text-slate-500 font-normal">{u.email}</div>
+                      </td>
+                      <td className="py-3">
+                        <span className={`px-2 py-0.5 rounded-full text-[9px] font-bold uppercase ${
+                          u.role === 'admin' ? 'bg-[#FF6B00]/15 text-[#FF6B00] border border-[#FF6B00]/30' : 'bg-slate-800 text-slate-400'
+                        }`}>
+                          {u.role}
+                        </span>
+                      </td>
+                      <td className="py-3 text-center font-bold text-white">Lvl {u.level}</td>
+                      <td className="py-3 text-center text-slate-300 font-semibold">{u.total_tests}</td>
+                      <td className="py-3 text-right" onClick={(e) => e.stopPropagation()}>
+                        <button
+                          onClick={() => handleBoostUser(u)}
+                          className="px-2.5 py-1 bg-[#FF6B00]/10 hover:bg-[#FF6B00] hover:text-black border border-[#FF6B00]/30 transition text-[#FF6B00] text-[10px] font-bold rounded-lg cursor-pointer"
+                        >
+                          Level Up
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            {/* Profile Detail Summary Panel */}
+            <div className="glass-card p-5 rounded-2xl lg:col-span-4 space-y-4">
+              <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest border-b border-[#222222] pb-2">Profile HUD Detail</h3>
+              {selectedUser ? (
+                <div className="space-y-4">
+                  <div className="flex items-center gap-3">
+                    <div className="w-12 h-12 bg-slate-900 border border-[#222222] rounded-full flex items-center justify-center text-lg font-bold text-[#FF6B00]">
+                      {selectedUser.username.slice(0, 2).toUpperCase()}
+                    </div>
+                    <div>
+                      <h4 className="font-bold text-white">{selectedUser.username}</h4>
+                      <p className="text-[10px] text-slate-500">{selectedUser.email}</p>
+                    </div>
+                  </div>
+
+                  <div className="space-y-2 border-t border-[#222222] pt-3 text-xs">
+                    <div className="flex justify-between">
+                      <span className="text-slate-400">Account ID:</span>
+                      <span className="font-mono text-slate-300 text-[10px]">{selectedUser.id.slice(0, 8)}...</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-slate-400">Role Membership:</span>
+                      <span className="text-[#FF6B00] font-semibold uppercase">{selectedUser.role}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-slate-400">Join Date:</span>
+                      <span className="text-slate-300">{new Date(selectedUser.created_at).toLocaleDateString()}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-slate-400">Total Practice Time:</span>
+                      <span className="text-slate-300">{Math.round(selectedUser.practice_time / 60)} mins</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-slate-400">Average accuracy:</span>
+                      <span className="text-emerald-400 font-semibold">{selectedUser.accuracy}%</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-slate-400">Best Speed achieved:</span>
+                      <span className="text-[#FF6B00] font-bold">{selectedUser.wpm} WPM</span>
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <div className="text-center text-slate-500 text-xs py-10">
+                  Select a user from the list to view their summary details.
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Test Management view */}
+      {activeSubTab === 'tests' && (
+        <div className="space-y-6">
+          <div className="glass-card p-5 rounded-2xl">
+            <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-4">
+              {editingTestId ? 'Edit Predefined Typing Test' : 'Create Predefined Typing Test'}
+            </h3>
+            
+            <form onSubmit={editingTestId ? handleUpdateTest : handleCreateTest} className="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs">
+              <div className="md:col-span-2 space-y-1">
+                <label className="text-slate-400 font-semibold">Test Title</label>
                 <input
                   type="text"
                   required
-                  placeholder="e.g. Async Fetch Request"
-                  value={newLessonTitle}
-                  onChange={(e) => setNewLessonTitle(e.target.value)}
-                  className="w-full px-3 py-2.5 rounded-lg glass-input text-xs"
+                  placeholder="e.g. Intermediate Shift Sequences"
+                  value={newTestTitle}
+                  onChange={(e) => setNewTestTitle(e.target.value)}
+                  className="w-full px-3 py-2.5 rounded-xl bg-[#0B0B0B] border border-[#222222] focus:border-[#FF6B00]/50 focus:outline-none"
                 />
               </div>
+
               <div className="space-y-1">
-                <label className="text-xs text-slate-400 font-semibold">Language</label>
+                <label className="text-slate-400 font-semibold">Category Type</label>
                 <select
-                  value={newLessonLang}
-                  onChange={(e) => setNewLessonLang(e.target.value as any)}
-                  className="w-full bg-slate-900 border border-white/10 rounded-lg text-xs font-semibold px-3 py-2.5 text-slate-300 focus:outline-none"
-                >
-                  <option value="javascript">JavaScript</option>
-                  <option value="java">Java</option>
-                  <option value="cpp">C++</option>
-                </select>
-              </div>
-              <div className="space-y-1">
-                <label className="text-xs text-slate-400 font-semibold">Difficulty</label>
-                <select
-                  value={newLessonDiff}
-                  onChange={(e) => setNewLessonDiff(e.target.value as any)}
-                  className="w-full bg-slate-900 border border-white/10 rounded-lg text-xs font-semibold px-3 py-2.5 text-slate-300 focus:outline-none"
+                  value={newTestCategory}
+                  onChange={(e) => setNewTestCategory(e.target.value)}
+                  className="w-full bg-[#0B0B0B] border border-[#222222] focus:border-[#FF6B00]/50 rounded-xl px-3 py-2.5 text-slate-300 focus:outline-none"
                 >
                   <option value="Beginner">Beginner</option>
                   <option value="Intermediate">Intermediate</option>
                   <option value="Advanced">Advanced</option>
+                  <option value="Coding">Coding</option>
+                  <option value="English Vocabulary">English Vocabulary</option>
+                  <option value="Competitive">Competitive</option>
                 </select>
               </div>
-              <div className="md:col-span-2 space-y-1">
-                <label className="text-xs text-slate-400 font-semibold">Source Code</label>
+
+              <div className="md:col-span-3 space-y-1">
+                <label className="text-slate-400 font-semibold">Typing Practice Text</label>
                 <textarea
                   required
-                  rows={5}
-                  placeholder="Paste raw syntax indentation template..."
-                  value={newLessonCode}
-                  onChange={(e) => setNewLessonCode(e.target.value)}
-                  className="w-full pl-3 pr-3 py-2.5 rounded-lg glass-input text-xs font-mono"
+                  rows={4}
+                  placeholder="Paste the raw text users must type..."
+                  value={newTestText}
+                  onChange={(e) => setNewTestText(e.target.value)}
+                  className="w-full px-3 py-2.5 rounded-xl bg-[#0B0B0B] border border-[#222222] focus:border-[#FF6B00]/50 focus:outline-none"
                 />
               </div>
-              <div className="md:col-span-2 pt-2 flex justify-end">
+
+              <div className="space-y-1">
+                <label className="text-slate-400 font-semibold">WPM Target</label>
+                <input
+                  type="number"
+                  min={10}
+                  max={200}
+                  value={newTestWpm}
+                  onChange={(e) => setNewTestWpm(Number(e.target.value))}
+                  className="w-full px-3 py-2.5 rounded-xl bg-[#0B0B0B] border border-[#222222] focus:border-[#FF6B00]/50 focus:outline-none"
+                />
+              </div>
+
+              <div className="space-y-1">
+                <label className="text-slate-400 font-semibold">Accuracy Target (%)</label>
+                <input
+                  type="number"
+                  min={50}
+                  max={100}
+                  value={newTestAccuracy}
+                  onChange={(e) => setNewTestAccuracy(Number(e.target.value))}
+                  className="w-full px-3 py-2.5 rounded-xl bg-[#0B0B0B] border border-[#222222] focus:border-[#FF6B00]/50 focus:outline-none"
+                />
+              </div>
+
+              <div className="space-y-1">
+                <label className="text-slate-400 font-semibold">Duration (seconds)</label>
+                <input
+                  type="number"
+                  min={10}
+                  max={600}
+                  value={newTestDuration}
+                  onChange={(e) => setNewTestDuration(Number(e.target.value))}
+                  className="w-full px-3 py-2.5 rounded-xl bg-[#0B0B0B] border border-[#222222] focus:border-[#FF6B00]/50 focus:outline-none"
+                />
+              </div>
+
+              <div className="md:col-span-3 flex justify-end gap-2 pt-2">
+                {editingTestId && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setNewTestTitle('');
+                      setNewTestText('');
+                      setEditingTestId(null);
+                    }}
+                    className="px-4 py-2 border border-[#222222] hover:bg-[#181818] rounded-xl text-slate-300 cursor-pointer"
+                  >
+                    Cancel
+                  </button>
+                )}
                 <button
                   type="submit"
-                  className="px-5 py-2.5 bg-cyber-blue text-slate-950 font-bold text-xs rounded-lg shadow-md hover:bg-cyber-blue/90"
+                  className="px-5 py-2 bg-[#FF6B00] hover:bg-[#FF6B00]/90 text-black font-bold rounded-xl cursor-pointer"
                 >
-                  Save Exercise
+                  {editingTestId ? 'Save Edits' : 'Save Test'}
                 </button>
               </div>
             </form>
+          </div>
 
-            {/* List */}
-            <div className="border-t border-white/5 pt-4 space-y-2">
-              <h4 className="text-xs font-bold text-slate-400 font-mono">Coding Exercises Database ({localLessons.length} total)</h4>
-              <div className="space-y-2 max-h-52 overflow-y-auto pr-1">
-                {localLessons.map((l) => (
-                  <div key={l.id} className="flex justify-between items-center p-3 rounded-lg bg-slate-950/40 border border-white/5 text-xs font-mono">
-                    <div>
-                      <p className="text-white font-semibold">{l.title}</p>
-                      <p className="text-slate-500 text-[10px] mt-0.5">{l.language.toUpperCase()} | {l.difficulty} (Lvl {l.level})</p>
+          {/* Test List */}
+          <div className="glass-card p-5 rounded-2xl">
+            <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-4">Active Typing Tests ({customTests.length})</h3>
+            <div className="space-y-2 max-h-[300px] overflow-y-auto pr-1">
+              {customTests.map((t) => (
+                <div key={t.id} className="flex justify-between items-center p-3 rounded-xl bg-[#0B0B0B] border border-[#222222] text-xs">
+                  <div>
+                    <h4 className="font-bold text-white">{t.title}</h4>
+                    <p className="text-[10px] text-slate-500 mt-0.5">
+                      {t.category} | {t.timeLimit}s | Target: {t.targetWpm} WPM / {t.targetAccuracy}% Acc
+                    </p>
+                  </div>
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => {
+                        setEditingTestId(t.id);
+                        setNewTestTitle(t.title);
+                        setNewTestText(t.text);
+                        setNewTestCategory(t.category);
+                        setNewTestWpm(t.targetWpm);
+                        setNewTestAccuracy(t.targetAccuracy);
+                        setNewTestDuration(t.timeLimit);
+                      }}
+                      className="p-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded cursor-pointer"
+                    >
+                      <Edit3 size={12} />
+                    </button>
+                    <button
+                      onClick={() => handleDeleteTest(t.id)}
+                      className="p-1.5 bg-rose-950/40 hover:bg-rose-900 border border-rose-900/30 text-rose-400 rounded cursor-pointer"
+                    >
+                      <Trash size={12} />
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Word Collections view */}
+      {activeSubTab === 'words' && (
+        <div className="space-y-6">
+          <div className="glass-card p-5 rounded-2xl">
+            <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-4">
+              {editingSetId ? 'Edit Word Collection' : 'Create Custom Word Set'}
+            </h3>
+
+            <form onSubmit={handleSaveWordSet} className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
+              <div className="space-y-1">
+                <label className="text-slate-400 font-semibold">Collection Name</label>
+                <input
+                  type="text"
+                  required
+                  placeholder="e.g. Python Key Functions"
+                  value={newSetName}
+                  onChange={(e) => setNewSetName(e.target.value)}
+                  className="w-full px-3 py-2.5 rounded-xl bg-[#0B0B0B] border border-[#222222] focus:border-[#FF6B00]/50 focus:outline-none"
+                />
+              </div>
+
+              <div className="space-y-1">
+                <label className="text-slate-400 font-semibold">Category Type</label>
+                <select
+                  value={newSetCategory}
+                  onChange={(e) => setNewSetCategory(e.target.value)}
+                  className="w-full bg-[#0B0B0B] border border-[#222222] focus:border-[#FF6B00]/50 rounded-xl px-3 py-2.5 text-slate-300 focus:outline-none"
+                >
+                  <option value="English Vocabulary">English Vocabulary</option>
+                  <option value="Coding">Coding</option>
+                  <option value="Competitive">Competitive</option>
+                  <option value="Keyboard Layout Layouts">Layout Drill</option>
+                </select>
+              </div>
+
+              <div className="md:col-span-2 space-y-1">
+                <label className="text-slate-400 font-semibold">Words (separated by spaces)</label>
+                <textarea
+                  required
+                  rows={4}
+                  placeholder="Insert lists of words..."
+                  value={newSetWords}
+                  onChange={(e) => setNewSetWords(e.target.value)}
+                  className="w-full px-3 py-2.5 rounded-xl bg-[#0B0B0B] border border-[#222222] focus:border-[#FF6B00]/50 focus:outline-none font-mono"
+                />
+              </div>
+
+              <div className="md:col-span-2 flex justify-end gap-2 pt-2">
+                {editingSetId && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setNewSetName('');
+                      setNewSetWords('');
+                      setEditingSetId(null);
+                    }}
+                    className="px-4 py-2 border border-[#222222] hover:bg-[#181818] rounded-xl text-slate-300 cursor-pointer"
+                  >
+                    Cancel
+                  </button>
+                )}
+                <button
+                  type="submit"
+                  className="px-5 py-2 bg-[#FF6B00] hover:bg-[#FF6B00]/90 text-black font-bold rounded-xl cursor-pointer"
+                >
+                  {editingSetId ? 'Save Edits' : 'Save Collection'}
+                </button>
+              </div>
+            </form>
+          </div>
+
+          {/* List Collections */}
+          <div className="glass-card p-5 rounded-2xl">
+            <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-4">Word Collections Dashboard</h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {wordSets.map((ws) => (
+                <div key={ws.id} className="p-4 rounded-xl bg-[#0B0B0B] border border-[#222222] flex flex-col justify-between text-xs gap-3">
+                  <div>
+                    <div className="flex justify-between items-center">
+                      <h4 className="font-bold text-white">{ws.name}</h4>
+                      <span className="text-[9px] bg-slate-800 text-slate-400 px-2 py-0.5 rounded-full font-bold uppercase">{ws.category}</span>
+                    </div>
+                    <p className="text-[10px] text-slate-500 font-mono line-clamp-2 mt-2">{ws.words}</p>
+                  </div>
+                  
+                  <div className="flex justify-between items-center border-t border-[#222222] pt-2 mt-1">
+                    <span className="text-[10px] text-slate-400">Usage runs: <strong className="text-white">{ws.usageCount}</strong></span>
+                    <div className="flex gap-2">
+                      <button
+                        onClick={() => {
+                          setEditingSetId(ws.id);
+                          setNewSetName(ws.name);
+                          setNewSetCategory(ws.category);
+                          setNewSetWords(ws.words);
+                        }}
+                        className="p-1 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded cursor-pointer"
+                      >
+                        <Edit3 size={11} />
+                      </button>
+                      <button
+                        onClick={() => {
+                          setWordSets(wordSets.filter(s => s.id !== ws.id));
+                          addToast('Collection Deleted', 'Word set deleted successfully.', 'info');
+                        }}
+                        className="p-1 bg-rose-950/40 hover:bg-rose-900 border border-rose-900/30 text-rose-400 rounded cursor-pointer"
+                      >
+                        <Trash size={11} />
+                      </button>
                     </div>
                   </div>
-                ))}
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Platform Analytics view */}
+      {activeSubTab === 'analytics' && (
+        <div className="space-y-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            
+            {/* Speed Curve Charts */}
+            <div className="glass-card p-5 rounded-2xl space-y-4">
+              <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest flex items-center gap-1.5">
+                <Activity size={14} className="text-[#FF6B00]" />
+                User Speed Distributions
+              </h3>
+              <div className="h-64">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={[
+                    { name: '10-30 WPM', count: 3 },
+                    { name: '30-50 WPM', count: 8 },
+                    { name: '50-70 WPM', count: 12 },
+                    { name: '70-90 WPM', count: 5 },
+                    { name: '90+ WPM', count: 2 }
+                  ]}>
+                    <XAxis dataKey="name" stroke="#444" fontSize={9} />
+                    <YAxis stroke="#444" fontSize={9} />
+                    <Tooltip contentStyle={{ backgroundColor: '#111', borderColor: '#222' }} />
+                    <Bar dataKey="count" fill="#FF6B00" radius={[4, 4, 0, 0]} />
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+            </div>
+
+            {/* Error rate metrics */}
+            <div className="glass-card p-5 rounded-2xl space-y-4">
+              <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest flex items-center gap-1.5">
+                <ShieldAlert size={14} className="text-[#FF6B00]" />
+                Accuracy Distributions
+              </h3>
+              <div className="h-64">
+                <ResponsiveContainer width="100%" height="100%">
+                  <LineChart data={[
+                    { name: 'Day 1', acc: 92 },
+                    { name: 'Day 3', acc: 93 },
+                    { name: 'Day 7', acc: 94.5 },
+                    { name: 'Day 14', acc: 96.2 },
+                    { name: 'Day 30', acc: 97.8 }
+                  ]}>
+                    <XAxis dataKey="name" stroke="#444" fontSize={9} />
+                    <YAxis stroke="#444" domain={[90, 100]} fontSize={9} />
+                    <Tooltip contentStyle={{ backgroundColor: '#111', borderColor: '#222' }} />
+                    <Line type="monotone" dataKey="acc" stroke="#FF6B00" strokeWidth={2} />
+                  </LineChart>
+                </ResponsiveContainer>
               </div>
             </div>
           </div>
-        )}
+        </div>
+      )}
 
-        {activeSubTab === 'users' && (
-          <div className="space-y-6">
-            <h3 className="text-base font-bold text-white mb-2">User Stats Configuration (Local User)</h3>
-            <p className="text-xs text-slate-400">
-              Direct tools for testing level transitions and verifying achievements workflows.
-            </p>
+      {/* Platform Settings view */}
+      {activeSubTab === 'settings' && (
+        <div className="space-y-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-start text-xs">
+            
+            {/* Multipliers & thresholds */}
+            <div className="glass-card p-5 rounded-2xl space-y-4">
+              <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest border-b border-[#222222] pb-2">Multipliers & Thresholds</h3>
+              
+              <div className="space-y-4">
+                {/* XP Multiplier */}
+                <div className="space-y-2">
+                  <div className="flex justify-between font-semibold">
+                    <span className="text-slate-400">XP Reward Multiplier</span>
+                    <span className="text-[#FF6B00] font-bold">{xpMultiplier}x</span>
+                  </div>
+                  <input
+                    type="range"
+                    min={1}
+                    max={3}
+                    step={0.1}
+                    value={xpMultiplier}
+                    onChange={(e) => setXpMultiplier(Number(e.target.value))}
+                    className="w-full accent-[#FF6B00] cursor-pointer"
+                  />
+                  <p className="text-[10px] text-slate-500">Multiplies the XP gained by users upon typing completion.</p>
+                </div>
 
-            {targetUser && (
-              <div className="glass-card bg-slate-950/40 p-4 border border-white/5 rounded-xl space-y-4 max-w-md">
-                <div className="flex justify-between text-xs">
-                  <span className="text-slate-400">User Target:</span>
-                  <strong className="text-white">{targetUser.username}</strong>
+                {/* Level Up Threshold */}
+                <div className="space-y-2">
+                  <div className="flex justify-between font-semibold">
+                    <span className="text-slate-400">Base Level XP Threshold</span>
+                    <span className="text-white font-bold">{rankThreshold} XP</span>
+                  </div>
+                  <input
+                    type="number"
+                    min={100}
+                    max={2000}
+                    step={50}
+                    value={rankThreshold}
+                    onChange={(e) => setRankThreshold(Number(e.target.value))}
+                    className="w-full px-3 py-2 rounded-lg bg-[#0B0B0B] border border-[#222222] focus:border-[#FF6B00]/50 focus:outline-none"
+                  />
+                  <p className="text-[10px] text-slate-500">Calculates level thresholds: Level * Threshold.</p>
                 </div>
-                <div className="flex justify-between text-xs">
-                  <span className="text-slate-400">Active Level:</span>
-                  <strong className="text-white">{targetUser.level}</strong>
-                </div>
-                <div className="flex justify-between text-xs">
-                  <span className="text-slate-400">XP Progress:</span>
-                  <strong className="text-white">{targetUser.xp} XP</strong>
-                </div>
-                <div className="flex justify-between text-xs">
-                  <span className="text-slate-400">Top WPM:</span>
-                  <strong className="text-white">{targetUser.wpm} WPM</strong>
+              </div>
+            </div>
+
+            {/* Test Duration Presets */}
+            <div className="glass-card p-5 rounded-2xl space-y-4">
+              <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest border-b border-[#222222] pb-2">Default Test Presets</h3>
+              
+              <div className="space-y-4">
+                <div className="flex flex-wrap gap-2">
+                  {testPresets.map((preset) => (
+                    <div key={preset} className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#0B0B0B] border border-[#222222] text-white">
+                      <span>{preset}s</span>
+                      <button
+                        onClick={() => setTestPresets(testPresets.filter(p => p !== preset))}
+                        className="text-rose-500 hover:text-rose-400 ml-1 font-bold cursor-pointer"
+                      >
+                        &times;
+                      </button>
+                    </div>
+                  ))}
                 </div>
 
-                <div className="flex gap-2 pt-2 border-t border-white/5">
+                <div className="flex gap-2">
+                  <input
+                    type="number"
+                    placeholder="Add duration (s)"
+                    value={newDurationPreset || ''}
+                    onChange={(e) => setNewDurationPreset(Number(e.target.value))}
+                    className="flex-1 px-3 py-2 rounded-lg bg-[#0B0B0B] border border-[#222222] focus:border-[#FF6B00]/50 focus:outline-none"
+                  />
                   <button
-                    onClick={handleBoostXp}
-                    className="flex-1 py-2 bg-cyber-blue text-slate-950 font-bold text-xs rounded-lg shadow-md hover:bg-cyber-blue/90"
+                    onClick={() => {
+                      if (newDurationPreset && !testPresets.includes(newDurationPreset)) {
+                        setTestPresets([...testPresets, newDurationPreset].sort((a, b) => a - b));
+                        setNewDurationPreset(0);
+                        addToast('Preset Added', 'New default time limit configured.', 'success');
+                      }
+                    }}
+                    className="px-4 bg-[#FF6B00] hover:bg-[#FF6B00]/90 text-black font-bold rounded-lg cursor-pointer"
                   >
-                    Level Up (+1 Level)
-                  </button>
-                  <button
-                    onClick={handleResetProgress}
-                    className="flex-1 py-2 border border-cyber-red/50 bg-cyber-red/5 hover:bg-cyber-red/10 text-cyber-red font-bold text-xs rounded-lg"
-                  >
-                    Reset ALL Data
+                    Add
                   </button>
                 </div>
               </div>
-            )}
+            </div>
           </div>
-        )}
-      </div>
+        </div>
+      )}
     </div>
   );
 };

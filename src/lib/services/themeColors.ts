@@ -227,6 +227,21 @@ export const deriveTokens = (bg: string, text: string, accent: string): Omit<The
 
 export const PRESET_THEMES: Theme[] = [
   {
+    id: "keystra-premium",
+    name: "Keystra Premium",
+    bg: "#0B0B0B",
+    surface: "#111111",
+    surface2: "#181818",
+    text: "#FFFFFF",
+    textMuted: "#888888",
+    accent: "#FF6B00",
+    error: "#FF3B30",
+    success: "#34C759",
+    caret: "#FF6B00",
+    border: "#222222",
+    selection: "#3b1a03",
+  },
+  {
     id: "classic-dark",
     name: "Classic Dark",
     bg: "#111111",

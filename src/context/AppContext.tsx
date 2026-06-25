@@ -299,7 +299,19 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
           if (currentUser) {
             setUser(currentUser);
             const uProfile = await getProfile(currentUser.id);
+            
+            // Sync role based on user email
+            const email = localStorage.getItem('typemaster_user_email') || 'guest@typemaster.pro';
+            const role = email === 'kumarajeet19022004@gmail.com' ? 'admin' : 'user';
+            uProfile.email = email;
+            uProfile.role = role;
+            localStorage.setItem('typemaster_profile', JSON.stringify(uProfile));
             setProfile(uProfile);
+
+            if (typeof window !== 'undefined') {
+              document.cookie = `local-user-role=${role}; path=/; max-age=31536000; SameSite=Lax; Secure`;
+              document.cookie = `sb-access-token=local-mock-token; path=/; max-age=31536000; SameSite=Lax; Secure`;
+            }
           } else {
             setUser(null);
             setProfile(null);
@@ -323,9 +335,19 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
             setUser(currentSession.user);
             const uProfile = await getProfile(currentSession.user.id);
             setProfile(uProfile);
+
+            if (typeof window !== 'undefined' && currentSession.access_token) {
+              const maxAge = currentSession.expires_in || 3600;
+              document.cookie = `sb-access-token=${currentSession.access_token}; path=/; max-age=${maxAge}; SameSite=Lax; Secure`;
+              document.cookie = `local-user-role=${uProfile.role}; path=/; max-age=${maxAge}; SameSite=Lax; Secure`;
+            }
           } else {
             setUser(null);
             setProfile(null);
+            if (typeof window !== 'undefined') {
+              document.cookie = 'sb-access-token=; path=/; max-age=0; SameSite=Lax; Secure';
+              document.cookie = 'local-user-role=; path=/; max-age=0; SameSite=Lax; Secure';
+            }
           }
           setLoading(false);
         }
@@ -344,6 +366,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       localStorage.setItem('typemaster_user_email', email);
       localStorage.setItem('typemaster_username', username);
       
+      const role = email === 'kumarajeet19022004@gmail.com' ? 'admin' : 'user';
+      document.cookie = `local-user-role=${role}; path=/; max-age=31536000; SameSite=Lax; Secure`;
+      document.cookie = `sb-access-token=local-mock-token; path=/; max-age=31536000; SameSite=Lax; Secure`;
+
       const mockUser = {
         id: 'guest-user-id',
         email,
@@ -352,12 +378,11 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       
       setUser(mockUser);
       const uProfile = await getProfile(mockUser.id);
-      // Synchronize with updated username
-      if (uProfile.username !== username) {
-        uProfile.username = username;
-        uProfile.avatarUrl = 'https://api.dicebear.com/7.x/pixel-art/svg?seed=' + username;
-        localStorage.setItem('typemaster_profile', JSON.stringify(uProfile));
-      }
+      uProfile.username = username;
+      uProfile.avatarUrl = 'https://api.dicebear.com/7.x/pixel-art/svg?seed=' + username;
+      uProfile.email = email;
+      uProfile.role = role;
+      localStorage.setItem('typemaster_profile', JSON.stringify(uProfile));
       setProfile(uProfile);
       addToast('Welcome Back!', `Logged in as ${username}`, 'success');
     }
@@ -368,6 +393,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       localStorage.setItem('typemaster_is_logged_in', 'true');
       localStorage.setItem('typemaster_user_email', email);
       localStorage.setItem('typemaster_username', username);
+
+      const role = email === 'kumarajeet19022004@gmail.com' ? 'admin' : 'user';
+      document.cookie = `local-user-role=${role}; path=/; max-age=31536000; SameSite=Lax; Secure`;
+      document.cookie = `sb-access-token=local-mock-token; path=/; max-age=31536000; SameSite=Lax; Secure`;
       
       const defaultProfile: UserProfile = {
         id: 'guest-user-id',
@@ -379,7 +408,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         accuracy: 0,
         practiceTime: 0,
         streak: 1,
-        lastActive: new Date().toISOString()
+        lastActive: new Date().toISOString(),
+        email,
+        role
       };
       
       localStorage.setItem('typemaster_profile', JSON.stringify(defaultProfile));
@@ -397,6 +428,11 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   };
 
   const logOut = async () => {
+    if (typeof window !== 'undefined') {
+      document.cookie = 'sb-access-token=; path=/; max-age=0; SameSite=Lax; Secure';
+      document.cookie = 'local-user-role=; path=/; max-age=0; SameSite=Lax; Secure';
+    }
+
     if (localMode) {
       if (typeof window !== 'undefined') {
         localStorage.removeItem('typemaster_is_logged_in');

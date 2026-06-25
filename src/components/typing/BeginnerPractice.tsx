@@ -70,6 +70,8 @@ export const BeginnerPractice: React.FC<{ onBack?: () => void }> = ({ onBack }) 
     if (!isPlaying || showResults) return;
 
     const handleKeyDown = (e: KeyboardEvent) => {
+      if (!e.key) return;
+
       // Prevent browser shortcuts
       if (e.key === 'Tab' || e.key === 'Backspace' || e.key === ' ') {
         e.preventDefault();

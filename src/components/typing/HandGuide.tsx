@@ -33,6 +33,7 @@ export const HandGuide: React.FC<HandGuideProps> = ({ targetKey, onClose }) => {
 
   // Determine hand and finger based on the character
   const getFingerMapping = (char: string): { hand: 'left' | 'right'; finger: 'pinky' | 'ring' | 'middle' | 'index' | 'thumb' } => {
+    if (!char) return { hand: 'left', finger: 'thumb' };
     const key = char.toUpperCase();
     
     // Left Hand Keys

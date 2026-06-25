@@ -8,7 +8,7 @@ interface KeyboardVisualizerProps {
 }
 
 export const KeyboardVisualizer: React.FC<KeyboardVisualizerProps> = ({ targetKey, errorKey }) => {
-  const normTarget = targetKey.toUpperCase();
+  const normTarget = (targetKey || '').toUpperCase();
   const normError = errorKey ? errorKey.toUpperCase() : '';
 
   const rows = [

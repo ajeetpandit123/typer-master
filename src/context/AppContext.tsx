@@ -252,6 +252,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   }, [themeMode, accentColor, fontFamily, soundName, soundVolume]);
 
   const playClickSound = (key: string) => {
+    if (!key) return;
     playKeystrokeSound(soundName, key, soundVolume);
   };
 

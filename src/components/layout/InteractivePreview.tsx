@@ -64,6 +64,8 @@ export const InteractivePreview: React.FC = () => {
   // Track global key presses to highlight virtual keyboard (ignoring sensitive fields)
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
+      if (!e.key) return;
+
       // Security check: Ignore keypresses inside password input
       const activeEl = document.activeElement;
       if (activeEl) {

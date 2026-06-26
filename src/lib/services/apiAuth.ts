@@ -31,7 +31,12 @@ export async function verifyAdmin(request: NextRequest): Promise<{ isAdmin: bool
 
   try {
     const supabase = createClient(supabaseUrl, supabaseAnonKey, {
-      auth: { persistSession: false }
+      auth: { persistSession: false },
+      global: {
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      }
     });
 
     const { data: { user }, error: userError } = await supabase.auth.getUser(token);
@@ -39,13 +44,18 @@ export async function verifyAdmin(request: NextRequest): Promise<{ isAdmin: bool
       return { isAdmin: false, error: 'Access Denied: Invalid user session.' };
     }
 
+    const isHardcodedAdmin = user.email && user.email.toLowerCase() === 'kumarajeet19022004@gmail.com';
+
     const { data: profile, error: profileError } = await supabase
       .from('profiles')
       .select('role')
       .eq('id', user.id)
       .single();
 
-    if (profileError || !profile || profile.role !== 'admin') {
+    // Use profile role if available, otherwise default to admin if the email matches
+    const role = profile?.role || (isHardcodedAdmin ? 'admin' : 'user');
+
+    if (role !== 'admin') {
       return { isAdmin: false, error: 'Access Denied: Admin role required.' };
     }
 

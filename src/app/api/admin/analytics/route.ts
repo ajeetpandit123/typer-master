@@ -34,8 +34,14 @@ export async function GET(request: NextRequest) {
 
   // 2. Production Supabase Query
   try {
+    const token = request.cookies.get('sb-access-token')?.value || 
+                  request.headers.get('Authorization')?.replace('Bearer ', '');
+
     const supabase = createClient(supabaseUrl, supabaseAnonKey, {
-      auth: { persistSession: false }
+      auth: { persistSession: false },
+      global: {
+        headers: token ? { Authorization: `Bearer ${token}` } : undefined
+      }
     });
 
     // Count profiles

@@ -125,6 +125,8 @@ export const AppShell: React.FC<AppShellProps> = ({ children }) => {
         { id: 'tests', label: 'Tests', icon: <Code size={16} /> },
         { id: 'words', label: 'Word Collections', icon: <BookOpen size={16} /> },
         { id: 'analytics', label: 'Analytics', icon: <Zap size={16} /> },
+        { id: 'settings', label: 'Settings', icon: <Settings size={16} /> },
+        { id: 'return-app', label: 'Return to App', icon: <ArrowLeft size={16} /> },
       ]
     : [
         { id: 'dashboard', label: 'Overview', icon: <Target size={16} /> },
@@ -138,6 +140,11 @@ export const AppShell: React.FC<AppShellProps> = ({ children }) => {
   // If user is admin and in user panel, append Admin Dashboard to the sidebar
   if (!isAdminPanel && profile.role === 'admin') {
     navItems.push({ id: 'admin', label: 'Admin Dashboard', icon: <Shield size={16} /> });
+  }
+
+  // Append Settings to the user panel at the very end
+  if (!isAdminPanel) {
+    navItems.push({ id: 'settings', label: 'Settings', icon: <Settings size={16} /> });
   }
 
   return (
@@ -188,14 +195,17 @@ export const AppShell: React.FC<AppShellProps> = ({ children }) => {
             </div>
             {navItems.map((item) => {
               const isActive = activeTab === item.id;
+              const isReturnApp = item.id === 'return-app';
               return (
                 <button
                   key={item.id}
                   onClick={() => handleNavigate(item.id)}
                   className={`w-full px-3 py-2.5 rounded-lg text-xs font-semibold flex items-center gap-2.5 transition-all border cursor-pointer ${
-                    isActive 
-                      ? 'bg-[#FF6B00]/10 border-[#FF6B00] text-[#FF6B00]' 
-                      : 'border-transparent text-slate-400 hover:text-white hover:bg-[#181818]'
+                    isReturnApp
+                      ? 'border-transparent text-[#FF6B00] hover:bg-[#FF6B00]/10'
+                      : isActive 
+                        ? 'bg-[#FF6B00]/10 border-[#FF6B00] text-[#FF6B00]' 
+                        : 'border-transparent text-slate-400 hover:text-white hover:bg-[#181818]'
                   }`}
                 >
                   {item.icon}
@@ -206,43 +216,7 @@ export const AppShell: React.FC<AppShellProps> = ({ children }) => {
           </nav>
         </div>
 
-        {/* Sidebar Footer - Settings and Return to App */}
-        <div className="space-y-2 pt-4 border-t border-[#222222]">
-          {isAdminPanel ? (
-            <>
-              <button
-                onClick={() => handleNavigate('settings')}
-                className={`w-full px-3 py-2 rounded-lg text-xs font-semibold flex items-center gap-2.5 transition border cursor-pointer ${
-                  activeTab === 'settings' 
-                    ? 'bg-[#FF6B00]/10 border-[#FF6B00] text-[#FF6B00]' 
-                    : 'border-transparent text-slate-400 hover:text-white hover:bg-[#181818]'
-                }`}
-              >
-                <Settings size={16} />
-                Settings
-              </button>
-              <button
-                onClick={() => handleNavigate('return-app')}
-                className="w-full px-3 py-2 rounded-lg text-xs font-semibold flex items-center gap-2.5 transition border border-transparent text-[#FF6B00] hover:bg-[#FF6B00]/10 cursor-pointer"
-              >
-                <ArrowLeft size={16} />
-                Return to App
-              </button>
-            </>
-          ) : (
-            <button
-              onClick={() => handleNavigate('settings')}
-              className={`w-full px-3 py-2 rounded-lg text-xs font-semibold flex items-center gap-2.5 transition border cursor-pointer ${
-                activeTab === 'settings' 
-                  ? 'bg-[#FF6B00]/10 border-[#FF6B00] text-[#FF6B00]' 
-                  : 'border-transparent text-slate-400 hover:text-white hover:bg-[#181818]'
-              }`}
-            >
-              <Settings size={16} />
-              Settings
-            </button>
-          )}
-        </div>
+
       </aside>
 
       {/* 2. Mobile Nav Header Bar */}
@@ -299,59 +273,29 @@ export const AppShell: React.FC<AppShellProps> = ({ children }) => {
               </div>
 
               <nav className="space-y-1">
-                {navItems.map((item) => (
-                  <button
-                    key={item.id}
-                    onClick={() => handleNavigate(item.id)}
-                    className={`w-full px-3 py-2 rounded-lg text-xs font-semibold flex items-center gap-2.5 transition border cursor-pointer ${
-                      activeTab === item.id 
-                        ? 'bg-[#FF6B00]/10 border-[#FF6B00] text-[#FF6B00]' 
-                        : 'border-transparent text-slate-400 hover:text-white hover:bg-[#181818]'
-                    }`}
-                  >
-                    {item.icon}
-                    {item.label}
-                  </button>
-                ))}
+                {navItems.map((item) => {
+                  const isReturnApp = item.id === 'return-app';
+                  return (
+                    <button
+                      key={item.id}
+                      onClick={() => handleNavigate(item.id)}
+                      className={`w-full px-3 py-2 rounded-lg text-xs font-semibold flex items-center gap-2.5 transition border cursor-pointer ${
+                        isReturnApp
+                          ? 'border-transparent text-[#FF6B00] hover:bg-[#FF6B00]/10'
+                          : activeTab === item.id 
+                            ? 'bg-[#FF6B00]/10 border-[#FF6B00] text-[#FF6B00]' 
+                            : 'border-transparent text-slate-400 hover:text-white hover:bg-[#181818]'
+                      }`}
+                    >
+                      {item.icon}
+                      {item.label}
+                    </button>
+                  );
+                })}
               </nav>
             </div>
 
-            <div className="space-y-2 pt-4 border-t border-[#222222]">
-              {isAdminPanel ? (
-                <>
-                  <button
-                    onClick={() => handleNavigate('settings')}
-                    className={`w-full px-3 py-2 rounded-lg text-xs font-semibold flex items-center gap-2.5 transition border cursor-pointer ${
-                      activeTab === 'settings' 
-                        ? 'bg-[#FF6B00]/10 border-[#FF6B00] text-[#FF6B00]' 
-                        : 'border-transparent text-slate-400 hover:text-white hover:bg-[#181818]'
-                    }`}
-                  >
-                    <Settings size={16} />
-                    Settings
-                  </button>
-                  <button
-                    onClick={() => handleNavigate('return-app')}
-                    className="w-full px-3 py-2 rounded-lg text-xs font-semibold flex items-center gap-2.5 transition border border-transparent text-[#FF6B00] hover:bg-[#FF6B00]/10 cursor-pointer"
-                  >
-                    <ArrowLeft size={16} />
-                    Return to App
-                  </button>
-                </>
-              ) : (
-                <button
-                  onClick={() => handleNavigate('settings')}
-                  className={`w-full px-3 py-2 rounded-lg text-xs font-semibold flex items-center gap-2.5 transition border cursor-pointer ${
-                    activeTab === 'settings' 
-                      ? 'bg-[#FF6B00]/10 border-[#FF6B00] text-[#FF6B00]' 
-                      : 'border-transparent text-slate-400 hover:text-white hover:bg-[#181818]'
-                  }`}
-                >
-                  <Settings size={16} />
-                  Settings
-                </button>
-              )}
-            </div>
+
           </div>
         </div>
       )}

@@ -58,6 +58,11 @@ export async function middleware(request: NextRequest) {
     const supabase = createClient(supabaseUrl, supabaseAnonKey, {
       auth: {
         persistSession: false
+      },
+      global: {
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
       }
     });
 
@@ -68,6 +73,8 @@ export async function middleware(request: NextRequest) {
       throw new Error('Invalid session token');
     }
 
+    const isHardcodedAdmin = user.email && user.email.toLowerCase() === 'kumarajeet19022004@gmail.com';
+
     // Fetch user profile to verify role
     const { data: profile, error: profileError } = await supabase
       .from('profiles')
@@ -75,7 +82,10 @@ export async function middleware(request: NextRequest) {
       .eq('id', user.id)
       .single();
 
-    if (profileError || !profile || profile.role !== 'admin') {
+    // Use profile role if available, otherwise default to admin if the email matches
+    const role = profile?.role || (isHardcodedAdmin ? 'admin' : 'user');
+
+    if (role !== 'admin') {
       throw new Error('Unauthorized role');
     }
 

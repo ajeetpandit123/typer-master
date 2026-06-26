@@ -3,6 +3,7 @@ import { Outfit, JetBrains_Mono } from "next/font/google";
 import { AppProvider } from "@/context/AppContext";
 import { APP_NAME } from "@/lib/config";
 import "./globals.css";
+import { Suspense } from "react";
 
 const outfit = Outfit({
   variable: "--font-outfit",
@@ -34,7 +35,13 @@ export default function RootLayout({
     >
       <body className="min-h-full flex flex-col bg-cyber-dark text-slate-100 font-sans">
         <AppProvider>
-          {children}
+          <Suspense fallback={
+            <div className="min-h-screen flex items-center justify-center bg-[#0B0B0B]">
+              <div className="w-16 h-16 border-4 border-[#FF6B00] border-t-transparent rounded-full animate-spin"></div>
+            </div>
+          }>
+            {children}
+          </Suspense>
         </AppProvider>
       </body>
     </html>

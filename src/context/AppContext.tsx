@@ -5,11 +5,12 @@ import {
   getActiveUser, 
   getProfile, 
   UserProfile, 
-  isLocalMode
+  isLocalMode,
+  getUserGlobalRank
 } from '@/lib/services/db';
 import { supabase, isSupabaseConfigured } from '@/lib/services/supabaseClient';
 import { playKeystrokeSound } from '@/lib/services/soundSynth';
-import { Theme, PRESET_THEMES } from '@/lib/services/themeColors';
+import { Theme, PRESET_THEMES, hexToRgb } from '@/lib/services/themeColors';
 import { APP_NAME } from '@/lib/config';
 
 export interface ToastMessage {
@@ -22,6 +23,7 @@ export interface ToastMessage {
 interface AppContextType {
   user: any | null;
   profile: UserProfile | null;
+  globalRank: number;
   loading: boolean;
   localMode: boolean;
   toasts: ToastMessage[];
@@ -67,11 +69,29 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const secureFlag = getSecureFlag();
   const [user, setUser] = useState<any | null>(null);
   const [profile, setProfile] = useState<UserProfile | null>(null);
+  const [globalRank, setGlobalRank] = useState<number>(0);
   const [loading, setLoading] = useState<boolean>(true);
   const [localMode, setLocalMode] = useState<boolean>(true);
   const [toasts, setToasts] = useState<ToastMessage[]>([]);
   const [isZenMode, setIsZenMode] = useState<boolean>(false);
   const [isResettingPassword, setIsResettingPassword] = useState<boolean>(false);
+
+  // Fetch global rank when profile changes
+  useEffect(() => {
+    const loadRank = async () => {
+      if (profile && profile.id) {
+        try {
+          const rank = await getUserGlobalRank(profile.id, profile.wpm);
+          setGlobalRank(rank);
+        } catch (err) {
+          console.error('Failed to load global rank:', err);
+        }
+      } else {
+        setGlobalRank(0);
+      }
+    };
+    loadRank();
+  }, [profile, profile?.wpm]);
 
   // Monkeytype Theme Engine States
   const [customThemes, setCustomThemes] = useState<Theme[]>(() => {
@@ -203,6 +223,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       root.style.setProperty('--text', currentTheme.text);
       root.style.setProperty('--text-muted', currentTheme.textMuted);
       root.style.setProperty('--accent', currentTheme.accent);
+      const rgb = hexToRgb(currentTheme.accent);
+      root.style.setProperty('--accent-rgb', `${rgb.r}, ${rgb.g}, ${rgb.b}`);
       root.style.setProperty('--error', currentTheme.error);
       root.style.setProperty('--success', currentTheme.success);
       root.style.setProperty('--caret', currentTheme.caret);
@@ -471,6 +493,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       value={{
         user,
         profile,
+        globalRank,
         loading,
         localMode,
         toasts,

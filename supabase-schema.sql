@@ -20,13 +20,9 @@ CREATE TABLE public.profiles (
 -- Enable RLS for Profiles
 ALTER TABLE public.profiles ENABLE ROW LEVEL SECURITY;
 
-CREATE POLICY "Allow select for profile owner or admin"
+CREATE POLICY "Allow select for everyone"
     ON public.profiles FOR SELECT
-    USING (
-        auth.uid() = id 
-        OR 
-        (auth.jwt() ->> 'email') = 'kumarajeet19022004@gmail.com'
-    );
+    USING (true);
 
 CREATE POLICY "Allow update for profile owner or admin"
     ON public.profiles FOR UPDATE

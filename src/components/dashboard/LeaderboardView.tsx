@@ -1,13 +1,25 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
-import { getLeaderboard, LeaderboardEntry } from '@/lib/services/db';
+import { getLeaderboard, LeaderboardEntry, getUserWins } from '@/lib/services/db';
+import { useApp } from '@/context/AppContext';
 import { Trophy, Award, Zap, Target, Flame } from 'lucide-react';
 
+const getOrdinalSuffix = (num: number): string => {
+  const j = num % 10;
+  const k = num % 100;
+  if (j === 1 && k !== 11) return num + "st";
+  if (j === 2 && k !== 12) return num + "nd";
+  if (j === 3 && k !== 13) return num + "rd";
+  return num + "th";
+};
+
 export const LeaderboardView: React.FC = () => {
+  const { profile, globalRank } = useApp();
   const [entries, setEntries] = useState<LeaderboardEntry[]>([]);
   const [period, setPeriod] = useState<'daily' | 'weekly' | 'monthly' | 'all'>('all');
   const [loading, setLoading] = useState(true);
+  const [userWins, setUserWins] = useState<number>(0);
 
   useEffect(() => {
     const fetchLeaderboard = async () => {
@@ -15,6 +27,11 @@ export const LeaderboardView: React.FC = () => {
       try {
         const list = await getLeaderboard();
         setEntries(list);
+
+        if (profile && profile.id) {
+          const wins = await getUserWins(profile.id);
+          setUserWins(wins);
+        }
       } catch (err) {
         console.error('Failed to load leaderboard entries:', err);
       } finally {
@@ -22,7 +39,7 @@ export const LeaderboardView: React.FC = () => {
       }
     };
     fetchLeaderboard();
-  }, [period]);
+  }, [period, profile]);
 
   if (loading) {
     return (
@@ -35,6 +52,10 @@ export const LeaderboardView: React.FC = () => {
   // Split top 3 for podium
   const podiumEntries = entries.slice(0, 3);
   const tableEntries = entries.slice(0, 10);
+
+  const isUserInTopTen = profile && tableEntries.some(
+    (entry) => entry.username.toLowerCase() === profile.username.toLowerCase()
+  );
 
   // Re-order podium as: 2nd place (left), 1st place (center), 3rd place (right)
   const sortedPodium = [];
@@ -151,49 +172,100 @@ export const LeaderboardView: React.FC = () => {
           </thead>
           <tbody className="divide-y divide-white/5">
             {tableEntries.length > 0 ? (
-              tableEntries.map((entry, idx) => {
-                const rank = idx + 1;
-                const getRankBadge = () => {
-                  if (rank === 1) return '🥇';
-                  if (rank === 2) return '🥈';
-                  if (rank === 3) return '🥉';
-                  return `#${rank}`;
-                };
+              <>
+                {tableEntries.map((entry, idx) => {
+                  const rank = idx + 1;
+                  const getRankBadge = () => {
+                    if (rank === 1) return '🥇';
+                    if (rank === 2) return '🥈';
+                    if (rank === 3) return '🥉';
+                    return `#${rank}`;
+                  };
 
-                return (
-                  <tr 
-                    key={entry.username} 
-                    className="hover:bg-white/5 transition duration-150"
-                  >
-                    <td className={`p-4 font-bold ${
-                      rank === 1 ? 'text-cyber-amber text-sm' :
-                      rank === 2 ? 'text-slate-300 text-sm' :
-                      rank === 3 ? 'text-amber-600 text-sm' :
-                      'text-slate-400 text-xs'
-                    }`}>
-                      {getRankBadge()}
-                    </td>
-                    <td className="p-4">
-                      <div className="flex items-center gap-3">
-                        <img src={entry.avatarUrl} alt="Avatar" className="w-8 h-8 rounded-full border border-white/5" />
-                        <span className="font-bold text-white">{entry.username}</span>
-                      </div>
-                    </td>
-                    <td className="p-4 text-center text-slate-300">
-                      {entry.level}
-                    </td>
-                    <td className="p-4 text-center font-bold text-cyber-blue">
-                      {entry.wpm} WPM
-                    </td>
-                    <td className="p-4 text-center text-cyber-green">
-                      {entry.accuracy}%
-                    </td>
-                    <td className="p-4 text-center text-slate-400">
-                      {entry.wins || 0}
-                    </td>
-                  </tr>
-                );
-              })
+                  const isCurrentUser = profile && entry.username.toLowerCase() === profile.username.toLowerCase();
+
+                  return (
+                    <tr 
+                      key={entry.username} 
+                      className={`transition duration-150 ${
+                        isCurrentUser 
+                          ? 'bg-cyber-blue/10 border-y border-cyber-blue/30 text-cyber-blue font-bold shadow-[inset_0_0_12px_rgba(0,242,254,0.05)]' 
+                          : 'hover:bg-white/5'
+                      }`}
+                    >
+                      <td className={`p-4 font-bold ${
+                        isCurrentUser ? 'text-cyber-blue text-sm' :
+                        rank === 1 ? 'text-cyber-amber text-sm' :
+                        rank === 2 ? 'text-slate-300 text-sm' :
+                        rank === 3 ? 'text-amber-600 text-sm' :
+                        'text-slate-400 text-xs'
+                      }`}>
+                        {getRankBadge()}
+                      </td>
+                      <td className="p-4">
+                        <div className="flex items-center gap-3">
+                          <img src={entry.avatarUrl} alt="Avatar" className={`w-8 h-8 rounded-full border ${isCurrentUser ? 'border-cyber-blue/20' : 'border-white/5'}`} />
+                          <span className={`font-bold ${isCurrentUser ? 'text-cyber-blue text-glow-blue' : 'text-white'}`}>
+                            {entry.username}
+                            {isCurrentUser && <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-cyber-blue/20 text-cyber-blue uppercase font-black border border-cyber-blue/30 ml-1.5">You</span>}
+                          </span>
+                        </div>
+                      </td>
+                      <td className={`p-4 text-center ${isCurrentUser ? 'text-cyber-blue' : 'text-slate-300'}`}>
+                        {entry.level}
+                      </td>
+                      <td className={`p-4 text-center font-bold ${isCurrentUser ? 'text-cyber-blue' : 'text-cyber-blue'}`}>
+                        {entry.wpm} WPM
+                      </td>
+                      <td className={`p-4 text-center font-semibold ${isCurrentUser ? 'text-cyber-green text-glow-green' : 'text-cyber-green'}`}>
+                        {entry.accuracy}%
+                      </td>
+                      <td className={`p-4 text-center ${isCurrentUser ? 'text-cyber-blue' : 'text-slate-400'}`}>
+                        {entry.wins || 0}
+                      </td>
+                    </tr>
+                  );
+                })}
+
+                {/* 11th Row showing the current user if they are not in the top 10 */}
+                {profile && !isUserInTopTen && globalRank > 10 && profile.wpm > 0 && (
+                  <>
+                    <tr className="border-t-2 border-dashed border-white/10 bg-slate-950/20">
+                      <td colSpan={6} className="p-2 text-center text-slate-500 text-[10px] uppercase tracking-widest font-black select-none">
+                        ••• Your Rank •••
+                      </td>
+                    </tr>
+                    <tr 
+                      className="bg-cyber-blue/10 border-y border-cyber-blue/30 text-cyber-blue font-bold shadow-[inset_0_0_12px_rgba(0,242,254,0.05)] transition duration-150"
+                    >
+                      <td className="p-4 font-bold text-cyber-blue text-xs">
+                        {getOrdinalSuffix(globalRank)}
+                      </td>
+                      <td className="p-4">
+                        <div className="flex items-center gap-3">
+                          <img src={profile.avatarUrl} alt="Avatar" className="w-8 h-8 rounded-full border border-cyber-blue/20" />
+                          <span className="font-bold text-cyber-blue text-glow-blue flex items-center gap-1.5">
+                            {profile.username}
+                            <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-cyber-blue/20 text-cyber-blue uppercase font-black border border-cyber-blue/30">You</span>
+                          </span>
+                        </div>
+                      </td>
+                      <td className="p-4 text-center text-slate-300">
+                        {profile.level}
+                      </td>
+                      <td className="p-4 text-center font-bold text-cyber-blue">
+                        {profile.wpm} WPM
+                      </td>
+                      <td className="p-4 text-center text-cyber-green">
+                        {profile.accuracy}%
+                      </td>
+                      <td className="p-4 text-center text-slate-400">
+                        {userWins || 0}
+                      </td>
+                    </tr>
+                  </>
+                )}
+              </>
             ) : (
               podiumEntries.length === 0 && (
                 <tr>

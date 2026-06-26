@@ -693,3 +693,48 @@ export const getLeaderboard = async (): Promise<LeaderboardEntry[]> => {
     wins: winsMap[d.id] || 0
   }));
 };
+
+export const getUserGlobalRank = async (userId: string, userWpm: number): Promise<number> => {
+  if (isLocalMode()) {
+    const profile = getLocalData<UserProfile>('profile', DEFAULT_PROFILE);
+    const userWpmVal = userWpm > 0 ? userWpm : profile.wpm;
+    if (userWpmVal === 0) return 0;
+    
+    const list = [...MOCK_LEADERBOARD];
+    const count = list.filter(e => e.wpm > userWpmVal).length;
+    return count + 1;
+  }
+
+  try {
+    const { count, error } = await supabase!
+      .from('profiles')
+      .select('*', { count: 'exact', head: true })
+      .gt('wpm', userWpm);
+
+    if (error) throw error;
+    return (count || 0) + 1;
+  } catch (err) {
+    console.error('Error fetching global rank:', err);
+    return 0;
+  }
+};
+
+export const getUserWins = async (userId: string): Promise<number> => {
+  if (isLocalMode()) {
+    return getLocalData<number>('battle_wins', 0);
+  }
+
+  try {
+    const { count, error } = await supabase!
+      .from('room_players')
+      .select('*', { count: 'exact', head: true })
+      .eq('user_id', userId)
+      .eq('is_winner', true);
+
+    if (error) throw error;
+    return count || 0;
+  } catch (err) {
+    console.error('Error fetching user wins:', err);
+    return 0;
+  }
+};

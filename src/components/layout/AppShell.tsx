@@ -20,6 +20,7 @@ export const AppShell: React.FC<AppShellProps> = ({ children }) => {
   const { 
     user, 
     profile, 
+    globalRank,
     loading, 
     logOut, 
     isZenMode, 
@@ -103,8 +104,8 @@ export const AppShell: React.FC<AppShellProps> = ({ children }) => {
     return (
       <div className="min-h-screen flex items-center justify-center bg-[#0B0B0B]">
         <div className="relative">
-          <div className="w-16 h-16 border-4 border-[#FF6B00] border-t-transparent rounded-full animate-spin"></div>
-          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-xs font-black text-[#FF6B00]">
+          <div className="w-16 h-16 border-4 border-[var(--accent,#FF6B00)] border-t-transparent rounded-full animate-spin"></div>
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-xs font-black text-[var(--accent,#FF6B00)]">
             KS
           </div>
         </div>
@@ -148,7 +149,7 @@ export const AppShell: React.FC<AppShellProps> = ({ children }) => {
   }
 
   return (
-    <div className={`flex bg-[#0B0B0B] text-white relative font-sans selection:bg-[#FF6B00]/30 selection:text-white ${
+    <div className={`flex bg-[#0B0B0B] text-white relative font-sans selection:bg-[rgba(var(--accent-rgb),0.3)] selection:text-white ${
       isZenMode 
         ? 'h-screen max-h-screen overflow-hidden w-screen' 
         : 'min-h-screen w-full'
@@ -167,24 +168,28 @@ export const AppShell: React.FC<AppShellProps> = ({ children }) => {
           {/* Logo */}
           <div className="flex items-center gap-2 select-none cursor-pointer" onClick={() => handleNavigate('dashboard')}>
             <div 
-              className="w-8 h-8 rounded-lg flex items-center justify-center font-black text-sm bg-[#FF6B00] text-black shadow-[0_0_12px_#FF6B00]"
+              className="w-8 h-8 rounded-lg flex items-center justify-center font-black text-sm text-black transition-all duration-300"
+              style={{
+                backgroundColor: 'var(--accent)',
+                boxShadow: '0 0 12px var(--accent)'
+              }}
             >
               KS
             </div>
-            <h1 className="text-lg font-bold tracking-wider text-white">
-              Key<span className="text-[#FF6B00]" style={{ textShadow: '0 0 6px #FF6B00' }}>stra</span>
+            <h1 className="text-lg font-bold tracking-wider text-white transition-all duration-300">
+              Key<span className="transition-all duration-300" style={{ color: 'var(--accent)', textShadow: '0 0 6px var(--accent)' }}>stra</span>
             </h1>
           </div>
 
           {/* User Profile Widget */}
           <div 
             onClick={() => handleNavigate('settings')}
-            className="p-3 rounded-xl border flex items-center gap-3 bg-[#181818] border-[#222222] hover:border-[#FF6B00]/40 transition duration-200 cursor-pointer"
+            className="p-3 rounded-xl border flex items-center gap-3 bg-[#181818] border-[#222222] hover:border-[rgba(var(--accent-rgb),0.4)] transition duration-200 cursor-pointer"
           >
             <img src={profile.avatarUrl} alt="Avatar" className="w-10 h-10 rounded-full border border-[#222222]" />
             <div className="truncate">
               <h4 className="text-xs font-bold truncate text-white">{profile.username}</h4>
-              <span className="text-[10px] font-semibold text-[#FF6B00]">Lvl {profile.level} Typist</span>
+              <span className="text-[10px] font-semibold text-[var(--accent)]">Lvl {profile.level} Typist</span>
             </div>
           </div>
 
@@ -204,7 +209,7 @@ export const AppShell: React.FC<AppShellProps> = ({ children }) => {
                     isReturnApp
                       ? 'border-transparent text-[#FF6B00] hover:bg-[#FF6B00]/10'
                       : isActive 
-                        ? 'bg-[#FF6B00]/10 border-[#FF6B00] text-[#FF6B00]' 
+                        ? 'bg-[rgba(var(--accent-rgb),0.1)] border-[var(--accent)] text-[var(--accent)]' 
                         : 'border-transparent text-slate-400 hover:text-white hover:bg-[#181818]'
                   }`}
                 >
@@ -232,14 +237,14 @@ export const AppShell: React.FC<AppShellProps> = ({ children }) => {
           >
             <Menu size={20} />
           </button>
-          <h1 className="text-sm font-bold tracking-wider text-white" onClick={() => handleNavigate('dashboard')}>
-            Key<span className="font-bold text-[#FF6B00]" style={{ textShadow: '0 0 6px #FF6B00' }}>stra</span>
+          <h1 className="text-sm font-bold tracking-wider text-white cursor-pointer transition-all duration-300" onClick={() => handleNavigate('dashboard')}>
+            Key<span className="font-bold transition-all duration-300" style={{ color: 'var(--accent)', textShadow: '0 0 6px var(--accent)' }}>stra</span>
           </h1>
         </div>
 
         <div className="flex items-center gap-2.5">
           <div className="flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold border border-[#222222] bg-[#181818] text-white">
-            <Flame size={11} className="text-[#FF6B00]" />
+            <Flame size={11} className="text-[var(--accent)]" />
             <span>{profile.streak}d</span>
           </div>
 
@@ -263,9 +268,19 @@ export const AppShell: React.FC<AppShellProps> = ({ children }) => {
           <div className="relative w-64 p-6 flex flex-col justify-between border-r border-[#222222] bg-[#111111]">
             <div className="space-y-6">
               <div className="flex justify-between items-center">
-                <div className="flex items-center gap-2">
-                  <div className="w-6 h-6 rounded bg-[#FF6B00] text-black font-black text-xs flex items-center justify-center">KS</div>
-                  <span className="text-sm font-bold text-white tracking-wider">Key<span className="text-[#FF6B00]">stra</span></span>
+                <div className="flex items-center gap-2 select-none cursor-pointer" onClick={() => { handleNavigate('dashboard'); setSidebarOpen(false); }}>
+                  <div 
+                    className="w-6 h-6 rounded text-black font-black text-xs flex items-center justify-center transition-all duration-300"
+                    style={{
+                      backgroundColor: 'var(--accent)',
+                      boxShadow: '0 0 8px var(--accent)'
+                    }}
+                  >
+                    KS
+                  </div>
+                  <span className="text-sm font-bold text-white tracking-wider transition-all duration-300">
+                    Key<span className="transition-all duration-300" style={{ color: 'var(--accent)', textShadow: '0 0 4px var(--accent)' }}>stra</span>
+                  </span>
                 </div>
                 <button onClick={() => setSidebarOpen(false)} className="text-slate-400 hover:text-white cursor-pointer">
                   <X size={18} />
@@ -283,7 +298,7 @@ export const AppShell: React.FC<AppShellProps> = ({ children }) => {
                         isReturnApp
                           ? 'border-transparent text-[#FF6B00] hover:bg-[#FF6B00]/10'
                           : activeTab === item.id 
-                            ? 'bg-[#FF6B00]/10 border-[#FF6B00] text-[#FF6B00]' 
+                            ? 'bg-[rgba(var(--accent-rgb),0.1)] border-[var(--accent)] text-[var(--accent)]' 
                             : 'border-transparent text-slate-400 hover:text-white hover:bg-[#181818]'
                       }`}
                     >
@@ -318,13 +333,13 @@ export const AppShell: React.FC<AppShellProps> = ({ children }) => {
           <div className="flex items-center gap-4">
             {/* Streak Indicator */}
             <div className="flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-bold border border-[#222222] bg-[#181818] text-white select-none">
-              <Flame size={13} className="text-[#FF6B00] animate-pulse" />
-              <span>Streak: <span className="text-[#FF6B00]">{profile.streak}d</span></span>
+              <Flame size={13} className="text-[var(--accent)] animate-pulse" />
+              <span>Streak: <span className="text-[var(--accent)]">{profile.streak}d</span></span>
             </div>
 
             {/* XP Indicator */}
             <div className="flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-bold border border-[#222222] bg-[#181818] text-white select-none">
-              <Zap size={13} className="text-[#FF6B00]" />
+              <Zap size={13} className="text-[var(--accent)]" />
               <span>{profile.xp} XP</span>
             </div>
 
@@ -332,15 +347,15 @@ export const AppShell: React.FC<AppShellProps> = ({ children }) => {
             <div className="flex items-center gap-2 text-xs select-none">
               <span className="font-semibold text-slate-400">Rank:</span>
               <strong className="flex items-center gap-1 text-white">
-                <Sparkles size={12} className="text-[#FF6B00]" />
-                Lvl {profile.level}
+                <Sparkles size={12} className="text-[var(--accent)]" />
+                Lvl {profile.level} {globalRank > 0 && `(#${globalRank})`}
               </strong>
             </div>
 
             {/* Profile Button */}
             <button 
               onClick={() => handleNavigate('settings')}
-              className="flex items-center gap-2 px-3 py-1 rounded-full border bg-[#111111] hover:bg-[#181818] transition-all duration-200 border-[#222222] hover:border-[#FF6B00]/40 cursor-pointer select-none group"
+              className="flex items-center gap-2 px-3 py-1 rounded-full border bg-[#111111] hover:bg-[#181818] transition-all duration-200 border-[#222222] hover:border-[rgba(var(--accent-rgb),0.4)] cursor-pointer select-none group"
             >
               <img src={profile.avatarUrl} alt="Avatar" className="w-5.5 h-5.5 rounded-full border border-[#222222]" />
               <span className="text-xs font-bold text-white">

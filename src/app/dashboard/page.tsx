@@ -57,7 +57,7 @@ export default function DashboardPage() {
   if (loading || !user || !profile) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-[#0B0B0B]">
-        <div className="w-16 h-16 border-4 border-[#FF6B00] border-t-transparent rounded-full animate-spin"></div>
+        <div className="w-16 h-16 border-4 border-[var(--accent,#FF6B00)] border-t-transparent rounded-full animate-spin"></div>
       </div>
     );
   }

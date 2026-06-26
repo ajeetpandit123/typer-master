@@ -56,9 +56,15 @@ interface AppContextType {
   setCustomThemes: React.Dispatch<React.SetStateAction<Theme[]>>;
 }
 
+const getSecureFlag = () => {
+  if (typeof window === 'undefined') return '';
+  return window.location.protocol === 'https:' ? '; Secure' : '';
+};
+
 const AppContext = createContext<AppContextType | undefined>(undefined);
 
 export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const secureFlag = getSecureFlag();
   const [user, setUser] = useState<any | null>(null);
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
@@ -303,15 +309,15 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
             
             // Sync role based on user email
             const email = localStorage.getItem('typemaster_user_email') || 'guest@typemaster.pro';
-            const role = email === 'kumarajeet19022004@gmail.com' ? 'admin' : 'user';
+            const role = email.toLowerCase() === 'kumarajeet19022004@gmail.com' ? 'admin' : 'user';
             uProfile.email = email;
             uProfile.role = role;
             localStorage.setItem('typemaster_profile', JSON.stringify(uProfile));
             setProfile(uProfile);
 
             if (typeof window !== 'undefined') {
-              document.cookie = `local-user-role=${role}; path=/; max-age=31536000; SameSite=Lax; Secure`;
-              document.cookie = `sb-access-token=local-mock-token; path=/; max-age=31536000; SameSite=Lax; Secure`;
+              document.cookie = `local-user-role=${role}; path=/; max-age=31536000; SameSite=Lax${secureFlag}`;
+              document.cookie = `sb-access-token=local-mock-token; path=/; max-age=31536000; SameSite=Lax${secureFlag}`;
             }
           } else {
             setUser(null);
@@ -335,19 +341,24 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
           if (currentSession?.user) {
             setUser(currentSession.user);
             const uProfile = await getProfile(currentSession.user.id);
+            
+            // Sync/heal role in context/cookie if logged in as admin email
+            if (currentSession.user.email && currentSession.user.email.toLowerCase() === 'kumarajeet19022004@gmail.com') {
+              uProfile.role = 'admin';
+            }
             setProfile(uProfile);
 
             if (typeof window !== 'undefined' && currentSession.access_token) {
               const maxAge = currentSession.expires_in || 3600;
-              document.cookie = `sb-access-token=${currentSession.access_token}; path=/; max-age=${maxAge}; SameSite=Lax; Secure`;
-              document.cookie = `local-user-role=${uProfile.role}; path=/; max-age=${maxAge}; SameSite=Lax; Secure`;
+              document.cookie = `sb-access-token=${currentSession.access_token}; path=/; max-age=${maxAge}; SameSite=Lax${secureFlag}`;
+              document.cookie = `local-user-role=${uProfile.role}; path=/; max-age=${maxAge}; SameSite=Lax${secureFlag}`;
             }
           } else {
             setUser(null);
             setProfile(null);
             if (typeof window !== 'undefined') {
-              document.cookie = 'sb-access-token=; path=/; max-age=0; SameSite=Lax; Secure';
-              document.cookie = 'local-user-role=; path=/; max-age=0; SameSite=Lax; Secure';
+              document.cookie = `sb-access-token=; path=/; max-age=0; SameSite=Lax${secureFlag}`;
+              document.cookie = `local-user-role=; path=/; max-age=0; SameSite=Lax${secureFlag}`;
             }
           }
           setLoading(false);
@@ -367,9 +378,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       localStorage.setItem('typemaster_user_email', email);
       localStorage.setItem('typemaster_username', username);
       
-      const role = email === 'kumarajeet19022004@gmail.com' ? 'admin' : 'user';
-      document.cookie = `local-user-role=${role}; path=/; max-age=31536000; SameSite=Lax; Secure`;
-      document.cookie = `sb-access-token=local-mock-token; path=/; max-age=31536000; SameSite=Lax; Secure`;
+      const role = email.toLowerCase() === 'kumarajeet19022004@gmail.com' ? 'admin' : 'user';
+      document.cookie = `local-user-role=${role}; path=/; max-age=31536000; SameSite=Lax${secureFlag}`;
+      document.cookie = `sb-access-token=local-mock-token; path=/; max-age=31536000; SameSite=Lax${secureFlag}`;
 
       const mockUser = {
         id: 'guest-user-id',
@@ -395,9 +406,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       localStorage.setItem('typemaster_user_email', email);
       localStorage.setItem('typemaster_username', username);
 
-      const role = email === 'kumarajeet19022004@gmail.com' ? 'admin' : 'user';
-      document.cookie = `local-user-role=${role}; path=/; max-age=31536000; SameSite=Lax; Secure`;
-      document.cookie = `sb-access-token=local-mock-token; path=/; max-age=31536000; SameSite=Lax; Secure`;
+      const role = email.toLowerCase() === 'kumarajeet19022004@gmail.com' ? 'admin' : 'user';
+      document.cookie = `local-user-role=${role}; path=/; max-age=31536000; SameSite=Lax${secureFlag}`;
+      document.cookie = `sb-access-token=local-mock-token; path=/; max-age=31536000; SameSite=Lax${secureFlag}`;
       
       const defaultProfile: UserProfile = {
         id: 'guest-user-id',
@@ -430,8 +441,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   const logOut = async () => {
     if (typeof window !== 'undefined') {
-      document.cookie = 'sb-access-token=; path=/; max-age=0; SameSite=Lax; Secure';
-      document.cookie = 'local-user-role=; path=/; max-age=0; SameSite=Lax; Secure';
+      document.cookie = `sb-access-token=; path=/; max-age=0; SameSite=Lax${secureFlag}`;
+      document.cookie = `local-user-role=; path=/; max-age=0; SameSite=Lax${secureFlag}`;
     }
 
     if (localMode) {

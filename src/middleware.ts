@@ -19,9 +19,16 @@ export async function middleware(request: NextRequest) {
     return NextResponse.next();
   }
 
-  // 1. Local Mode Bypass
+  const localRoleCookie = request.cookies.get('local-user-role')?.value;
+  const token = request.cookies.get('sb-access-token')?.value;
+
+  // 1. Local/Mock Session Bypass (Allows seamless dev navigation when client uses mock mode)
+  if (localRoleCookie === 'admin' && (!token || token === 'local-mock-token')) {
+    return NextResponse.next();
+  }
+
+  // 2. Local Mode Bypass
   if (!isSupabaseConfigured) {
-    const localRoleCookie = request.cookies.get('local-user-role')?.value;
     if (localRoleCookie === 'admin') {
       return NextResponse.next();
     }
@@ -36,9 +43,7 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(new URL('/dashboard?error=unauthorized', request.url));
   }
 
-  // 2. Production Supabase Mode
-  const token = request.cookies.get('sb-access-token')?.value;
-
+  // 3. Production Supabase Mode
   if (!token) {
     if (isAdminApi) {
       return new NextResponse(

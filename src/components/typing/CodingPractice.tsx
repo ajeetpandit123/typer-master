@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { useApp } from '@/context/AppContext';
 import { saveSession, incrementPracticeTime } from '@/lib/services/db';
 import { CODING_LESSONS, CodingLesson } from '@/lib/services/mockData';
@@ -9,6 +9,8 @@ import {
   Terminal, ShieldCheck, Award, Sparkles, ArrowLeft
 } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell } from 'recharts';
+
+const TOOLTIP_CONTENT_STYLE = { backgroundColor: '#0f1322', border: '1px solid rgba(255,255,255,0.08)' };
 
 export const CodingPractice: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
   const { user, addToast, refreshProfile, isZenMode, setIsZenMode, playClickSound } = useApp();
@@ -207,13 +209,13 @@ export const CodingPractice: React.FC<{ onBack?: () => void }> = ({ onBack }) =>
     return { count, total, percent: Math.round((count / (total || 1)) * 100) };
   };
 
-  const getLanguageChartData = () => {
+  const languageChartData = useMemo(() => {
     return [
       { name: 'JavaScript', value: getLanguageProgress('javascript').percent, color: '#f59e0b' },
       { name: 'Java', value: getLanguageProgress('java').percent, color: '#f43f5e' },
       { name: 'C++', value: getLanguageProgress('cpp').percent, color: '#00f2fe' }
     ];
-  };
+  }, [showResults]);
 
   const symbolAccuracy = totalSymbols > 0
     ? Math.max(0, Math.round(((totalSymbols - symbolErrors) / totalSymbols) * 100))
@@ -508,12 +510,12 @@ export const CodingPractice: React.FC<{ onBack?: () => void }> = ({ onBack }) =>
             </h3>
             <div className="h-44 w-full">
               <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={getLanguageChartData()}>
+                <BarChart data={languageChartData}>
                   <XAxis dataKey="name" stroke="#475569" fontSize={11} />
                   <YAxis stroke="#475569" domain={[0, 100]} fontSize={11} tickFormatter={(v) => `${v}%`} />
-                  <Tooltip contentStyle={{ backgroundColor: '#0f1322', border: '1px solid rgba(255,255,255,0.08)' }} />
+                  <Tooltip contentStyle={TOOLTIP_CONTENT_STYLE} />
                   <Bar dataKey="value" fill="#8884d8" radius={[4, 4, 0, 0]}>
-                    {getLanguageChartData().map((entry, index) => (
+                    {languageChartData.map((entry, index) => (
                       <Cell key={`cell-${index}`} fill={entry.color} />
                     ))}
                   </Bar>

@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useApp } from '@/context/AppContext';
 import { getProfile, updateProfile, UserProfile } from '@/lib/services/db';
 import { CHALLENGES, QUOTES, Quote, Challenge } from '@/lib/services/mockData';
@@ -22,6 +22,34 @@ interface WordSet {
   words: string;
   usageCount: number;
 }
+
+const DEFAULT_GROWTH_DATA = [
+  { name: 'Jan', users: 2 },
+  { name: 'Feb', users: 5 },
+  { name: 'Mar', users: 9 },
+  { name: 'Apr', users: 15 },
+  { name: 'May', users: 20 },
+  { name: 'Jun', users: 24 }
+];
+
+const DEFAULT_WPM_DISTRIBUTION = [
+  { name: '10-30 WPM', count: 3 },
+  { name: '30-50 WPM', count: 8 },
+  { name: '50-70 WPM', count: 12 },
+  { name: '70-90 WPM', count: 5 },
+  { name: '90+ WPM', count: 2 }
+];
+
+const DEFAULT_ACCURACY_DISTRIBUTION = [
+  { name: 'Day 1', acc: 92 },
+  { name: 'Day 3', acc: 93 },
+  { name: 'Day 7', acc: 94.5 },
+  { name: 'Day 14', acc: 96.2 },
+  { name: 'Day 30', acc: 97.8 }
+];
+
+const ADMIN_TOOLTIP_CONTENT_STYLE = { backgroundColor: '#111', borderColor: '#222' };
+const ADMIN_TOOLTIP_LABEL_STYLE = { color: '#FF6B00' };
 
 export const AdminView: React.FC<AdminViewProps> = ({ activeSubTab }) => {
   const { user, profile, addToast, refreshProfile } = useApp();
@@ -64,6 +92,10 @@ export const AdminView: React.FC<AdminViewProps> = ({ activeSubTab }) => {
   const [newDurationPreset, setNewDurationPreset] = useState<number>(45);
   const [leaderboardRows, setLeaderboardRows] = useState(50);
 
+  const growthChartData = useMemo(() => {
+    return analyticsData?.growth || DEFAULT_GROWTH_DATA;
+  }, [analyticsData?.growth]);
+
   // Fetch Users and Analytics from Secured APIs
   const fetchAdminData = async () => {
     setLoadingData(true);
@@ -103,9 +135,11 @@ export const AdminView: React.FC<AdminViewProps> = ({ activeSubTab }) => {
 
   // Filtered Users computation
   const filteredUsers = usersList.filter((u) => {
-    const matchesSearch = u.username.toLowerCase().includes(searchQuery.toLowerCase()) || 
-                          u.email.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesRole = roleFilter === 'all' ? true : u.role === roleFilter;
+    const username = u?.username || '';
+    const email = u?.email || '';
+    const matchesSearch = username.toLowerCase().includes(searchQuery.toLowerCase()) || 
+                          email.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesRole = roleFilter === 'all' ? true : u?.role === roleFilter;
     return matchesSearch && matchesRole;
   });
 
@@ -303,14 +337,7 @@ export const AdminView: React.FC<AdminViewProps> = ({ activeSubTab }) => {
             </h3>
             <div className="h-64">
               <ResponsiveContainer width="100%" height="100%">
-                <AreaChart data={analyticsData?.growth || [
-                  { name: 'Jan', users: 2 },
-                  { name: 'Feb', users: 5 },
-                  { name: 'Mar', users: 9 },
-                  { name: 'Apr', users: 15 },
-                  { name: 'May', users: 20 },
-                  { name: 'Jun', users: 24 }
-                ]}>
+                <AreaChart data={growthChartData}>
                   <defs>
                     <linearGradient id="colorUsers" x1="0" y1="0" x2="0" y2="1">
                       <stop offset="5%" stopColor="#FF6B00" stopOpacity={0.2}/>
@@ -319,7 +346,7 @@ export const AdminView: React.FC<AdminViewProps> = ({ activeSubTab }) => {
                   </defs>
                   <XAxis dataKey="name" stroke="#444" fontSize={10} />
                   <YAxis stroke="#444" fontSize={10} />
-                  <Tooltip contentStyle={{ backgroundColor: '#111', borderColor: '#222' }} labelStyle={{ color: '#FF6B00' }} />
+                  <Tooltip contentStyle={ADMIN_TOOLTIP_CONTENT_STYLE} labelStyle={ADMIN_TOOLTIP_LABEL_STYLE} />
                   <Area type="monotone" dataKey="users" stroke="#FF6B00" strokeWidth={2} fillOpacity={1} fill="url(#colorUsers)" />
                 </AreaChart>
               </ResponsiveContainer>
@@ -458,7 +485,7 @@ export const AdminView: React.FC<AdminViewProps> = ({ activeSubTab }) => {
                 <div className="space-y-4">
                   <div className="flex items-center gap-3">
                     <div className="w-12 h-12 bg-slate-900 border border-[#222222] rounded-full flex items-center justify-center text-lg font-bold text-[#FF6B00]">
-                      {selectedUser.username.slice(0, 2).toUpperCase()}
+                      {(selectedUser.username || '').slice(0, 2).toUpperCase()}
                     </div>
                     <div>
                       <h4 className="font-bold text-white">{selectedUser.username}</h4>
@@ -783,16 +810,10 @@ export const AdminView: React.FC<AdminViewProps> = ({ activeSubTab }) => {
               </h3>
               <div className="h-64">
                 <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={[
-                    { name: '10-30 WPM', count: 3 },
-                    { name: '30-50 WPM', count: 8 },
-                    { name: '50-70 WPM', count: 12 },
-                    { name: '70-90 WPM', count: 5 },
-                    { name: '90+ WPM', count: 2 }
-                  ]}>
+                  <BarChart data={DEFAULT_WPM_DISTRIBUTION}>
                     <XAxis dataKey="name" stroke="#444" fontSize={9} />
                     <YAxis stroke="#444" fontSize={9} />
-                    <Tooltip contentStyle={{ backgroundColor: '#111', borderColor: '#222' }} />
+                    <Tooltip contentStyle={ADMIN_TOOLTIP_CONTENT_STYLE} />
                     <Bar dataKey="count" fill="#FF6B00" radius={[4, 4, 0, 0]} />
                   </BarChart>
                 </ResponsiveContainer>
@@ -807,16 +828,10 @@ export const AdminView: React.FC<AdminViewProps> = ({ activeSubTab }) => {
               </h3>
               <div className="h-64">
                 <ResponsiveContainer width="100%" height="100%">
-                  <LineChart data={[
-                    { name: 'Day 1', acc: 92 },
-                    { name: 'Day 3', acc: 93 },
-                    { name: 'Day 7', acc: 94.5 },
-                    { name: 'Day 14', acc: 96.2 },
-                    { name: 'Day 30', acc: 97.8 }
-                  ]}>
+                  <LineChart data={DEFAULT_ACCURACY_DISTRIBUTION}>
                     <XAxis dataKey="name" stroke="#444" fontSize={9} />
                     <YAxis stroke="#444" domain={[90, 100]} fontSize={9} />
-                    <Tooltip contentStyle={{ backgroundColor: '#111', borderColor: '#222' }} />
+                    <Tooltip contentStyle={ADMIN_TOOLTIP_CONTENT_STYLE} />
                     <Line type="monotone" dataKey="acc" stroke="#FF6B00" strokeWidth={2} />
                   </LineChart>
                 </ResponsiveContainer>

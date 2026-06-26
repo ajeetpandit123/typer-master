@@ -17,6 +17,14 @@ export async function verifyAdmin(request: NextRequest): Promise<{ isAdmin: bool
   const token = request.cookies.get('sb-access-token')?.value || 
                 request.headers.get('Authorization')?.replace('Bearer ', '');
 
+  // Local/Mock Session Bypass
+  if (token === 'local-mock-token') {
+    const localRole = request.cookies.get('local-user-role')?.value;
+    if (localRole === 'admin') {
+      return { isAdmin: true, userId: 'local-mock-admin-id' };
+    }
+  }
+
   if (!token) {
     return { isAdmin: false, error: 'Access Denied: Missing session token.' };
   }

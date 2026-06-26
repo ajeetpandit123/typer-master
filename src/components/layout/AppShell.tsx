@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useApp } from '@/context/AppContext';
 import { APP_NAME } from '@/lib/config';
 import { useRouter, usePathname, useSearchParams } from 'next/navigation';
@@ -51,15 +51,32 @@ export const AppShell: React.FC<AppShellProps> = ({ children }) => {
 
   const activeTab = getActiveTab();
 
-  // Client-side route protection
+  const hasToastedAccessDenied = useRef(false);
+
+  // Client-side route protection & error query toast
   useEffect(() => {
+    const errorParam = searchParams?.get('error');
+    if (errorParam === 'unauthorized') {
+      if (!hasToastedAccessDenied.current) {
+        addToast('Access Denied', 'You do not have permission to access this page.', 'error');
+        hasToastedAccessDenied.current = true;
+      }
+      router.replace(pathname);
+      return;
+    }
+
     if (!loading && profile) {
       if (pathname.startsWith('/admin') && profile.role !== 'admin') {
-        addToast('Access Denied', 'You do not have permission to access this page.', 'error');
+        if (!hasToastedAccessDenied.current) {
+          addToast('Access Denied', 'You do not have permission to access this page.', 'error');
+          hasToastedAccessDenied.current = true;
+        }
         router.push('/dashboard');
+      } else {
+        hasToastedAccessDenied.current = false;
       }
     }
-  }, [profile, loading, pathname, router, addToast]);
+  }, [profile, loading, pathname, router, addToast, searchParams]);
 
   const handleNavigate = (tabId: string) => {
     setIsZenMode(false);

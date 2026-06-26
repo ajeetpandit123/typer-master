@@ -156,7 +156,7 @@ export const getProfile = async (userId: string): Promise<UserProfile> => {
       
     if (!profile.role || !profile.email) {
       profile.email = storedEmail;
-      profile.role = storedEmail === 'kumarajeet19022004@gmail.com' ? 'admin' : 'user';
+      profile.role = storedEmail.toLowerCase() === 'kumarajeet19022004@gmail.com' ? 'admin' : 'user';
       if (typeof window !== 'undefined') {
         localStorage.setItem('typemaster_profile', JSON.stringify(profile));
       }
@@ -197,7 +197,7 @@ export const getProfile = async (userId: string): Promise<UserProfile> => {
 
           const avatarUrl = authUser?.user_metadata?.avatar_url || 'https://api.dicebear.com/7.x/pixel-art/svg?seed=' + username;
           const userEmail = authUser?.email || '';
-          const userRole = userEmail === 'kumarajeet19022004@gmail.com' ? 'admin' : 'user';
+          const userRole = userEmail.toLowerCase() === 'kumarajeet19022004@gmail.com' ? 'admin' : 'user';
 
           const newProfileData = {
             id: userId,
@@ -253,6 +253,19 @@ export const getProfile = async (userId: string): Promise<UserProfile> => {
         profile = { ...DEFAULT_PROFILE, id: userId };
       }
     } else {
+      // Auto-heal admin role if email matches but role in db is 'user'
+      if (data.email && data.email.toLowerCase() === 'kumarajeet19022004@gmail.com' && data.role !== 'admin') {
+        try {
+          await supabase!
+            .from('profiles')
+            .update({ role: 'admin' })
+            .eq('id', userId);
+          data.role = 'admin';
+        } catch (dbErr) {
+          console.error('Failed to auto-heal admin role in DB:', dbErr);
+        }
+      }
+
       profile = {
         id: data.id,
         username: data.username,

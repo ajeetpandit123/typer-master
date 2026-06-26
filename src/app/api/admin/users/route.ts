@@ -50,8 +50,8 @@ export async function GET(request: NextRequest) {
 
     const users = profiles.map((p) => ({
       id: p.id,
-      username: p.username,
-      email: p.email || `${p.username.toLowerCase()}@example.com`,
+      username: p.username || 'Anonymous',
+      email: p.email || `${(p.username || 'anonymous').toLowerCase()}@example.com`,
       role: p.role || 'user',
       created_at: p.created_at,
       level: p.level,

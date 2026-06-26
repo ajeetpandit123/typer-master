@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { useApp } from '@/context/AppContext';
 import { saveSession, incrementPracticeTime } from '@/lib/services/db';
 import { 
@@ -8,6 +8,8 @@ import {
   TrendingUp, BarChart3, AlertCircle, Clock, Zap, Sparkles, ArrowLeft
 } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
+
+const TOOLTIP_CONTENT_STYLE = { backgroundColor: '#0f1322', border: '1px solid rgba(255,255,255,0.08)' };
 
 const ADVANCED_TEXTS = [
   "The formula is: Total = (Subtotal * 1.085) + Shipping; where Shipping = $14.95.",
@@ -222,7 +224,7 @@ export const AdvancedPractice: React.FC<{ onBack?: () => void }> = ({ onBack }) 
   };
 
   // Format Recharts character speeds
-  const getSpeedChartData = () => {
+  const chartData = useMemo(() => {
     return Object.values(charSpeeds)
       .filter(stat => stat.count > 0)
       .map(stat => ({
@@ -231,7 +233,7 @@ export const AdvancedPractice: React.FC<{ onBack?: () => void }> = ({ onBack }) 
         errors: stat.errors
       }))
       .slice(0, 10); // top 10 characters
-  };
+  }, [charSpeeds]);
 
   const renderTextHighlights = () => {
     return targetText.split('').map((char, index) => {
@@ -260,8 +262,6 @@ export const AdvancedPractice: React.FC<{ onBack?: () => void }> = ({ onBack }) 
     : 100;
 
   const currentWpm = Math.round((rawTypedText.length / 5) / ((elapsedTime || 1) / 60));
-
-  const chartData = getSpeedChartData();
 
   return (
     <div className={`transition-all duration-500 ${isZenMode ? 'w-full h-screen max-h-screen overflow-hidden flex flex-col justify-center mx-auto px-6 md:px-16 lg:px-24 pb-0' : 'space-y-6 max-w-5xl mx-auto pb-10'}`}>
@@ -499,7 +499,7 @@ export const AdvancedPractice: React.FC<{ onBack?: () => void }> = ({ onBack }) 
                         <BarChart data={chartData}>
                           <XAxis dataKey="key" stroke="#475569" fontSize={9} />
                           <YAxis stroke="#475569" fontSize={9} />
-                          <Tooltip contentStyle={{ backgroundColor: '#0f1322', border: '1px solid rgba(255,255,255,0.08)' }} />
+                          <Tooltip contentStyle={TOOLTIP_CONTENT_STYLE} />
                           <Bar dataKey="speed" fill="#00f2fe" radius={[4, 4, 0, 0]} />
                         </BarChart>
                       </ResponsiveContainer>

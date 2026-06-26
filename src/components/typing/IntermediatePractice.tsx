@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { useApp } from '@/context/AppContext';
 import { saveSession, unlockAchievement, incrementPracticeTime, getSessions } from '@/lib/services/db';
 import { 
@@ -8,6 +8,9 @@ import {
   TrendingUp, Award, BarChart2, Sparkles, BookOpen, ShieldCheck
 } from 'lucide-react';
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
+
+const TOOLTIP_CONTENT_STYLE = { backgroundColor: '#0f1322', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '8px' };
+const LINE_DOT_STYLE = { fill: '#00f2fe' };
 
 const INTERMEDIATE_WORDS = [
   'about', 'after', 'again', 'all', 'along', 'also', 'always', 'another', 'around',
@@ -40,6 +43,13 @@ export const IntermediatePractice: React.FC<{ onBack?: () => void }> = ({ onBack
   const [showProgressModal, setShowProgressModal] = useState(false);
   const [showAccuracyModal, setShowAccuracyModal] = useState(false);
   const [showSettingsModal, setShowSettingsModal] = useState(false);
+
+  const progressChartData = useMemo(() => {
+    return [...allSessions]
+      .reverse()
+      .slice(-10)
+      .map((s, idx) => ({ name: `Run ${idx + 1}`, wpm: s.wpm }));
+  }, [allSessions]);
 
   useEffect(() => {
     const loadStats = async () => {
@@ -934,8 +944,8 @@ export const IntermediatePractice: React.FC<{ onBack?: () => void }> = ({ onBack
                       <LineChart data={wpmHistory}>
                         <XAxis dataKey="time" stroke="#475569" fontSize={9} tickFormatter={(t) => `${t}s`} />
                         <YAxis stroke="#475569" fontSize={9} />
-                        <Tooltip contentStyle={{ backgroundColor: '#0f1322', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '8px' }} />
-                        <Line type="monotone" dataKey="wpm" stroke="#00f2fe" strokeWidth={2.5} dot={{ fill: '#00f2fe' }} />
+                        <Tooltip contentStyle={TOOLTIP_CONTENT_STYLE} />
+                        <Line type="monotone" dataKey="wpm" stroke="#00f2fe" strokeWidth={2.5} dot={LINE_DOT_STYLE} />
                       </LineChart>
                     </ResponsiveContainer>
                   </div>
@@ -980,11 +990,11 @@ export const IntermediatePractice: React.FC<{ onBack?: () => void }> = ({ onBack
               <div className="space-y-6">
                 <div className="h-56 w-full bg-slate-950/40 p-4 rounded-xl border border-white/5">
                   <ResponsiveContainer width="100%" height="100%">
-                    <LineChart data={[...allSessions].reverse().slice(-10).map((s, idx) => ({ name: `Run ${idx+1}`, wpm: s.wpm }))}>
+                    <LineChart data={progressChartData}>
                       <XAxis dataKey="name" stroke="#475569" fontSize={9} />
                       <YAxis stroke="#475569" fontSize={9} />
-                      <Tooltip contentStyle={{ backgroundColor: '#0f1322', border: '1px solid rgba(255,255,255,0.08)' }} />
-                      <Line type="monotone" dataKey="wpm" stroke="#00f2fe" strokeWidth={2.5} dot={{ fill: '#00f2fe' }} />
+                      <Tooltip contentStyle={TOOLTIP_CONTENT_STYLE} />
+                      <Line type="monotone" dataKey="wpm" stroke="#00f2fe" strokeWidth={2.5} dot={LINE_DOT_STYLE} />
                     </LineChart>
                   </ResponsiveContainer>
                 </div>

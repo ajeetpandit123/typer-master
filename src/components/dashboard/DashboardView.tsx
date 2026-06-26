@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import { useApp } from '@/context/AppContext';
 import { getSessions, getChallengeProgress, TypingSession, getUnlockedAchievements } from '@/lib/services/db';
 import { ACHIEVEMENTS } from '@/lib/services/mockData';
@@ -9,6 +9,11 @@ import {
   Sparkles, Calendar, BookOpen, MessageSquare, Code, Sword
 } from 'lucide-react';
 import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, LineChart, Line } from 'recharts';
+
+const CHART_MARGIN = { top: 10, right: 10, left: -20, bottom: 0 };
+const TOOLTIP_CONTENT_STYLE = { backgroundColor: '#0f1322', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px' };
+const TOOLTIP_LABEL_STYLE = { color: '#94a3b8' };
+const LINE_DOT_STYLE = { fill: '#8b5cf6', strokeWidth: 1 };
 
 export const DashboardView: React.FC<{ onNavigate: (tab: string) => void }> = ({ onNavigate }) => {
   const { user, profile, refreshProfile } = useApp();
@@ -19,6 +24,19 @@ export const DashboardView: React.FC<{ onNavigate: (tab: string) => void }> = ({
 
   // Key Error Heatmap Data Simulation/Loading
   const [keyErrors, setKeyErrors] = useState<Record<string, number>>({});
+
+  // Recharts Formatted Data
+  const chartData = useMemo(() => {
+    return [...sessions]
+      .reverse()
+      .slice(-15) // last 15 sessions
+      .map((s, idx) => ({
+        name: `T${idx + 1}`,
+        wpm: s.wpm,
+        accuracy: s.accuracy,
+        date: new Date(s.createdAt).toLocaleDateString()
+      }));
+  }, [sessions]);
 
   useEffect(() => {
     const loadDashboardData = async () => {
@@ -72,17 +90,6 @@ export const DashboardView: React.FC<{ onNavigate: (tab: string) => void }> = ({
     const remainingMins = mins % 60;
     return `${hrs}h ${remainingMins}m`;
   };
-
-  // Recharts Formatted Data
-  const chartData = [...sessions]
-    .reverse()
-    .slice(-15) // last 15 sessions
-    .map((s, idx) => ({
-      name: `T${idx + 1}`,
-      wpm: s.wpm,
-      accuracy: s.accuracy,
-      date: new Date(s.createdAt).toLocaleDateString()
-    }));
 
   // Standard keyboard rows for Heatmap visualization
   const keyboardRows = [
@@ -233,7 +240,7 @@ export const DashboardView: React.FC<{ onNavigate: (tab: string) => void }> = ({
           <div className="h-60 w-full">
             {chartData.length > 0 ? (
               <ResponsiveContainer width="100%" height="100%">
-                <AreaChart data={chartData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                <AreaChart data={chartData} margin={CHART_MARGIN}>
                   <defs>
                     <linearGradient id="wpmGlow" x1="0" y1="0" x2="0" y2="1">
                       <stop offset="5%" stopColor="#00f2fe" stopOpacity={0.4}/>
@@ -243,8 +250,8 @@ export const DashboardView: React.FC<{ onNavigate: (tab: string) => void }> = ({
                   <XAxis dataKey="name" stroke="#64748b" fontSize={11} tickLine={false} />
                   <YAxis stroke="#64748b" fontSize={11} tickLine={false} />
                   <Tooltip 
-                    contentStyle={{ backgroundColor: '#0f1322', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px' }}
-                    labelStyle={{ color: '#94a3b8' }}
+                    contentStyle={TOOLTIP_CONTENT_STYLE}
+                    labelStyle={TOOLTIP_LABEL_STYLE}
                   />
                   <Area type="monotone" dataKey="wpm" stroke="#00f2fe" strokeWidth={2} fillOpacity={1} fill="url(#wpmGlow)" />
                 </AreaChart>
@@ -265,14 +272,14 @@ export const DashboardView: React.FC<{ onNavigate: (tab: string) => void }> = ({
           <div className="h-60 w-full">
             {chartData.length > 0 ? (
               <ResponsiveContainer width="100%" height="100%">
-                <LineChart data={chartData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                <LineChart data={chartData} margin={CHART_MARGIN}>
                   <XAxis dataKey="name" stroke="#64748b" fontSize={11} tickLine={false} />
                   <YAxis stroke="#64748b" domain={[70, 100]} fontSize={11} tickLine={false} />
                   <Tooltip 
-                    contentStyle={{ backgroundColor: '#0f1322', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px' }}
-                    labelStyle={{ color: '#94a3b8' }}
+                    contentStyle={TOOLTIP_CONTENT_STYLE}
+                    labelStyle={TOOLTIP_LABEL_STYLE}
                   />
-                  <Line type="monotone" dataKey="accuracy" stroke="#8b5cf6" strokeWidth={2} dot={{ fill: '#8b5cf6', strokeWidth: 1 }} />
+                  <Line type="monotone" dataKey="accuracy" stroke="#8b5cf6" strokeWidth={2} dot={LINE_DOT_STYLE} />
                 </LineChart>
               </ResponsiveContainer>
             ) : (

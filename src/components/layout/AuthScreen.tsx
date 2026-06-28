@@ -226,7 +226,7 @@ export const AuthScreen: React.FC = () => {
           initial={{ opacity: 0, x: -40 }}
           animate={{ opacity: 1, x: 0 }}
           transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
-          className="lg:col-span-7 flex flex-col items-start text-left text-white max-w-xl select-none pt-10 lg:pt-0"
+          className="lg:col-span-7 flex flex-col items-start text-left text-white max-w-xl select-none pt-24 lg:pt-0"
         >
           <h1 className="font-extrabold tracking-tight text-5xl lg:text-[56px] leading-[1.05] text-white">
             Master Every<br />

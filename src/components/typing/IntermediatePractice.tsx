@@ -359,6 +359,10 @@ export const IntermediatePractice: React.FC<{ onBack?: () => void }> = ({ onBack
         console.error('Failed to save intermediate session:', err);
       }
     }
+
+    if (testMode === 'lessons') {
+      setSelectedLessonIdx(prev => (prev + 1) % INTERMEDIATE_LESSONS.length);
+    }
   };
 
   // Effect to handle timer running out
@@ -457,7 +461,7 @@ export const IntermediatePractice: React.FC<{ onBack?: () => void }> = ({ onBack
                 </select>
               )}
 
-              {testMode === 'time' ? (
+              {testMode === 'time' && (
                 <div className="flex bg-slate-900 border border-white/5 p-1 rounded-lg items-center gap-1.5">
                   {[30, 60, 120, 180].map((t) => (
                     <button
@@ -518,7 +522,9 @@ export const IntermediatePractice: React.FC<{ onBack?: () => void }> = ({ onBack
                     )}
                   </div>
                 </div>
-              ) : (
+              )}
+
+              {testMode === 'words' && (
                 <div className="flex bg-slate-900 border border-white/5 p-1 rounded-lg items-center gap-1.5">
                   {[25, 50, 100].map((w) => (
                     <button
@@ -577,6 +583,23 @@ export const IntermediatePractice: React.FC<{ onBack?: () => void }> = ({ onBack
                   </div>
                 </div>
               )}
+
+              <button
+                onClick={() => {
+                  if (testMode === 'lessons') {
+                    const nextIdx = (selectedLessonIdx + 1) % INTERMEDIATE_LESSONS.length;
+                    setSelectedLessonIdx(nextIdx);
+                    addToast('Next Lesson Loaded', `Loaded Lesson ${nextIdx + 1}`, 'info');
+                  } else {
+                    generateText();
+                    addToast('Text Refreshed', 'Generated a new set of random words', 'info');
+                  }
+                }}
+                className="px-3.5 py-1.5 bg-slate-800 hover:bg-slate-750 border border-white/10 rounded-lg text-xs font-bold text-slate-200 hover:text-white transition flex items-center gap-1.5 select-none cursor-pointer"
+              >
+                <RotateCcw size={12} className="text-cyber-purple" />
+                Change Text
+              </button>
             </div>
           )}
         </div>

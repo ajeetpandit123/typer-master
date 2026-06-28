@@ -21,7 +21,7 @@ export default function Home() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-[#0B0B0B]">
+      <div className="min-h-screen flex items-center justify-center bg-[var(--bg,#0B0B0B)] text-[var(--text,#ffffff)]">
         <div className="relative">
           <div className="w-16 h-16 border-4 border-[var(--accent,#FF6B00)] border-t-transparent rounded-full animate-spin"></div>
           <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-xs font-black text-[var(--accent,#FF6B00)]">
@@ -39,7 +39,7 @@ export default function Home() {
 
   // Render loading while redirecting
   return (
-    <div className="min-h-screen flex items-center justify-center bg-[#0B0B0B]">
+    <div className="min-h-screen flex items-center justify-center bg-[var(--bg,#0B0B0B)] text-[var(--text,#ffffff)]">
       <div className="w-16 h-16 border-4 border-[var(--accent,#FF6B00)] border-t-transparent rounded-full animate-spin"></div>
     </div>
   );

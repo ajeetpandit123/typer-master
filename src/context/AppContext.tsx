@@ -235,6 +235,27 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       setAccentColor(currentTheme.accent);
       
       localStorage.setItem('typemaster_active_theme_id', currentTheme.id);
+
+      // Update favicon dynamically based on current theme colors
+      try {
+        const faviconSvg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="32" height="32"><rect width="32" height="32" rx="7" fill="${currentTheme.bg}" /><path d="M5 8h22a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V10a2 2 0 0 1 2-2zm2 4v2h2v-2H7zm4 0v2h2v-2h-2zm4 0v2h2v-2h-2zm4 0v2h2v-2h-2zm4 0v2h2v-2h-2zm-16 5v2h2v-2H7zm4 0v2h10v-2H11zm12 0v2h2v-2h-2z" fill="${currentTheme.accent}" /></svg>`;
+        const faviconDataUrl = `data:image/svg+xml;base64,${btoa(faviconSvg)}`;
+        
+        // Find and remove all existing icon/shortcut icon links to avoid browser conflict or caching
+        const existingLinks = document.querySelectorAll("link[rel*='icon']");
+        existingLinks.forEach(link => {
+          link.parentNode?.removeChild(link);
+        });
+
+        // Create and append the new SVG icon
+        const faviconLink = document.createElement('link');
+        faviconLink.rel = 'icon';
+        faviconLink.type = 'image/svg+xml';
+        faviconLink.href = faviconDataUrl;
+        document.head.appendChild(faviconLink);
+      } catch (err) {
+        console.error('Failed to update favicon dynamically:', err);
+      }
     }
   }, [currentTheme]);
 

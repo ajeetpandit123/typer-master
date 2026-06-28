@@ -33,10 +33,10 @@ export default function RootLayout({
       lang="en"
       className={`${outfit.variable} ${jetbrainsMono.variable} h-full antialiased`}
     >
-      <body className="min-h-full flex flex-col bg-cyber-dark text-slate-100 font-sans">
+      <body className="min-h-full flex flex-col font-sans">
         <AppProvider>
           <Suspense fallback={
-            <div className="min-h-screen flex items-center justify-center bg-[#0B0B0B]">
+            <div className="min-h-screen flex items-center justify-center bg-[var(--bg,#0B0B0B)] text-[var(--text,#f8fafc)]">
               <div className="w-16 h-16 border-4 border-[var(--accent,#FF6B00)] border-t-transparent rounded-full animate-spin"></div>
             </div>
           }>

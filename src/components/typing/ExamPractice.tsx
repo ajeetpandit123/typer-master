@@ -24,7 +24,7 @@ const EXAM_PRESETS: ExamPreset[] = [
     name: 'IT Customer Support Chat Agent',
     description: 'Common entry exam for voice/chat support roles. Focuses on customer communication with standard punctuation.',
     targetWords: 300,
-    timeLimit: 15 * 60, // 15 minutes (900 seconds)
+    timeLimit: 15 * 60, // 15 mins
     targetWpm: 20
   },
   {
@@ -32,7 +32,7 @@ const EXAM_PRESETS: ExamPreset[] = [
     name: 'Civil Service Typist Exam',
     description: 'Standard typing assessment required for administrative positions in the public sector and civil services.',
     targetWords: 400,
-    timeLimit: 10 * 60, // 10 minutes (600 seconds)
+    timeLimit: 10 * 60, // 10 mins
     targetWpm: 40
   },
   {
@@ -40,8 +40,168 @@ const EXAM_PRESETS: ExamPreset[] = [
     name: 'Professional Transcriptionist',
     description: 'Advanced speed and formatting simulation for legal, medical, or administrative transcription roles.',
     targetWords: 500,
-    timeLimit: 10 * 60, // 10 minutes (600 seconds)
+    timeLimit: 10 * 60, // 10 mins
     targetWpm: 50
+  },
+  {
+    id: 'court-reporter',
+    name: 'Legal Court Reporter Certification',
+    description: 'Extremely high speed transcription representing courtroom testimonies and depositions.',
+    targetWords: 600,
+    timeLimit: 5 * 60, // 5 mins
+    targetWpm: 75
+  },
+  {
+    id: 'medical-scribe',
+    name: 'Medical Scribe Practice Exam',
+    description: 'Documenting patient clinical visits and physician notes containing standard medical vocabulary.',
+    targetWords: 350,
+    timeLimit: 7 * 60, // 7 mins
+    targetWpm: 45
+  },
+  {
+    id: 'data-entry',
+    name: 'Speed Data Entry Specialist',
+    description: 'Rapid alphanumeric database entries testing precision with code identifiers, keys, and values.',
+    targetWords: 450,
+    timeLimit: 8 * 60, // 8 mins
+    targetWpm: 55
+  },
+  {
+    id: 'executive-sec',
+    name: 'Executive Secretary Assessment',
+    description: 'Drafting high-priority memos, business agreements, and corporate communications.',
+    targetWords: 500,
+    timeLimit: 12 * 60,
+    targetWpm: 60
+  },
+  {
+    id: 'journalist-news',
+    name: 'Press & News Journalist Speedrun',
+    description: 'Fast-paced reportage writing under tight newsroom publication deadlines.',
+    targetWords: 600,
+    timeLimit: 10 * 60,
+    targetWpm: 65
+  },
+  {
+    id: 'coder-rapid',
+    name: 'Software Developer Rapid Prototyping',
+    description: 'Writing technical documentation, API specifications, and structural comments rapidly.',
+    targetWords: 300,
+    timeLimit: 6 * 60,
+    targetWpm: 50
+  },
+  {
+    id: 'bilingual-trans',
+    name: 'Bilingual Translator Writing Exam',
+    description: 'Translating and transcribing texts quickly while preserving complex structural details.',
+    targetWords: 400,
+    timeLimit: 10 * 60,
+    targetWpm: 35
+  },
+  {
+    id: 'dispatch-911',
+    name: '911 Emergency Dispatcher Training',
+    description: 'High-stress rapid communication and logging of emergency dispatch status.',
+    targetWords: 350,
+    timeLimit: 5 * 60,
+    targetWpm: 40
+  },
+  {
+    id: 'bank-teller',
+    name: 'Bank Teller Ledger Entry',
+    description: 'Precision recording of financial ledger entries, balance accounts, and notes.',
+    targetWords: 300,
+    timeLimit: 8 * 60,
+    targetWpm: 30
+  },
+  {
+    id: 'copy-editor',
+    name: 'Publishing House Copy Editor',
+    description: 'Proofreading texts, modifying structure, and compiling grammatical documents.',
+    targetWords: 550,
+    timeLimit: 12 * 60,
+    targetWpm: 55
+  },
+  {
+    id: 'closed-capt',
+    name: 'Real-time Closed Captioner',
+    description: 'Translating broadcast speech instantly into readable closed captions on screen.',
+    targetWords: 700,
+    timeLimit: 10 * 60,
+    targetWpm: 70
+  },
+  {
+    id: 'content-mod',
+    name: 'Social Media Content Moderator',
+    description: 'Logging incident reports and categorizing policy infractions quickly.',
+    targetWords: 400,
+    timeLimit: 9 * 60,
+    targetWpm: 40
+  },
+  {
+    id: 'admin-assistant',
+    name: 'Corporate Administrative Assistant',
+    description: 'Routine office documentation, scheduling emails, and logging details.',
+    targetWords: 400,
+    timeLimit: 10 * 60,
+    targetWpm: 35
+  },
+  {
+    id: 'technical-writer',
+    name: 'Technical Documentation Writer',
+    description: 'Compiling structured assembly guides, specifications, and hardware manuals.',
+    targetWords: 450,
+    timeLimit: 11 * 60,
+    targetWpm: 45
+  },
+  {
+    id: 'library-archivist',
+    name: 'Library Metadata Archivist',
+    description: 'Logging bibliographic records, classification numbers, and book indexes.',
+    targetWords: 350,
+    timeLimit: 8 * 60,
+    targetWpm: 35
+  },
+  {
+    id: 'subtitles-editor',
+    name: 'Video Subtitles Editor',
+    description: 'Synchronizing voice timestamps with transcribed texts rapidly.',
+    targetWords: 500,
+    timeLimit: 8 * 60,
+    targetWpm: 50
+  },
+  {
+    id: 'data-analyst',
+    name: 'Data Analyst SQL & Entry',
+    description: 'Writing SQL scripts, querying database logs, and compiling analytics dashboards.',
+    targetWords: 350,
+    timeLimit: 7 * 60,
+    targetWpm: 40
+  },
+  {
+    id: 'receptionist-front',
+    name: 'Front Desk Receptionist Exam',
+    description: 'Logging visitors, answering simple office inquiries, and drafting emails.',
+    targetWords: 300,
+    timeLimit: 8 * 60,
+    targetWpm: 30
+  },
+  {
+    id: 'helpdesk-tier2',
+    name: 'Tier 2 Helpdesk Engineer Support',
+    description: 'Logging technical diagnostics, server crash status, and solution steps.',
+    targetWords: 400,
+    timeLimit: 10 * 60,
+    targetWpm: 45
+  },
+  {
+    id: 'legal-assistant',
+    name: 'Law Firm Legal Assistant Exam',
+    description: 'Compiling formal case law citations, contracts, and court petitions.',
+    targetWords: 500,
+    timeLimit: 10 * 60,
+    targetWpm: 55
   }
 ];
 
@@ -53,7 +213,19 @@ const EXAM_PARAGRAPHS = [
   "Greetings! I would be glad to guide you through the process of updating your employee profile information. Log into the corporate directory database portal using your secure single sign-on credentials. Select the profile settings tab in the upper-right corner and input your updated phone number and mailing address details. Once you click save, our human resources database will update automatically. Have a great day!",
   "Hello! I am writing to follow up on our previous conversation regarding the database migration project. The transition to the new secure cloud server is scheduled for this Friday at midnight. During this time, the production environment will be set to read-only mode to prevent any database write conflicts. Please save all active project files and close your database connections before ten PM. Thank you for your cooperation.",
   "Good morning! Thank you for contacting our customer service department. I would be glad to help you resolve your billing inquiry. After checking your account ledger, I found that you were charged twice for your annual subscription due to a system transaction processing glitch. I have processed a full reversal refund for the second transaction, which should appear in your bank account in three days. Let us know if you need assistance.",
-  "Welcome to the technical service hotline. If you are experiencing slow wireless connectivity in your workspace, it may be due to frequency channel interference from nearby electrical equipment. We suggest logging into the access point setup screen and changing the channel settings from automatic selection to static channel eleven or six. This adjustment often improves signal stability and transfer speeds for remote devices."
+  "Welcome to the technical service hotline. If you are experiencing slow wireless connectivity in your workspace, it may be due to frequency channel interference from nearby electrical equipment. We suggest logging into the access point setup screen and changing the channel settings from automatic selection to static channel eleven or six. This adjustment often improves signal stability and transfer speeds for remote devices.",
+  "Objection, Your Honor! The witness is speculating on events for which she has no direct personal knowledge. The defense moves to strike the last statement from the courtroom record. Under rule eight hundred and three of the federal rules of evidence, hearsay statements are inadmissible unless they qualify under specific exceptions. We request a sidebar consultation with counsel to discuss the admissibility of this document before proceeding with cross examination.",
+  "Patient is a forty-five year old male presenting with a history of acute respiratory discomfort, localized chest congestion, and a persistent dry cough for the past five days. Vital signs indicate a body temperature of one hundred and one point two degrees, a heart rate of eighty-eight beats per minute, and a blood pressure reading of one hundred and twenty-eight over eighty-two. A chest X-ray was ordered, revealing mild lobar congestion in the lower left lung field.",
+  "To assemble the model sixty desktop storage console, begin by laying out all wooden structural components on a flat, non-abrasive surface. Locate the main base panel labeled A and attach the two side support columns labeled B and C using the sixteen-millimeter steel dowel screws. Ensure the pre-drilled pilot holes are aligned precisely to prevent cracking. Once secure, slide the rear backing sheet into the guide grooves before locking.",
+  "This loan modification agreement is entered into this twenty-eighth day of June, by and between the principal mortgagor and the servicing bank entity. The parties hereby agree to adjust the active interest rate from six point five percent to a static four point two five percent per annum, effective on the first day of the upcoming calendar month. All remaining terms and financial conditions of the original deed of trust shall remain unchanged.",
+  "Emergency call received at zero one hundred hours. Caller reports a multi-vehicle traffic accident at the intersection of route nine and county road forty-two. Heavy smoke visible from the second vehicle with possible occupant entrapment. Dispatching ambulance unit twelve, fire rescue squad four, and local police cruisers eighty-eight and ninety-two. Units are instructed to approach from the north side to avoid active congestion.",
+  "The audit process requires verifying all financial receipts and ledger balances from the prior fiscal quarter. Analysts must cross-reference invoice numbers, purchase authorizations, and payment confirmation logs across three independent database systems. Any discrepancy exceeding fifty dollars must be documented in a reconciliation report and submitted to the compliance officer within forty-eight hours of discovery.",
+  "We are executing a database schema update for the e-commerce transactions table. The migration adds a foreign key constraint linking the customer ID field in the orders table to the corresponding primary key in the users metadata table. This database schema modification is designed to enforce referential integrity and prevent orphaned transaction entries, keeping data structured and clean.",
+  "The copy editor is responsible for reviewing the manuscript for spelling, punctuation, grammar, and structural consistency. They check that formatting styles, heading structures, and citation formats adhere to the guidelines. In addition to correcting typographical errors, the copy editor ensures that the author's voice is clear, readable, and engaging, while correcting passive voice constructions.",
+  "This document serves as a guide for configuring the API gateway route filters. In Next.js, the legacy middleware convention has been migrated to the new proxy file structure. Create a proxy.ts file in your root folder and export a named proxy function. This function intercepts incoming network requests, inspects session tokens, and rewrites or redirects users before pages are rendered.",
+  "The archivist is indexing a historical collection of nineteenth-century newspapers and legal records. Each item is assigned a unique identifier using the library classification index. The metadata fields logged include the date of publication, lead editor, main news topics, and physical storage location. This metadata indexing project makes historical documents searchable for academic research.",
+  "The film editing suite requires synchronizing the multi-track audio files with the high-definition video files. Editors align the timecodes from the digital slate before import. Once aligned, they cut and splice scenes to maintain a natural conversation rhythm, adding closed captions and subtitles matching the dialog track. Captions must be readable, high contrast, and display for at least two seconds.",
+  "A SQL query executes a search on database indexes to locate relevant records. To optimize performance, developers create indexes on columns that are frequently used in search queries, join conditions, or sorting actions. This index optimization reduces query execution latency from seconds to milliseconds, enabling real-time dashboards to display active metrics and user stats instantly."
 ];
 
 export const ExamPractice: React.FC<{ onBack?: () => void }> = ({ onBack }) => {

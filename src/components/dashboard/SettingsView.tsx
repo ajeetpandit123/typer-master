@@ -27,12 +27,16 @@ const TEST_SENTENCES = [
 
 const FONTS_SANS = [
   'Outfit', 'Inter', 'Roboto', 'Poppins', 'Montserrat', 
-  'Open Sans', 'Lato', 'Nunito', 'Raleway', 'Ubuntu'
+  'Open Sans', 'Lato', 'Nunito', 'Raleway', 'Ubuntu',
+  'Playfair Display', 'Merriweather', 'Lora', 'Oswald',
+  'Quicksand', 'Work Sans', 'Fira Sans', 'Plus Jakarta Sans',
+  'Lexend', 'Space Grotesk', 'Josefin Sans'
 ];
 
 const FONTS_MONO = [
   'Fira Code', 'JetBrains Mono', 'Inconsolata', 'Source Code Pro', 'Ubuntu Mono', 
-  'Courier Prime', 'Anonymous Pro', 'IBM Plex Mono', 'Space Mono', 'DM Mono'
+  'Courier Prime', 'Anonymous Pro', 'IBM Plex Mono', 'Space Mono', 'DM Mono',
+  'Major Mono Display', 'Share Tech Mono', 'Cutive Mono', 'Nova Mono', 'Overpass Mono'
 ];
 
 const SOUNDS = [

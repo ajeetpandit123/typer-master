@@ -258,7 +258,7 @@ export const ChallengePractice: React.FC<{ onBack?: () => void }> = ({ onBack })
             </div>
             <div>
               <span className="text-[10px] text-amber-400 font-bold uppercase tracking-wider">Challenge Progression Mode</span>
-              <h2 className="text-lg font-bold text-white leading-tight">20 Progressive Levels of Speed & Precision</h2>
+              <h2 className="text-lg font-bold text-white leading-tight">60 Progressive Levels of Speed & Precision</h2>
             </div>
           </div>
         </div>
@@ -291,6 +291,17 @@ export const ChallengePractice: React.FC<{ onBack?: () => void }> = ({ onBack })
                   {timeLeft}s
                 </span>
               </div>
+              {!isZenMode && (
+                <div className="hidden md:flex items-center gap-1.5 px-2.5 py-1 bg-white/5 border border-white/5 rounded-lg text-[9px] uppercase font-black tracking-widest text-slate-400">
+                  <span className={`w-1.5 h-1.5 rounded-full ${
+                    selectedChallenge.focusType === 'accuracy' ? 'bg-cyber-green animate-pulse' :
+                    selectedChallenge.focusType === 'speed' ? 'bg-orange-500 animate-pulse' :
+                    selectedChallenge.focusType === 'endurance' ? 'bg-purple-500 animate-pulse' :
+                    'bg-cyber-blue'
+                  }`} />
+                  {selectedChallenge.focusType} Trial
+                </div>
+              )}
             </div>
 
             {/* Text Highlights Box */}
@@ -406,8 +417,19 @@ export const ChallengePractice: React.FC<{ onBack?: () => void }> = ({ onBack })
                   <h4 className={`text-sm font-extrabold ${unlocked ? 'text-white' : 'text-slate-500'}`}>
                     Level {chal.level}
                   </h4>
-                  <p className="text-[10px] text-slate-400 mt-1 truncate">
-                    Req: {chal.targetWpm} WPM
+                  <div className="flex items-center gap-1.5 mt-1">
+                    <span className={`w-1.5 h-1.5 rounded-full ${
+                      chal.focusType === 'accuracy' ? 'bg-cyber-green' :
+                      chal.focusType === 'speed' ? 'bg-orange-500' :
+                      chal.focusType === 'endurance' ? 'bg-purple-500' :
+                      'bg-cyber-blue'
+                    }`} />
+                    <span className="text-[9px] uppercase font-bold tracking-wider text-slate-400">
+                      {chal.focusType}
+                    </span>
+                  </div>
+                  <p className="text-[9px] text-slate-400 mt-1 truncate">
+                    Req: {chal.targetWpm} W / {chal.targetAccuracy}%
                   </p>
                 </div>
 
@@ -498,7 +520,7 @@ export const ChallengePractice: React.FC<{ onBack?: () => void }> = ({ onBack })
                   <RotateCcw size={14} />
                   Retry Level
                 </button>
-                {passed && selectedChallenge.level < 20 ? (
+                {passed && selectedChallenge.level < CHALLENGES.length ? (
                   <button
                     onClick={() => {
                       setShowResults(false);

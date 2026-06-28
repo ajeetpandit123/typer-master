@@ -10,19 +10,7 @@ import {
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
 
 const TOOLTIP_CONTENT_STYLE = { backgroundColor: '#0f1322', border: '1px solid rgba(255,255,255,0.08)' };
-
-const ADVANCED_TEXTS = [
-  "The formula is: Total = (Subtotal * 1.085) + Shipping; where Shipping = $14.95.",
-  "ERROR 404: The request at 'https://typemaster.pro/api/v1/battle?room=9928' returned a NullPointerException.",
-  "Check validation rules: Password must contain >= 1 uppercase letter, 1 digit, and 1 symbol (like #, $, or %).",
-  "Is JavaScript fast? Let's test: const speedTest = () => { return Math.max(88, 92, 104); };",
-  "The 1990s saw the birth of the World Wide Web (WWW). By 2026, internet speeds exceeded 10 Gbps!",
-  "Are you ready? Press 'Shift + Alt + T' to launch the multiplayer battle terminal; code room #48A.",
-  "In software design, standard regex patterns like /^[A-Z_]+[0-9]*$/i are used to test global environments.",
-  "Philosophers ask: \"Is truth relative, or absolute?\" Scientific analysis suggests 99.9% of facts are verifiable.",
-  "Calculate coordinates: x = (r * cos(theta)) - 12.5; y = (r * sin(theta)) + 45.3; z = -1.0;",
-  "Advanced typing requires speed (>=80 WPM), precision (>=98% Acc), and absolute consistency!"
-];
+import { ADVANCED_LESSONS } from '@/lib/services/lessons/advancedData';
 
 interface KeyStat {
   char: string;
@@ -78,7 +66,7 @@ export const AdvancedPractice: React.FC<{ onBack?: () => void }> = ({ onBack }) 
     rawTypedTextRef.current = rawTypedText;
   }, [rawTypedText]);
 
-  const targetText = ADVANCED_TEXTS[currentTextIdx];
+  const targetText = ADVANCED_LESSONS[currentTextIdx];
 
   // Clean timer on unmount and save practice time
   useEffect(() => {
@@ -298,7 +286,7 @@ export const AdvancedPractice: React.FC<{ onBack?: () => void }> = ({ onBack }) 
               }}
               className="bg-slate-900 border border-white/10 rounded-lg text-xs font-semibold px-3 py-2 text-slate-300 focus:outline-none focus:border-cyber-blue"
             >
-              {ADVANCED_TEXTS.map((t, idx) => (
+              {ADVANCED_LESSONS.map((t, idx) => (
                 <option key={idx} value={idx}>Module {idx + 1}: {t.slice(0, 25)}...</option>
               ))}
             </select>

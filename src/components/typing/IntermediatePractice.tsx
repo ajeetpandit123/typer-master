@@ -8,6 +8,7 @@ import {
   TrendingUp, Award, BarChart2, Sparkles, BookOpen, ShieldCheck
 } from 'lucide-react';
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
+import { INTERMEDIATE_LESSONS } from '@/lib/services/lessons/intermediateData';
 
 const TOOLTIP_CONTENT_STYLE = { backgroundColor: '#0f1322', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '8px' };
 const LINE_DOT_STYLE = { fill: '#00f2fe' };
@@ -82,7 +83,8 @@ export const IntermediatePractice: React.FC<{ onBack?: () => void }> = ({ onBack
   }, [user, profile]);
 
   // Test setup
-  const [testMode, setTestMode] = useState<'time' | 'words'>('time');
+  const [testMode, setTestMode] = useState<'time' | 'words' | 'lessons'>('lessons');
+  const [selectedLessonIdx, setSelectedLessonIdx] = useState<number>(0);
   const [duration, setDuration] = useState<number>(30); // 30, 60, 120, 180, or custom
   const [wordCount, setWordCount] = useState<number>(25); // 25, 50, 100
   const [isCustomDuration, setIsCustomDuration] = useState<boolean>(false);
@@ -133,6 +135,11 @@ export const IntermediatePractice: React.FC<{ onBack?: () => void }> = ({ onBack
 
   // Generate lowercase text
   const generateText = (currentDuration?: number) => {
+    if (testMode === 'lessons') {
+      const lessonText = INTERMEDIATE_LESSONS[selectedLessonIdx] || INTERMEDIATE_LESSONS[0];
+      setTargetText(lessonText);
+      return;
+    }
     let words: string[] = [];
     const activeDuration = currentDuration !== undefined ? currentDuration : duration;
     // Scale target length for time mode based on duration, assuming ~200 WPM max speed to be safe
@@ -148,7 +155,7 @@ export const IntermediatePractice: React.FC<{ onBack?: () => void }> = ({ onBack
 
   useEffect(() => {
     generateText();
-  }, [testMode, duration, wordCount]);
+  }, [testMode, duration, wordCount, selectedLessonIdx]);
   // Clean timer on unmount and save practice time
   useEffect(() => {
     return () => {
@@ -413,6 +420,14 @@ export const IntermediatePractice: React.FC<{ onBack?: () => void }> = ({ onBack
             <div className="flex items-center gap-4 flex-wrap">
               <div className="flex bg-slate-900 border border-white/5 p-1 rounded-lg">
                 <button
+                  onClick={() => setTestMode('lessons')}
+                  className={`px-3 py-1 rounded-md text-xs font-semibold transition ${
+                    testMode === 'lessons' ? 'bg-cyber-purple text-white' : 'text-slate-400 hover:text-slate-200'
+                  }`}
+                >
+                  Lessons
+                </button>
+                <button
                   onClick={() => setTestMode('time')}
                   className={`px-3 py-1 rounded-md text-xs font-semibold transition ${
                     testMode === 'time' ? 'bg-cyber-purple text-white' : 'text-slate-400 hover:text-slate-200'
@@ -429,6 +444,18 @@ export const IntermediatePractice: React.FC<{ onBack?: () => void }> = ({ onBack
                   Words Mode
                 </button>
               </div>
+
+              {testMode === 'lessons' && (
+                <select
+                  value={selectedLessonIdx}
+                  onChange={(e) => setSelectedLessonIdx(Number(e.target.value))}
+                  className="bg-slate-900 border border-white/10 rounded-lg text-xs font-semibold px-3 py-2 text-slate-300 focus:outline-none focus:border-cyber-purple max-w-[220px]"
+                >
+                  {INTERMEDIATE_LESSONS.map((l, idx) => (
+                    <option key={idx} value={idx}>Lesson {idx + 1}: {l.slice(0, 25)}...</option>
+                  ))}
+                </select>
+              )}
 
               {testMode === 'time' ? (
                 <div className="flex bg-slate-900 border border-white/5 p-1 rounded-lg items-center gap-1.5">
@@ -1117,6 +1144,14 @@ export const IntermediatePractice: React.FC<{ onBack?: () => void }> = ({ onBack
                 <label className="text-xs text-slate-400 font-semibold block">Test Mode</label>
                 <div className="flex bg-slate-950 border border-white/5 p-1 rounded-lg">
                   <button
+                    onClick={() => setTestMode('lessons')}
+                    className={`flex-1 py-2 rounded-md text-xs font-semibold transition cursor-pointer ${
+                      testMode === 'lessons' ? 'bg-cyber-purple text-white font-bold' : 'text-slate-400 hover:text-slate-200'
+                    }`}
+                  >
+                    Lessons
+                  </button>
+                  <button
                     onClick={() => setTestMode('time')}
                     className={`flex-1 py-2 rounded-md text-xs font-semibold transition cursor-pointer ${
                       testMode === 'time' ? 'bg-cyber-purple text-white font-bold' : 'text-slate-400 hover:text-slate-200'
@@ -1136,7 +1171,20 @@ export const IntermediatePractice: React.FC<{ onBack?: () => void }> = ({ onBack
               </div>
 
               {/* Mode Options */}
-              {testMode === 'time' ? (
+              {testMode === 'lessons' ? (
+                <div className="space-y-1.5">
+                  <label className="text-xs text-slate-400 font-semibold block">Select Lesson</label>
+                  <select
+                    value={selectedLessonIdx}
+                    onChange={(e) => setSelectedLessonIdx(Number(e.target.value))}
+                    className="w-full bg-slate-950 border border-white/10 rounded-lg text-xs font-semibold px-3 py-2 text-slate-300 focus:outline-none focus:border-cyber-purple"
+                  >
+                    {INTERMEDIATE_LESSONS.map((l, idx) => (
+                      <option key={idx} value={idx}>Lesson {idx + 1}: {l.slice(0, 40)}...</option>
+                    ))}
+                  </select>
+                </div>
+              ) : testMode === 'time' ? (
                 <div className="space-y-1.5">
                   <label className="text-xs text-slate-400 font-semibold block">Select Duration</label>
                   <div className="grid grid-cols-4 gap-2 bg-slate-950 p-1 rounded-lg">

@@ -9,6 +9,41 @@ import {
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
+const DUMMY_TEMPLATES = [
+  {
+    name: "Classic Prose",
+    text: "It was the best of times, it was the worst of times, it was the age of wisdom, it was the age of foolishness, it was the epoch of belief, it was the epoch of incredulity, it was the season of light, it was the season of darkness, it was the spring of hope, it was the winter of despair."
+  },
+  {
+    name: "Alphabet Pangrams",
+    text: "The quick brown fox jumps over the lazy dog. Pack my box with five dozen liquor jugs. Sphinx of black quartz, judge my vow. Five quacking zephyrs jolt my wax bed."
+  },
+  {
+    name: "Javascript Code",
+    text: "const calculateLiveWpm = (charsTyped, seconds) => {\n  if (seconds <= 0) return 0;\n  const words = charsTyped / 5;\n  const minutes = seconds / 60;\n  return Math.round(words / minutes);\n};\nconsole.log(calculateLiveWpm(250, 60));"
+  },
+  {
+    name: "SQL Queries",
+    text: "SELECT u.id, u.username, p.wpm, p.accuracy FROM users u INNER JOIN profiles p ON u.id = p.id WHERE p.role = 'admin' ORDER BY p.wpm DESC LIMIT 10;"
+  },
+  {
+    name: "Standard Lore",
+    text: "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip."
+  },
+  {
+    name: "Special Symbols",
+    text: "Type these braces and mathematical operators sequentially: [1 + 2] * {3 - 4} / (5 % 6) == 9 && x != y || a < b <= c >= d != e; console.log(\"Done!\");"
+  },
+  {
+    name: "HTML Boilerplate",
+    text: "<!DOCTYPE html>\n<html lang=\"en\">\n<head>\n  <meta charset=\"UTF-8\">\n  <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">\n  <title>TypeMaster Platform</title>\n</head>\n<body>\n  <div id=\"root\"></div>\n</body>\n</html>"
+  },
+  {
+    name: "CSS Flexbox",
+    text: ".container {\n  display: flex;\n  flex-direction: row;\n  justify-content: center;\n  align-items: center;\n  gap: 1.5rem;\n  padding: 2rem;\n  border-radius: 12px;\n}"
+  }
+];
+
 export const MyWords: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
   const { user, addToast, refreshProfile, isZenMode, setIsZenMode, playClickSound } = useApp();
 
@@ -395,6 +430,28 @@ export const MyWords: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
                   style={{ backgroundColor: 'var(--bg)', borderColor: 'var(--border)', color: 'var(--text)' }}
                   placeholder="Paste your article, notes, code snippet, interview questions, essay, or any text you want to practice..."
                 />
+
+                {/* Dynamic Word Templates Selector */}
+                <div className="space-y-2">
+                  <label className="text-[10px] font-bold uppercase tracking-wider block" style={{ color: 'var(--text-muted)' }}>
+                    Quick Templates
+                  </label>
+                  <div className="flex flex-wrap gap-2">
+                    {DUMMY_TEMPLATES.map((tmpl, idx) => (
+                      <button
+                        key={idx}
+                        onClick={() => {
+                          setCustomText(tmpl.text);
+                          addToast('Template Loaded', `Successfully loaded "${tmpl.name}" template`, 'success');
+                        }}
+                        className="px-2.5 py-1 text-[10px] font-bold rounded-lg border hover:bg-selection/50 hover:border-accent hover:text-accent transition select-none cursor-pointer"
+                        style={{ backgroundColor: 'var(--surface-2)', borderColor: 'var(--border)', color: 'var(--text-muted)' }}
+                      >
+                        {tmpl.name}
+                      </button>
+                    ))}
+                  </div>
+                </div>
 
                 {/* Counter Footer */}
                 <div className="grid grid-cols-3 gap-3 p-3 rounded-xl border"

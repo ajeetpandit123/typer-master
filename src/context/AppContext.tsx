@@ -235,24 +235,28 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       setAccentColor(currentTheme.accent);
       
       localStorage.setItem('typemaster_active_theme_id', currentTheme.id);
+    }
+  }, [currentTheme]);
 
-      // Update favicon dynamically based on current theme colors
+  // Keep favicon updated dynamically matching current theme, watching for Next.js metadata resets
+  useEffect(() => {
+    if (typeof window === 'undefined' || !currentTheme) return;
+
+    const updateFavicon = () => {
       try {
         const faviconSvg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="32" height="32"><rect width="32" height="32" rx="7" fill="${currentTheme.bg}" /><path d="M5 8h22a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V10a2 2 0 0 1 2-2zm2 4v2h2v-2H7zm4 0v2h2v-2h-2zm4 0v2h2v-2h-2zm4 0v2h2v-2h-2zm4 0v2h2v-2h-2zm-16 5v2h2v-2H7zm4 0v2h10v-2H11zm12 0v2h2v-2h-2z" fill="${currentTheme.accent}" /></svg>`;
         const faviconDataUrl = `data:image/svg+xml;base64,${btoa(faviconSvg)}`;
         
-        // Find existing icon links and update their href/type attributes in-place.
-        // This avoids physical deletion of React-managed DOM nodes, preventing React from crashing
-        // with "Cannot read properties of null (reading 'removeChild')" during routing/unmounting.
         const existingLinks = document.querySelectorAll("link[rel~='icon']");
         if (existingLinks.length > 0) {
           existingLinks.forEach(link => {
             const linkElem = link as HTMLLinkElement;
-            linkElem.href = faviconDataUrl;
-            linkElem.type = 'image/svg+xml';
+            if (linkElem.href !== faviconDataUrl) {
+              linkElem.href = faviconDataUrl;
+              linkElem.type = 'image/svg+xml';
+            }
           });
         } else {
-          // If no icon links exist, safely create and append a new one
           const faviconLink = document.createElement('link');
           faviconLink.rel = 'icon';
           faviconLink.type = 'image/svg+xml';
@@ -262,7 +266,40 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       } catch (err) {
         console.error('Failed to update favicon dynamically:', err);
       }
-    }
+    };
+
+    // Run once on load/theme change
+    updateFavicon();
+
+    // Watch head element for changes to link tags
+    const observer = new MutationObserver((mutations) => {
+      let shouldUpdate = false;
+      for (const mutation of mutations) {
+        if (mutation.type === 'childList') {
+          mutation.addedNodes.forEach(node => {
+            if (node.nodeName.toLowerCase() === 'link' && (node as HTMLLinkElement).rel.includes('icon')) {
+              shouldUpdate = true;
+            }
+          });
+        } else if (mutation.type === 'attributes' && mutation.attributeName === 'href') {
+          const target = mutation.target as HTMLLinkElement;
+          if (target.nodeName.toLowerCase() === 'link' && target.rel.includes('icon')) {
+            shouldUpdate = true;
+          }
+        }
+      }
+      if (shouldUpdate) {
+        observer.disconnect();
+        updateFavicon();
+        observer.observe(document.head, { childList: true, subtree: true, attributes: true, attributeFilter: ['href', 'rel'] });
+      }
+    });
+
+    observer.observe(document.head, { childList: true, subtree: true, attributes: true, attributeFilter: ['href', 'rel'] });
+
+    return () => {
+      observer.disconnect();
+    };
   }, [currentTheme]);
 
   // Sync custom themes to localStorage

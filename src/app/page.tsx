@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useApp } from '@/context/AppContext';
 import { AuthScreen } from '@/components/layout/AuthScreen';
 import { useRouter } from 'next/navigation';
@@ -8,18 +8,24 @@ import { useRouter } from 'next/navigation';
 export default function Home() {
   const { user, profile, loading } = useApp();
   const router = useRouter();
+  const [hasMounted, setHasMounted] = useState(false);
 
   useEffect(() => {
-    if (!loading && user && profile) {
+    setHasMounted(true);
+  }, []);
+
+  useEffect(() => {
+    if (hasMounted && !loading && user && profile) {
       if (profile.role === 'admin') {
         router.replace('/admin/dashboard');
       } else {
         router.replace('/dashboard');
       }
     }
-  }, [user, profile, loading, router]);
+  }, [user, profile, loading, router, hasMounted]);
 
-  if (loading) {
+  // Prevent hydration mismatch by rendering the loading state until client mount
+  if (!hasMounted || loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-[var(--bg,#0B0B0B)] text-[var(--text,#ffffff)]">
         <div className="relative">

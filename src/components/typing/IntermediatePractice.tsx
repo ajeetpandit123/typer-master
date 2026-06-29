@@ -104,13 +104,24 @@ export const IntermediatePractice: React.FC<{ onBack?: () => void }> = ({ onBack
   const [elapsedTime, setElapsedTime] = useState(0);
   const [wpmHistory, setWpmHistory] = useState<{ time: number; wpm: number }[]>([]);
   const [showResults, setShowResults] = useState(false);
+  const [testResults, setTestResults] = useState<{
+    wpm: number;
+    accuracy: number;
+    consistency: number;
+    elapsedTime: number;
+    wpmHistory: { time: number; wpm: number }[];
+  } | null>(null);
 
   useEffect(() => {
-    setIsZenMode(true);
+    if (isPlaying && !showResults) {
+      setIsZenMode(true);
+    } else {
+      setIsZenMode(false);
+    }
     return () => {
       setIsZenMode(false);
     };
-  }, [setIsZenMode]);
+  }, [isPlaying, showResults, setIsZenMode]);
 
   // Refs for tracking practice time on unmount/exits
   const elapsedTimeRef = useRef(0);
@@ -134,9 +145,10 @@ export const IntermediatePractice: React.FC<{ onBack?: () => void }> = ({ onBack
   const textInputRef = useRef<HTMLTextAreaElement | null>(null);
 
   // Generate lowercase text
-  const generateText = (currentDuration?: number) => {
+  const generateText = (currentDuration?: number, customLessonIdx?: number) => {
     if (testMode === 'lessons') {
-      const lessonText = INTERMEDIATE_LESSONS[selectedLessonIdx] || INTERMEDIATE_LESSONS[0];
+      const idx = customLessonIdx !== undefined ? customLessonIdx : selectedLessonIdx;
+      const lessonText = INTERMEDIATE_LESSONS[idx] || INTERMEDIATE_LESSONS[0];
       setTargetText(lessonText);
       return;
     }
@@ -167,7 +179,7 @@ export const IntermediatePractice: React.FC<{ onBack?: () => void }> = ({ onBack
   }, [user]);
 
   // Timer Tick handler
-  const handleStart = () => {
+  const handleStart = (customLessonIdx?: number) => {
     let finalDuration = duration;
     
     // Sanitize custom duration if enabled
@@ -192,7 +204,7 @@ export const IntermediatePractice: React.FC<{ onBack?: () => void }> = ({ onBack
       incrementPracticeTime(user.id, elapsedTime);
     }
 
-    generateText(finalDuration);
+    generateText(finalDuration, customLessonIdx);
     setRawTypedText('');
     setInputIndex(0);
     setWpmHistory([]);
@@ -202,6 +214,7 @@ export const IntermediatePractice: React.FC<{ onBack?: () => void }> = ({ onBack
     setIsPaused(false);
     setIsStarted(false);
     setShowResults(false);
+    setTestResults(null);
 
     // Focus input
     setTimeout(() => {
@@ -299,7 +312,6 @@ export const IntermediatePractice: React.FC<{ onBack?: () => void }> = ({ onBack
     setIsZenMode(false);
     if (timerRef.current) clearInterval(timerRef.current);
     timerRef.current = null;
-    setShowResults(true);
 
     // Calculate metrics
     const cleanTyped = rawTypedText.trim();
@@ -327,6 +339,16 @@ export const IntermediatePractice: React.FC<{ onBack?: () => void }> = ({ onBack
       const stdDev = Math.sqrt(variance);
       consistency = Math.max(40, Math.min(100, Math.round((1 - stdDev / (avgWpm || 1)) * 100)));
     }
+
+    setTestResults({
+      wpm: finalWpm,
+      accuracy,
+      consistency,
+      elapsedTime: finalSeconds,
+      wpmHistory: [...wpmHistory]
+    });
+
+    setShowResults(true);
 
     if (user && finalWpm > 0) {
       try {
@@ -670,7 +692,7 @@ export const IntermediatePractice: React.FC<{ onBack?: () => void }> = ({ onBack
 
                 <div className="pt-2">
                   <button
-                    onClick={handleStart}
+                    onClick={() => handleStart()}
                     className="px-8 py-3 bg-accent text-bg hover:opacity-90 transition-all font-bold rounded-xl text-sm flex items-center gap-2.5 shadow-[0_0_20px_var(--accent)] active:scale-[0.98] cursor-pointer"
                   >
                     <Play size={14} fill="currentColor" />
@@ -908,6 +930,24 @@ export const IntermediatePractice: React.FC<{ onBack?: () => void }> = ({ onBack
                   Restart
                 </button>
                 <button
+                  onClick={() => {
+                    if (testMode === 'lessons') {
+                      const nextIdx = (selectedLessonIdx + 1) % INTERMEDIATE_LESSONS.length;
+                      setSelectedLessonIdx(nextIdx);
+                      handleStart(nextIdx);
+                      addToast('Next Lesson Loaded', `Loaded Lesson ${nextIdx + 1}`, 'info');
+                    } else {
+                      generateText();
+                      handleStart();
+                      addToast('Text Refreshed', 'Generated a new set of random words', 'info');
+                    }
+                  }}
+                  className="px-4 py-2 bg-white/5 border border-white/10 hover:bg-cyber-blue/20 text-white rounded-lg text-xs font-bold transition flex items-center gap-1.5 cursor-pointer"
+                >
+                  <ArrowRight size={12} />
+                  Next Text
+                </button>
+                <button
                   onClick={() => setIsZenMode(!isZenMode)}
                   className="px-4 py-2 bg-white/5 border border-cyber-blue/30 hover:bg-cyber-blue/10 text-cyber-blue rounded-lg text-xs font-bold transition flex items-center gap-1.5 shadow-sm cursor-pointer select-none"
                   title="Toggle distraction-free full-screen layout"
@@ -959,31 +999,29 @@ export const IntermediatePractice: React.FC<{ onBack?: () => void }> = ({ onBack
                 <div className="glass-card bg-slate-950/40 p-4 rounded-xl border border-white/5 text-center">
                   <span className="text-xs text-slate-400 uppercase tracking-wider font-semibold">Speed (WPM)</span>
                   <span className="text-3xl font-extrabold text-cyber-blue text-glow-cyan mt-1 block">
-                    {calculateLiveWpm(rawTypedText.trim().length, elapsedTime)}
+                    {testResults?.wpm || 0}
                   </span>
                 </div>
                 <div className="glass-card bg-slate-950/40 p-4 rounded-xl border border-white/5 text-center">
                   <span className="text-xs text-slate-400 uppercase tracking-wider font-semibold">Accuracy</span>
-                  <span className={`text-3xl font-extrabold mt-1 block ${accuracy >= 95 ? 'text-cyber-green' : 'text-cyber-amber'}`}>
-                    {accuracy}%
+                  <span className={`text-3xl font-extrabold mt-1 block ${(testResults?.accuracy ?? 0) >= 95 ? 'text-cyber-green' : 'text-cyber-amber'}`}>
+                    {testResults?.accuracy ?? 0}%
                   </span>
                 </div>
                 <div className="glass-card bg-slate-950/40 p-4 rounded-xl border border-white/5 text-center">
                   <span className="text-xs text-slate-400 uppercase tracking-wider font-semibold">Consistency</span>
                   <span className="text-3xl font-extrabold text-purple-400 mt-1 block">
-                    {wpmHistory.length > 2 
-                      ? `${Math.max(40, Math.min(100, Math.round(90 - (wpmHistory.reduce((s, h) => s + Math.abs(h.wpm - currentWpm), 0) / wpmHistory.length))))}%`
-                      : '92%'}
+                    {testResults?.consistency ?? 90}%
                   </span>
                 </div>
                 <div className="glass-card bg-slate-950/40 p-4 rounded-xl border border-white/5 text-center">
                   <span className="text-xs text-slate-400 uppercase tracking-wider font-semibold">Practice Time</span>
-                  <span className="text-3xl font-extrabold text-white mt-1 block">{elapsedTime}s</span>
+                  <span className="text-3xl font-extrabold text-white mt-1 block">{testResults?.elapsedTime || 0}s</span>
                 </div>
               </div>
 
               {/* Sparkline speed history chart */}
-              {wpmHistory.length > 0 && (
+              {testResults?.wpmHistory && testResults.wpmHistory.length > 0 && (
                 <div className="border border-white/5 bg-slate-950/40 p-5 rounded-xl">
                   <h4 className="text-xs font-bold text-slate-400 mb-4 flex items-center gap-1.5">
                     <TrendingUp size={14} className="text-cyber-blue" />
@@ -991,7 +1029,7 @@ export const IntermediatePractice: React.FC<{ onBack?: () => void }> = ({ onBack
                   </h4>
                   <div className="h-44 w-full">
                     <ResponsiveContainer width="100%" height="100%">
-                      <LineChart data={wpmHistory}>
+                      <LineChart data={testResults.wpmHistory}>
                         <XAxis dataKey="time" stroke="#475569" fontSize={9} tickFormatter={(t) => `${t}s`} />
                         <YAxis stroke="#475569" fontSize={9} />
                         <Tooltip contentStyle={TOOLTIP_CONTENT_STYLE} />

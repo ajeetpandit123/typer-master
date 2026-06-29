@@ -6,7 +6,8 @@ import {
   getProfile, 
   UserProfile, 
   isLocalMode,
-  getUserGlobalRank
+  getUserGlobalRank,
+  syncLocalSessionsToSupabase
 } from '@/lib/services/db';
 import { supabase, isSupabaseConfigured } from '@/lib/services/supabaseClient';
 import { playKeystrokeSound } from '@/lib/services/soundSynth';
@@ -439,6 +440,11 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
           }
           if (currentSession?.user) {
             setUser(currentSession.user);
+            try {
+              await syncLocalSessionsToSupabase(currentSession.user.id);
+            } catch (syncErr) {
+              console.error('Failed to sync local sessions on login:', syncErr);
+            }
             const uProfile = await getProfile(currentSession.user.id);
             
             // Sync/heal role in context/cookie if logged in as admin email

@@ -380,6 +380,61 @@ export const grantXp = async (userId: string, xpAmount: number): Promise<{ level
   return { levelUp, currentLevel: level, newXp };
 };
 
+export const syncLocalSessionsToSupabase = async (userId: string): Promise<void> => {
+  if (isLocalMode()) return;
+
+  const localSessions = getLocalData<TypingSession[]>('sessions', []);
+  if (localSessions.length > 0) {
+    console.log(`Syncing ${localSessions.length} local sessions to Supabase...`);
+    
+    // Sync sessions to Supabase preserving original timestamp
+    for (const sess of localSessions) {
+      const { error } = await supabase!
+        .from('typing_sessions')
+        .insert([{
+          user_id: userId,
+          wpm: sess.wpm,
+          accuracy: sess.accuracy,
+          level_type: sess.levelType,
+          duration: sess.duration,
+          errors: sess.errors,
+          chars_typed: sess.charsTyped,
+          created_at: sess.createdAt
+        }]);
+
+      if (error) {
+        console.error('Failed to sync session to Supabase:', error);
+      }
+    }
+    
+    // Clear local sessions after successful sync
+    if (typeof window !== 'undefined') {
+      localStorage.removeItem('typemaster_sessions');
+    }
+  }
+
+  // Also sync achievements if they exist
+  const localAchievements = getLocalData<string[]>('unlocked_achievements', []);
+  if (localAchievements.length > 0) {
+    console.log(`Syncing ${localAchievements.length} local achievements to Supabase...`);
+    for (const achId of localAchievements) {
+      const { error } = await supabase!
+        .from('achievements_unlocked')
+        .insert([{
+          user_id: userId,
+          achievement_id: achId
+        }]);
+      
+      if (error) {
+        console.error('Failed to sync achievement:', error);
+      }
+    }
+    if (typeof window !== 'undefined') {
+      localStorage.removeItem('typemaster_unlocked_achievements');
+    }
+  }
+};
+
 // ---------------- TYPING SESSIONS ----------------
 export const getSessions = async (userId: string): Promise<TypingSession[]> => {
   if (isLocalMode()) {

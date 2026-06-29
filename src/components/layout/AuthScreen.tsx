@@ -206,28 +206,28 @@ export const AuthScreen: React.FC = () => {
       {/* Atmospheric depth lighting overlay */}
       <div className="absolute inset-0 bg-gradient-to-tr from-[#020306]/90 via-[#070a13]/70 to-[#020306]/90 pointer-events-none z-0" />
 
-      {/* Top Left Header Logo */}
-      <div className="absolute top-6 left-6 flex items-center gap-2.5 z-20 select-none">
-        <div className="w-8 h-8 rounded-lg bg-orange-500 flex items-center justify-center shadow-[0_0_12px_rgba(249,115,22,0.4)]">
-          <svg className="w-5 h-5 text-[#070a13]" viewBox="0 0 24 24" fill="currentColor">
-            <path d="M4 5h16a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2zm1 4v2h2V9H5zm4 0v2h2V9H9zm4 0v2h2V9h-2zm4 0v2h2V9h-2zM5 13v2h2v-2H5zm4 0v2h6v-2H9zm8 0v2h2v-2h-2z" />
-          </svg>
-        </div>
-        <span className="text-md font-bold text-white tracking-wider">
-          Key<span className="text-orange-500">stra</span>
-        </span>
-      </div>
-
       {/* Main Grid Wrapper */}
-      <div className="relative z-10 w-full max-w-7xl mx-auto px-6 py-6 lg:py-0 grid grid-cols-1 lg:grid-cols-12 gap-10 items-center">
+      <div className="relative z-10 w-full max-w-[1440px] mx-auto px-8 lg:px-12 py-6 lg:py-0 grid grid-cols-1 lg:grid-cols-12 gap-10 items-center">
         
         {/* Left Side: Hero Section */}
         <motion.div 
           initial={{ opacity: 0, x: -40 }}
           animate={{ opacity: 1, x: 0 }}
           transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
-          className="lg:col-span-7 flex flex-col items-start text-left text-white max-w-xl select-none pt-24 lg:pt-0"
+          className="lg:col-span-7 flex flex-col items-start text-left text-white max-w-xl select-none pt-16 lg:pt-12"
         >
+          {/* Logo inline at the top of the Hero Column */}
+          <div className="flex items-center gap-2.5 mb-6 select-none">
+            <div className="w-8 h-8 rounded-lg bg-orange-500 flex items-center justify-center shadow-[0_0_12px_rgba(249,115,22,0.4)]">
+              <svg className="w-5 h-5 text-[#070a13]" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M4 5h16a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2zm1 4v2h2V9H5zm4 0v2h2V9H9zm4 0v2h2V9h-2zm4 0v2h2V9h-2zM5 13v2h2v-2H5zm4 0v2h6v-2H9zm8 0v2h2v-2h-2z" />
+              </svg>
+            </div>
+            <span className="text-md font-bold text-white tracking-wider">
+              Key<span className="text-orange-500">stra</span>
+            </span>
+          </div>
+
           <h1 className="font-extrabold tracking-tight text-5xl lg:text-[56px] leading-[1.05] text-white">
             Master Every<br />
             <span className="text-orange-500 drop-shadow-[0_0_15px_rgba(249,115,22,0.2)]">Keystroke</span>

@@ -60,7 +60,12 @@ const DEFAULT_PROFILE: UserProfile = {
 const getLocalData = <T>(key: string, defaultValue: T): T => {
   if (typeof window === 'undefined') return defaultValue;
   const data = localStorage.getItem(`typemaster_${key}`);
-  return data ? JSON.parse(data) : defaultValue;
+  if (!data) return defaultValue;
+  try {
+    return JSON.parse(data) as T;
+  } catch (e) {
+    return data as unknown as T;
+  }
 };
 
 const setLocalData = <T>(key: string, value: T): void => {

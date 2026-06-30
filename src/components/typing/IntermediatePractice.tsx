@@ -104,6 +104,7 @@ export const IntermediatePractice: React.FC<{ onBack?: () => void }> = ({ onBack
   const [elapsedTime, setElapsedTime] = useState(0);
   const [wpmHistory, setWpmHistory] = useState<{ time: number; wpm: number }[]>([]);
   const [showResults, setShowResults] = useState(false);
+  const [isFocused, setIsFocused] = useState(false);
   const [testResults, setTestResults] = useState<{
     wpm: number;
     accuracy: number;
@@ -399,19 +400,20 @@ export const IntermediatePractice: React.FC<{ onBack?: () => void }> = ({ onBack
     return targetText.split('').map((char, index) => {
       const typedChar = rawTypedText[index];
       
-      let charClass = 'text-slate-500'; // Default untyped
-      if (typedChar !== undefined) {
-        charClass = typedChar === char ? 'text-white' : 'bg-cyber-red/30 text-cyber-red border-b border-cyber-red';
+      let charClass = '';
+      if (index < rawTypedText.length) {
+        // Typed characters
+        charClass = typedChar === char ? 'text-[#888888]' : 'text-[var(--color-error)] bg-[rgba(225,112,85,0.15)]';
+      } else if (index === rawTypedText.length) {
+        // Current character
+        charClass = 'bg-[var(--color-brand)] text-white animate-cursor-blink';
+      } else {
+        // Upcoming characters
+        charClass = 'text-[var(--color-text-muted)]';
       }
-      
-      // Active letter highlight
-      const isActive = index === rawTypedText.length;
-      const activeClass = isActive 
-        ? 'typing-caret-active animate-caret' 
-        : '';
 
       return (
-        <span key={index} className={`${charClass} ${activeClass} transition-all duration-100 font-mono tracking-wide`}>
+        <span key={index} className={`${charClass} transition-all duration-100 font-mono tracking-wide`}>
           {char}
         </span>
       );
@@ -824,32 +826,7 @@ export const IntermediatePractice: React.FC<{ onBack?: () => void }> = ({ onBack
         ) : (
           /* Active typing engine container */
           <div className={`relative transition-all duration-500 ${isZenMode ? 'space-y-12' : 'space-y-6'}`}>
-            {/* Live Metrics */}
-            <div className={`flex justify-between items-center transition-all duration-300 ${isZenMode ? 'px-0 py-0 border-0 bg-transparent text-slate-500 text-lg' : 'bg-slate-950/30 px-4 py-2 border border-white/5 rounded-xl'}`}>
-              <div className="flex items-center gap-2">
-                <span className={isZenMode ? 'text-sm uppercase tracking-wider text-slate-500 font-semibold' : 'text-xs text-slate-400'}>WPM:</span>
-                <span className={isZenMode ? 'text-3xl font-black text-cyber-blue text-glow-cyan' : 'text-xs font-bold text-cyber-blue'}>{currentWpm}</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <span className={isZenMode ? 'text-sm uppercase tracking-wider text-slate-500 font-semibold' : 'text-xs text-slate-400'}>Accuracy:</span>
-                <span className={isZenMode ? 'text-3xl font-black text-cyber-green' : 'text-xs font-bold text-cyber-green'}>{accuracy}%</span>
-              </div>
-              <div className="flex items-center gap-2">
-                {testMode === 'time' ? (
-                  <>
-                    <span className={isZenMode ? 'text-sm uppercase tracking-wider text-slate-500 font-semibold' : 'text-xs text-slate-400'}>Time:</span>
-                    <span className={isZenMode ? 'text-3xl font-black text-white' : 'text-xs font-bold text-white'}>{timeLeft}s</span>
-                  </>
-                ) : (
-                  <>
-                    <span className={isZenMode ? 'text-sm uppercase tracking-wider text-slate-500 font-semibold' : 'text-xs text-slate-400'}>Words:</span>
-                    <span className={isZenMode ? 'text-3xl font-black text-white' : 'text-xs font-bold text-white'}>
-                      {rawTypedText.trim().split(/\s+/).filter(Boolean).length} / {wordCount}
-                    </span>
-                  </>
-                )}
-              </div>
-            </div>
+
 
             {/* Display Text Panel */}
             <div className="relative animate-fade-in">
@@ -868,23 +845,25 @@ export const IntermediatePractice: React.FC<{ onBack?: () => void }> = ({ onBack
 
               <div 
                 onClick={() => { if (textInputRef.current) textInputRef.current.focus(); }}
-                className={`w-full transition-all duration-500 select-none cursor-text overflow-hidden relative whitespace-pre-wrap ${
+                className={`w-full transition-all duration-500 select-none cursor-text overflow-hidden relative whitespace-pre-wrap font-mono ${
+                  isFocused ? 'outline outline-2 outline-[var(--color-brand)] outline-offset-2' : ''
+                } ${
                   isZenMode 
-                    ? 'border-0 bg-transparent p-0 min-h-48 max-h-96 text-2xl md:text-3xl leading-loose font-mono' 
-                    : 'border border-white/10 rounded-2xl bg-slate-950/50 p-8 min-h-36 max-h-56 overflow-y-auto text-lg leading-relaxed'
+                    ? 'border-0 bg-transparent p-0 min-h-48 max-h-96 text-2xl md:text-3xl leading-loose' 
+                    : 'border border-[var(--color-border)] rounded-2xl bg-[var(--color-surface)] p-8 min-h-36 max-h-56 overflow-y-auto text-lg leading-relaxed'
                 }`}
               >
                 {renderTextHighlights()}
-
-                {!isStarted && (
-                  <div className={`absolute flex items-center gap-1.5 text-slate-400 bg-slate-900 border border-white/5 px-2.5 py-1.5 rounded-lg animate-pulse select-none pointer-events-none ${
-                    isZenMode ? 'right-0 bottom-0 text-xs' : 'right-3 bottom-3 text-[10px]'
-                  }`}>
-                    <Sparkles size={12} className="text-yellow-400 animate-spin" style={{ animationDuration: '3s' }} />
-                    Type the first letter to begin timer
-                  </div>
-                )}
               </div>
+            </div>
+
+            {/* Live Stats Row */}
+            <div className="flex justify-center items-center gap-2 py-2 text-[13px] font-mono text-[var(--color-text-secondary)] select-none">
+              <span>{currentWpm} WPM</span>
+              <span>·</span>
+              <span>{accuracy}% acc</span>
+              <span>·</span>
+              <span>{testMode === 'time' ? `${timeLeft}s` : `${rawTypedText.trim().split(/\s+/).filter(Boolean).length}/${wordCount} words`}</span>
             </div>
 
             {/* Ghost input area */}
@@ -893,6 +872,8 @@ export const IntermediatePractice: React.FC<{ onBack?: () => void }> = ({ onBack
               value={rawTypedText}
               onChange={handleTextChange}
               onKeyDown={(e) => playClickSound(e.key)}
+              onFocus={() => setIsFocused(true)}
+              onBlur={() => setIsFocused(false)}
               disabled={isPaused}
               className="absolute w-0 h-0 opacity-0 pointer-events-none"
               autoCapitalize="off"

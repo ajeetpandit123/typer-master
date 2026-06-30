@@ -5,10 +5,9 @@ import { useApp } from '@/context/AppContext';
 import { APP_NAME } from '@/lib/config';
 import { useRouter, usePathname, useSearchParams } from 'next/navigation';
 import { 
-  Trophy, Zap, Target, Hourglass, ShieldAlert, Award, 
-  BookOpen, MessageSquare, Code, Sword, Settings, 
-  Menu, X, Sparkles, Database, FileText, Flame, Shield, LogOut,
-  Users, ArrowLeft
+  Trophy, Zap, Target, Award, BookOpen, Sword, Settings, 
+  Menu, X, Sparkles, FileText, Flame, Shield, LogOut,
+  Users, ArrowLeft, Lock, Code
 } from 'lucide-react';
 import { PasswordResetModal } from '@/components/layout/PasswordResetModal';
 
@@ -51,7 +50,6 @@ export const AppShell: React.FC<AppShellProps> = ({ children }) => {
   };
 
   const activeTab = getActiveTab();
-
   const hasToastedAccessDenied = useRef(false);
 
   // Client-side route protection & error query toast
@@ -102,10 +100,10 @@ export const AppShell: React.FC<AppShellProps> = ({ children }) => {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-[var(--bg,#0B0B0B)] text-[var(--text,#ffffff)]">
+      <div className="min-h-screen flex items-center justify-center bg-[var(--color-bg)] text-[var(--color-text-primary)]">
         <div className="relative">
-          <div className="w-16 h-16 border-4 border-[var(--accent,#FF6B00)] border-t-transparent rounded-full animate-spin"></div>
-          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-xs font-black text-[var(--accent,#FF6B00)]">
+          <div className="w-16 h-16 border-4 border-[var(--color-brand)] border-t-transparent rounded-full animate-spin"></div>
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-xs font-black text-[var(--color-brand)]">
             KS
           </div>
         </div>
@@ -118,38 +116,63 @@ export const AppShell: React.FC<AppShellProps> = ({ children }) => {
     return null;
   }
 
-  // Get dynamic navigation items based on active workspace
-  const navItems = isAdminPanel
-    ? [
-        { id: 'dashboard', label: 'Overview', icon: <Target size={16} /> },
-        { id: 'users', label: 'Users', icon: <Users size={16} /> },
-        { id: 'tests', label: 'Tests', icon: <Code size={16} /> },
-        { id: 'words', label: 'Word Collections', icon: <BookOpen size={16} /> },
-        { id: 'analytics', label: 'Analytics', icon: <Zap size={16} /> },
-        { id: 'settings', label: 'Settings', icon: <Settings size={16} /> },
-        { id: 'return-app', label: 'Return to App', icon: <ArrowLeft size={16} /> },
-      ]
-    : [
-        { id: 'dashboard', label: 'Overview', icon: <Target size={16} /> },
+  // User panel navigation groups
+  const userGroups = [
+    {
+      title: 'Dashboard',
+      items: [{ id: 'dashboard', label: 'Overview', icon: <Target size={16} /> }]
+    },
+    {
+      title: 'Practice',
+      items: [
         { id: 'practice', label: 'Practice Mode', icon: <BookOpen size={16} /> },
-        { id: 'my_words', label: 'My Words', icon: <FileText size={16} /> },
-        { id: 'battle', label: 'Battle Arena', icon: <Sword size={16} /> },
-        { id: 'leaderboard', label: 'Leaderboard', icon: <Award size={16} /> },
-        { id: 'achievements', label: 'Achievements', icon: <Trophy size={16} /> },
-      ];
+        { id: 'my_words', label: 'My Words', icon: <FileText size={16} /> }
+      ]
+    },
+    {
+      title: 'Compete',
+      items: [{ id: 'battle', label: 'Battle Arena', icon: <Sword size={16} /> }]
+    },
+    {
+      title: 'Analytics',
+      items: [{ id: 'leaderboard', label: 'Leaderboard', icon: <Award size={16} /> }]
+    },
+    {
+      title: 'Achievements',
+      items: [{ id: 'achievements', label: 'Achievements', icon: <Trophy size={16} /> }]
+    }
+  ];
 
-  // If user is admin and in user panel, append Admin Dashboard to the sidebar
-  if (!isAdminPanel && profile.role === 'admin') {
-    navItems.push({ id: 'admin', label: 'Admin Dashboard', icon: <Shield size={16} /> });
-  }
+  // Admin panel items
+  const adminItems = [
+    { id: 'dashboard', label: 'Overview', icon: <Target size={16} /> },
+    { id: 'users', label: 'Users', icon: <Users size={16} /> },
+    { id: 'tests', label: 'Tests', icon: <Code size={16} /> },
+    { id: 'words', label: 'Word Collections', icon: <BookOpen size={16} /> },
+    { id: 'analytics', label: 'Analytics', icon: <Zap size={16} /> },
+    { id: 'settings', label: 'Settings', icon: <Settings size={16} /> },
+    { id: 'return-app', label: 'Return to App', icon: <ArrowLeft size={16} /> },
+  ];
 
-  // Append Settings to the user panel at the very end
-  if (!isAdminPanel) {
-    navItems.push({ id: 'settings', label: 'Settings', icon: <Settings size={16} /> });
-  }
+  // Mobile Bottom Nav Tabs
+  const mobileTabs = [
+    { id: 'practice', label: 'Practice', icon: <BookOpen size={22} /> },
+    { id: 'battle', label: 'Compete', icon: <Sword size={22} /> },
+    { id: 'dashboard', label: 'Dashboard', icon: <Target size={22} /> },
+    { id: 'leaderboard', label: 'Leaderboard', icon: <Award size={22} /> },
+    { id: 'settings', label: 'Profile', icon: <Settings size={22} /> },
+  ];
+
+  const getNavItemClasses = (isActive: boolean) => {
+    return `w-full h-[36px] px-[10px] rounded-[var(--radius-md)] text-[13px] font-medium flex items-center gap-2 transition-all duration-200 cursor-pointer ${
+      isActive 
+        ? 'bg-[var(--color-surface-raised)] text-[var(--color-text-primary)]' 
+        : 'text-[var(--color-text-secondary)] hover:bg-[var(--color-surface-raised)] hover:text-[var(--color-text-primary)] bg-transparent'
+    }`;
+  };
 
   return (
-    <div className={`flex bg-[var(--bg,#0B0B0B)] text-[var(--text,#ffffff)] relative font-sans selection:bg-[rgba(var(--accent-rgb),0.3)] selection:text-[var(--text,#ffffff)] ${
+    <div className={`flex bg-[var(--color-bg)] text-[var(--color-text-primary)] relative font-sans ${
       isZenMode 
         ? 'h-screen max-h-screen overflow-hidden w-screen' 
         : 'min-h-screen w-full'
@@ -159,195 +182,286 @@ export const AppShell: React.FC<AppShellProps> = ({ children }) => {
       <PasswordResetModal />
       
       {/* 1. Desktop Sidebar */}
-      <aside className={`hidden lg:flex flex-col border-r border-[var(--border,#222222)] bg-[var(--surface,#111111)]/80 backdrop-blur-md justify-between shrink-0 transition-all duration-500 ease-in-out ${
+      <aside className={`hidden md:flex flex-col border-r border-[var(--color-border)] bg-[var(--color-surface)] justify-between shrink-0 transition-all duration-500 ease-in-out ${
         isZenMode 
           ? 'w-0 opacity-0 p-0 border-r-0 overflow-hidden' 
-          : 'w-64 opacity-100 p-6'
+          : 'w-[200px] opacity-100 p-[12px_8px]'
       }`}>
-        <div className="space-y-6">
+        <div className="space-y-4">
           {/* Logo */}
-          <div className="flex items-center gap-2 select-none cursor-pointer" onClick={() => handleNavigate('dashboard')}>
+          <div className="flex items-center gap-2 select-none cursor-pointer px-2 py-1" onClick={() => handleNavigate('dashboard')}>
             <div 
-              className="w-8 h-8 rounded-lg flex items-center justify-center font-black text-sm text-black transition-all duration-300"
+              className="w-7 h-7 rounded-[var(--radius-sm)] flex items-center justify-center font-black text-xs text-black transition-all duration-300"
               style={{
-                backgroundColor: 'var(--accent)',
-                boxShadow: '0 0 12px var(--accent)'
+                backgroundColor: 'var(--color-brand)',
+                boxShadow: '0 0 10px var(--color-brand)'
               }}
             >
               KS
             </div>
-            <h1 className="text-lg font-bold tracking-wider text-[var(--text,#ffffff)] transition-all duration-300">
-              Key<span className="transition-all duration-300" style={{ color: 'var(--accent)', textShadow: '0 0 6px var(--accent)' }}>stra</span>
+            <h1 className="text-base font-bold tracking-wider text-[var(--color-text-primary)]">
+              Key<span style={{ color: 'var(--color-brand)' }}>stra</span>
             </h1>
           </div>
 
           {/* User Profile Widget */}
           <div 
             onClick={() => handleNavigate('settings')}
-            className="p-3 rounded-xl border flex items-center gap-3 bg-[var(--surface-2,#181818)] border-[var(--border,#222222)] hover:border-[rgba(var(--accent-rgb),0.4)] transition duration-200 cursor-pointer"
+            className="mx-1 p-2 rounded-[var(--radius-md)] border border-[var(--color-border)] bg-[var(--color-surface-raised)] hover:border-[var(--color-brand-border)] transition duration-200 cursor-pointer flex items-center gap-2.5"
           >
-            <img src={profile.avatarUrl} alt="Avatar" className="w-10 h-10 rounded-full border border-[var(--border,#222222)]" />
-            <div className="truncate">
-              <h4 className="text-xs font-bold truncate text-[var(--text,#ffffff)]">{profile.username}</h4>
-              <span className="text-[10px] font-semibold text-[var(--accent)]">Lvl {profile.level} Typist</span>
+            <img src={profile.avatarUrl} alt="Avatar" className="w-8 h-8 rounded-full border border-[var(--color-border)]" />
+            <div className="truncate min-w-0">
+              <h4 className="text-[11px] font-semibold truncate text-[var(--color-text-primary)]">{profile.username}</h4>
+              <span className="text-[9px] text-[var(--color-brand)] font-medium">Lvl {profile.level}</span>
             </div>
           </div>
 
           {/* Navigation Links */}
-          <nav className="space-y-1">
-            <div className="text-[9px] uppercase tracking-widest font-bold mb-2 px-3 text-[var(--text-muted,#888888)]">
-              Menu
-            </div>
-            {navItems.map((item) => {
-              const isActive = activeTab === item.id;
-              const isReturnApp = item.id === 'return-app';
-              return (
+          <nav className="space-y-3 px-1">
+            {isAdminPanel ? (
+              <div className="space-y-1">
+                <span className="text-[9px] uppercase tracking-widest font-bold px-2 text-[var(--color-text-muted)] block mb-1">
+                  Admin Panel
+                </span>
+                {adminItems.map((item) => (
+                  <button
+                    key={item.id}
+                    onClick={() => handleNavigate(item.id)}
+                    className={getNavItemClasses(activeTab === item.id)}
+                  >
+                    {item.icon}
+                    {item.label}
+                  </button>
+                ))}
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {userGroups.map((group) => (
+                  <div key={group.title} className="space-y-1">
+                    <span className="text-[9px] uppercase tracking-widest font-bold px-2 text-[var(--color-text-muted)] block mb-1">
+                      {group.title}
+                    </span>
+                    {group.items.map((item) => (
+                      <button
+                        key={item.id}
+                        onClick={() => handleNavigate(item.id)}
+                        className={getNavItemClasses(activeTab === item.id)}
+                      >
+                        {item.icon}
+                        {item.label}
+                      </button>
+                    ))}
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {/* Admin Dashboard Entry link (if in user panel and role is admin) */}
+            {!isAdminPanel && profile.role === 'admin' && (
+              <div className="pt-2 border-t border-[var(--color-border)]">
                 <button
-                  key={item.id}
-                  onClick={() => handleNavigate(item.id)}
-                  className={`w-full px-3 py-2.5 rounded-lg text-xs font-semibold flex items-center gap-2.5 transition-all border cursor-pointer ${
-                    isReturnApp
-                      ? 'border-transparent text-[#FF6B00] hover:bg-[#FF6B00]/10'
-                      : isActive 
-                        ? 'bg-[rgba(var(--accent-rgb),0.1)] border-[var(--accent)] text-[var(--accent)]' 
-                        : 'border-transparent text-[var(--text-muted,#888888)] hover:text-[var(--text,#ffffff)] hover:bg-[var(--surface-2,#181818)]'
-                  }`}
+                  onClick={() => handleNavigate('admin')}
+                  className={getNavItemClasses(activeTab === 'admin')}
                 >
-                  {item.icon}
-                  {item.label}
+                  <Shield size={16} />
+                  Admin Panel
                 </button>
-              );
-            })}
+              </div>
+            )}
+
+            {/* Divider and Settings link */}
+            {!isAdminPanel && (
+              <div className="pt-2 border-t border-[var(--color-border)]">
+                <button
+                  onClick={() => handleNavigate('settings')}
+                  className={getNavItemClasses(activeTab === 'settings')}
+                >
+                  <Settings size={16} />
+                  Settings
+                </button>
+              </div>
+            )}
           </nav>
         </div>
 
-
+        {/* Logout Button */}
+        <div className="px-1 pt-2 border-t border-[var(--color-border)]">
+          <button
+            onClick={() => {
+              logOut();
+              router.push('/');
+            }}
+            className="w-full h-[36px] px-[10px] rounded-[var(--radius-md)] text-[13px] font-medium flex items-center gap-2 text-[var(--color-error)] hover:bg-[rgba(225,112,85,0.08)] transition duration-200 cursor-pointer"
+          >
+            <LogOut size={16} />
+            Logout
+          </button>
+        </div>
       </aside>
 
-      {/* 2. Mobile Nav Header Bar */}
-      <div className={`fixed top-0 left-0 right-0 z-40 border-b bg-[var(--surface,#111111)]/85 backdrop-blur-xl px-4 flex items-center justify-between lg:hidden transition-all duration-500 ease-in-out overflow-hidden ${
+      {/* 2. Mobile Nav Header Bar (for screens <= 768px, styled using new tokens) */}
+      <div className={`fixed top-0 left-0 right-0 z-40 border-b bg-[var(--color-surface)] px-4 flex items-center justify-between md:hidden transition-all duration-500 ease-in-out overflow-hidden ${
         isZenMode 
           ? 'h-0 opacity-0 border-b-0 py-0 pointer-events-none' 
           : 'h-14 opacity-100'
-      }`} style={{ borderColor: 'var(--border,#222222)' }}>
+      }`} style={{ borderColor: 'var(--color-border)' }}>
         <div className="flex items-center gap-2">
           <button 
             onClick={() => setSidebarOpen(!sidebarOpen)}
-            className="text-[var(--text-muted,#888888)] hover:text-[var(--text,#ffffff)] cursor-pointer"
+            className="text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] cursor-pointer"
           >
             <Menu size={20} />
           </button>
-          <h1 className="text-sm font-bold tracking-wider text-[var(--text,#ffffff)] cursor-pointer transition-all duration-300" onClick={() => handleNavigate('dashboard')}>
-            Key<span className="font-bold transition-all duration-300" style={{ color: 'var(--accent)', textShadow: '0 0 6px var(--accent)' }}>stra</span>
+          <h1 className="text-sm font-bold tracking-wider text-[var(--color-text-primary)] cursor-pointer" onClick={() => handleNavigate('dashboard')}>
+            Key<span style={{ color: 'var(--color-brand)' }}>stra</span>
           </h1>
         </div>
 
-        <div className="flex items-center gap-2.5">
-          <div className="flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold border border-[var(--border,#222222)] bg-[var(--surface-2,#181818)] text-[var(--text,#ffffff)]">
-            <Flame size={11} className="text-[var(--accent)]" />
+        <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold border border-[var(--color-border)] bg-[var(--color-surface-raised)] text-[var(--color-text-primary)]">
+            <Flame size={11} className="text-[var(--color-brand)]" />
             <span>{profile.streak}d</span>
           </div>
 
           <button 
             onClick={() => handleNavigate('settings')}
-            className="flex items-center gap-1.5 px-2 py-0.5 rounded-full border bg-[var(--surface,#111111)] hover:bg-[var(--surface-2,#181818)] transition duration-200 border-[var(--border,#222222)] cursor-pointer select-none"
+            className="flex items-center gap-1.5 px-2 py-0.5 rounded-full border bg-[var(--color-surface)] hover:bg-[var(--color-surface-raised)] transition duration-200 border-[var(--color-border)] cursor-pointer select-none"
           >
-            <img src={profile.avatarUrl} alt="Avatar" className="w-4 h-4 rounded-full border border-[var(--border,#222222)]" />
-            <span className="text-[10px] font-bold text-[var(--text,#ffffff)]">
+            <img src={profile.avatarUrl} alt="Avatar" className="w-4 h-4 rounded-full border border-[var(--color-border)]" />
+            <span className="text-[10px] font-bold text-[var(--color-text-primary)]">
               {profile.username}
             </span>
           </button>
         </div>
       </div>
 
-      {/* 3. Mobile Sidebar Overlay */}
+      {/* 3. Mobile Sidebar Drawer Overlay */}
       {sidebarOpen && (
-        <div className="lg:hidden fixed inset-0 z-50 flex">
+        <div className="md:hidden fixed inset-0 z-50 flex">
           <div className="fixed inset-0 bg-black/80" onClick={() => setSidebarOpen(false)} />
           
-          <div className="relative w-64 p-6 flex flex-col justify-between border-r border-[var(--border,#222222)] bg-[var(--surface,#111111)]">
+          <div className="relative w-64 p-6 flex flex-col justify-between border-r border-[var(--color-border)] bg-[var(--color-surface)]">
             <div className="space-y-6">
               <div className="flex justify-between items-center">
                 <div className="flex items-center gap-2 select-none cursor-pointer" onClick={() => { handleNavigate('dashboard'); setSidebarOpen(false); }}>
                   <div 
-                    className="w-6 h-6 rounded text-black font-black text-xs flex items-center justify-center transition-all duration-300"
+                    className="w-6 h-6 rounded text-black font-black text-xs flex items-center justify-center"
                     style={{
-                      backgroundColor: 'var(--accent)',
-                      boxShadow: '0 0 8px var(--accent)'
+                      backgroundColor: 'var(--color-brand)',
+                      boxShadow: '0 0 8px var(--color-brand)'
                     }}
                   >
                     KS
                   </div>
-                  <span className="text-sm font-bold text-[var(--text,#ffffff)] tracking-wider transition-all duration-300">
-                    Key<span className="transition-all duration-300" style={{ color: 'var(--accent)', textShadow: '0 0 4px var(--accent)' }}>stra</span>
+                  <span className="text-sm font-bold text-[var(--color-text-primary)] tracking-wider">
+                    Key<span style={{ color: 'var(--color-brand)' }}>stra</span>
                   </span>
                 </div>
-                <button onClick={() => setSidebarOpen(false)} className="text-[var(--text-muted,#888888)] hover:text-[var(--text,#ffffff)] cursor-pointer">
+                <button onClick={() => setSidebarOpen(false)} className="text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] cursor-pointer">
                   <X size={18} />
                 </button>
               </div>
 
-              <nav className="space-y-1">
-                {navItems.map((item) => {
-                  const isReturnApp = item.id === 'return-app';
-                  return (
-                    <button
-                      key={item.id}
-                      onClick={() => handleNavigate(item.id)}
-                      className={`w-full px-3 py-2 rounded-lg text-xs font-semibold flex items-center gap-2.5 transition border cursor-pointer ${
-                        isReturnApp
-                          ? 'border-transparent text-[#FF6B00] hover:bg-[#FF6B00]/10'
-                          : activeTab === item.id 
-                            ? 'bg-[rgba(var(--accent-rgb),0.1)] border-[var(--accent)] text-[var(--accent)]' 
-                            : 'border-transparent text-[var(--text-muted,#888888)] hover:text-[var(--text,#ffffff)] hover:bg-[var(--surface-2,#181818)]'
-                      }`}
-                    >
-                      {item.icon}
-                      {item.label}
-                    </button>
-                  );
-                })}
+              <nav className="space-y-3">
+                {isAdminPanel ? (
+                  <div className="space-y-1">
+                    <span className="text-[9px] uppercase tracking-widest font-bold px-2 text-[var(--color-text-muted)] block mb-1">
+                      Admin Panel
+                    </span>
+                    {adminItems.map((item) => (
+                      <button
+                        key={item.id}
+                        onClick={() => handleNavigate(item.id)}
+                        className={getNavItemClasses(activeTab === item.id)}
+                      >
+                        {item.icon}
+                        {item.label}
+                      </button>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    {userGroups.map((group) => (
+                      <div key={group.title} className="space-y-1">
+                        <span className="text-[9px] uppercase tracking-widest font-bold px-2 text-[var(--color-text-muted)] block mb-1">
+                          {group.title}
+                        </span>
+                        {group.items.map((item) => (
+                          <button
+                            key={item.id}
+                            onClick={() => handleNavigate(item.id)}
+                            className={getNavItemClasses(activeTab === item.id)}
+                          >
+                            {item.icon}
+                            {item.label}
+                          </button>
+                        ))}
+                      </div>
+                    ))}
+                  </div>
+                )}
+                
+                {/* Admin/Settings Links */}
+                {!isAdminPanel && profile.role === 'admin' && (
+                  <button onClick={() => handleNavigate('admin')} className={getNavItemClasses(activeTab === 'admin')}>
+                    <Shield size={16} /> Admin Panel
+                  </button>
+                )}
+                {!isAdminPanel && (
+                  <button onClick={() => handleNavigate('settings')} className={getNavItemClasses(activeTab === 'settings')}>
+                    <Settings size={16} /> Settings
+                  </button>
+                )}
               </nav>
             </div>
-
-
+            
+            <button
+              onClick={() => {
+                logOut();
+                router.push('/');
+              }}
+              className="w-full h-[36px] px-[10px] rounded-[var(--radius-md)] text-[13px] font-medium flex items-center gap-2 text-[var(--color-error)] hover:bg-[rgba(225,112,85,0.08)] transition duration-200 cursor-pointer"
+            >
+              <LogOut size={16} />
+              Logout
+            </button>
           </div>
         </div>
       )}
 
       {/* 4. Main Panel Body */}
-      <main className={`flex-1 flex flex-col min-w-0 ${isZenMode ? 'pt-0' : 'pt-14 lg:pt-0'}`}>
+      <main className={`flex-1 flex flex-col min-w-0 ${isZenMode ? 'pt-0' : 'pt-14 md:pt-0'}`}>
         
-        {/* Header HUD panel */}
-        <header className={`hidden lg:flex items-center justify-between border-b border-[var(--border,#222222)] px-8 shrink-0 transition-all duration-500 ease-in-out overflow-hidden ${
+        {/* Desktop Header HUD panel */}
+        <header className={`hidden md:flex items-center justify-between border-b border-[var(--color-border)] px-8 shrink-0 transition-all duration-500 ease-in-out overflow-hidden ${
           isZenMode 
             ? 'h-0 opacity-0 border-b-0 py-0 pointer-events-none' 
             : 'h-14 opacity-100'
         }`}>
           <div className="flex items-center gap-2">
-            <span className="text-xs font-bold uppercase tracking-wider text-[var(--text-muted,#888888)]">
+            <span className="text-xs font-bold uppercase tracking-wider text-[var(--color-text-muted)]">
               {activeTab === 'dashboard' ? 'Overview' : activeTab.replace(/([A-Z])/g, ' $1')}
             </span>
           </div>
 
           <div className="flex items-center gap-4">
             {/* Streak Indicator */}
-            <div className="flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-bold border border-[var(--border,#222222)] bg-[var(--surface-2,#181818)] text-[var(--text,#ffffff)] select-none">
-              <Flame size={13} className="text-[var(--accent)] animate-pulse" />
-              <span>Streak: <span className="text-[var(--accent)]">{profile.streak}d</span></span>
+            <div className="flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-bold border border-[var(--color-border)] bg-[var(--color-surface-raised)] text-[var(--color-text-primary)] select-none">
+              <Flame size={13} className="text-[var(--color-brand)] animate-pulse" />
+              <span>Streak: <span className="text-[var(--color-brand)]">{profile.streak}d</span></span>
             </div>
 
             {/* XP Indicator */}
-            <div className="flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-bold border border-[var(--border,#222222)] bg-[var(--surface-2,#181818)] text-[var(--text,#ffffff)] select-none">
-              <Zap size={13} className="text-[var(--accent)]" />
+            <div className="flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-bold border border-[var(--color-border)] bg-[var(--color-surface-raised)] text-[var(--color-text-primary)] select-none">
+              <Zap size={13} className="text-[var(--color-brand)]" />
               <span>{profile.xp} XP</span>
             </div>
 
             {/* Rank Indicator */}
             <div className="flex items-center gap-2 text-xs select-none">
-              <span className="font-semibold text-[var(--text-muted,#888888)]">Rank:</span>
-              <strong className="flex items-center gap-1 text-[var(--text,#ffffff)]">
-                <Sparkles size={12} className="text-[var(--accent)]" />
+              <span className="font-semibold text-[var(--color-text-muted)]">Rank:</span>
+              <strong className="flex items-center gap-1 text-[var(--color-text-primary)]">
+                <Sparkles size={12} className="text-[var(--color-brand)]" />
                 Lvl {profile.level} {globalRank > 0 && `(#${globalRank})`}
               </strong>
             </div>
@@ -355,25 +469,50 @@ export const AppShell: React.FC<AppShellProps> = ({ children }) => {
             {/* Profile Button */}
             <button 
               onClick={() => handleNavigate('settings')}
-              className="flex items-center gap-2 px-3 py-1 rounded-full border bg-[var(--surface,#111111)] hover:bg-[var(--surface-2,#181818)] transition-all duration-200 border-[var(--border,#222222)] hover:border-[rgba(var(--accent-rgb),0.4)] cursor-pointer select-none group"
+              className="flex items-center gap-2 px-3 py-1 rounded-full border bg-[var(--color-surface)] hover:bg-[var(--color-surface-raised)] transition-all duration-200 border-[var(--color-border)] hover:border-[var(--color-brand-border)] cursor-pointer select-none group"
             >
-              <img src={profile.avatarUrl} alt="Avatar" className="w-5.5 h-5.5 rounded-full border border-[var(--border,#222222)]" />
-              <span className="text-xs font-bold text-[var(--text,#ffffff)]">
+              <img src={profile.avatarUrl} alt="Avatar" className="w-5.5 h-5.5 rounded-full border border-[var(--color-border)]" />
+              <span className="text-xs font-bold text-[var(--color-text-primary)]">
                 {profile.username}
               </span>
             </button>
           </div>
         </header>
 
-        {/* Content Pane */}
-        <div className={`flex-1 ${
+        {/* Content Pane (with padding-bottom for mobile bottom nav) */}
+        <div className={`flex-grow overflow-y-auto ${
           isZenMode 
             ? 'p-0 overflow-hidden' 
-            : 'p-6 md:p-8 overflow-y-auto'
+            : 'p-6 md:p-8 pb-[72px] md:pb-8'
         }`}>
           {children}
         </div>
       </main>
+
+      {/* 5. Mobile Bottom Nav (visible on screens <= 768px, hidden on desktop) */}
+      {!isZenMode && (
+        <div className="fixed bottom-0 left-0 right-0 z-40 md:hidden flex justify-around items-center h-[56px] bg-[var(--color-surface)] border-t border-[var(--color-border)]">
+          {mobileTabs.map((tab) => {
+            const isActive = activeTab === tab.id;
+            return (
+              <button
+                key={tab.id}
+                onClick={() => handleNavigate(tab.id)}
+                className="flex flex-col items-center justify-center flex-1 h-full py-1 text-center cursor-pointer active:scale-95 transition-transform"
+                style={{ minHeight: '44px' }}
+                aria-label={tab.label}
+              >
+                <span className={`transition-colors duration-200 ${isActive ? 'text-[var(--color-brand)]' : 'text-[var(--color-text-muted)]'}`}>
+                  {tab.icon}
+                </span>
+                <span className={`text-[10px] font-medium mt-0.5 transition-colors duration-200 ${isActive ? 'text-[var(--color-brand)]' : 'text-[var(--color-text-muted)]'}`}>
+                  {tab.label}
+                </span>
+              </button>
+            );
+          })}
+        </div>
+      )}
 
     </div>
   );

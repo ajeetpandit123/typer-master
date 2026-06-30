@@ -56,6 +56,32 @@ export const CodingPractice: React.FC<{ onBack?: () => void }> = ({ onBack }) =>
     isPlayingRef.current = isPlaying;
   }, [isPlaying]);
 
+  useEffect(() => {
+    const activeEl = activeCharRef.current;
+    const container = containerRef.current;
+    if (activeEl && container) {
+      const activeRect = activeEl.getBoundingClientRect();
+      const containerRect = container.getBoundingClientRect();
+      const activeTop = activeRect.top - containerRect.top + container.scrollTop;
+      
+      if (activeTop !== lastActiveTopRef.current) {
+        lastActiveTopRef.current = activeTop;
+        const containerHeight = container.clientHeight;
+        const activeHeight = activeRect.height;
+        const targetScrollTop = activeTop - (containerHeight / 2) + (activeHeight / 2);
+        
+        container.scrollTo({
+          top: Math.max(0, targetScrollTop),
+          behavior: rawTypedText.length <= 1 ? 'auto' : 'smooth'
+        });
+      }
+    }
+  }, [rawTypedText]);
+
+  const containerRef = useRef<HTMLDivElement | null>(null);
+  const activeCharRef = useRef<HTMLSpanElement | null>(null);
+  const lastActiveTopRef = useRef<number>(0);
+
   // Filter lessons
   const filteredLessons = CODING_LESSONS.filter(l => l.language === selectedLang);
   const lesson = filteredLessons[selectedLessonIdx] || filteredLessons[0] || CODING_LESSONS[0];
@@ -257,7 +283,11 @@ export const CodingPractice: React.FC<{ onBack?: () => void }> = ({ onBack }) =>
         }
 
         return (
-          <span key={charIdx} className={`${charClass} ${activeClass} ${customSyntaxStyle} font-mono tracking-wide`}>
+          <span 
+            key={charIdx} 
+            ref={isActive ? activeCharRef : undefined}
+            className={`${charClass} ${activeClass} ${customSyntaxStyle} font-mono tracking-wide`}
+          >
             {char}
           </span>
         );
@@ -285,7 +315,7 @@ export const CodingPractice: React.FC<{ onBack?: () => void }> = ({ onBack }) =>
   const cppProg = getLanguageProgress('cpp');
 
   return (
-    <div className={`transition-all duration-500 ${isZenMode ? 'w-full h-screen max-h-screen overflow-hidden flex flex-col justify-center mx-auto px-6 md:px-16 lg:px-24 pb-0' : 'space-y-6 max-w-5xl mx-auto pb-10'}`}>
+    <div className={`transition-all duration-500 ${isZenMode ? 'w-full h-screen max-h-screen overflow-hidden flex flex-col justify-center mx-auto px-6 md:px-16 lg:px-24 pb-0' : 'space-y-4 w-full pb-2'}`}>
       {/* 1. Header Navigation */}
       {!isZenMode && (
         <div className="glass-card p-5 rounded-2xl flex flex-col md:flex-row md:items-center justify-between gap-4">
@@ -409,8 +439,9 @@ export const CodingPractice: React.FC<{ onBack?: () => void }> = ({ onBack }) =>
 
             {/* Simulated VS Code Editor Pane */}
             <div 
+              ref={containerRef}
               onClick={() => { if (textInputRef.current) textInputRef.current.focus(); }}
-              className={`w-full border border-slate-800 rounded-xl bg-[#090d16] p-5 shadow-2xl relative select-none cursor-text overflow-x-auto transition-all duration-500 ${isZenMode ? 'min-h-96 text-lg py-10' : 'min-h-48'}`}
+              className={`w-full border border-slate-800 rounded-xl bg-[#090d16] p-5 shadow-2xl relative select-none cursor-text overflow-x-auto overflow-y-auto transition-all duration-500 ${isZenMode ? 'min-h-96 max-h-[70vh] text-lg py-10' : 'min-h-48 max-h-80'}`}
             >
               {/* Tab Header bar */}
               <div className="absolute top-0 left-0 right-0 h-8 bg-[#06090e] border-b border-slate-800/80 px-4 flex items-center justify-between">

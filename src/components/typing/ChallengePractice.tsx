@@ -42,8 +42,33 @@ export const ChallengePractice: React.FC<{ onBack?: () => void }> = ({ onBack })
     rawTypedTextRef.current = rawTypedText;
   }, [rawTypedText]);
 
+  useEffect(() => {
+    const activeEl = activeCharRef.current;
+    const container = containerRef.current;
+    if (activeEl && container) {
+      const activeRect = activeEl.getBoundingClientRect();
+      const containerRect = container.getBoundingClientRect();
+      const activeTop = activeRect.top - containerRect.top + container.scrollTop;
+      
+      if (activeTop !== lastActiveTopRef.current) {
+        lastActiveTopRef.current = activeTop;
+        const containerHeight = container.clientHeight;
+        const activeHeight = activeRect.height;
+        const targetScrollTop = activeTop - (containerHeight / 2) + (activeHeight / 2);
+        
+        container.scrollTo({
+          top: Math.max(0, targetScrollTop),
+          behavior: rawTypedText.length <= 1 ? 'auto' : 'smooth'
+        });
+      }
+    }
+  }, [rawTypedText]);
+
   const timerRef = useRef<NodeJS.Timeout | null>(null);
   const textInputRef = useRef<HTMLTextAreaElement | null>(null);
+  const containerRef = useRef<HTMLDivElement | null>(null);
+  const activeCharRef = useRef<HTMLSpanElement | null>(null);
+  const lastActiveTopRef = useRef<number>(0);
 
   // Load user progress
   const loadProgress = async () => {
@@ -217,7 +242,11 @@ export const ChallengePractice: React.FC<{ onBack?: () => void }> = ({ onBack })
 
       const isActive = index === rawTypedText.length;
       return (
-        <span key={index} className={`${charClass} ${isActive ? 'typing-caret-active animate-caret' : ''} font-mono tracking-wide`}>
+        <span 
+          key={index} 
+          ref={isActive ? activeCharRef : undefined}
+          className={`${charClass} ${isActive ? 'typing-caret-active animate-caret' : ''} font-mono tracking-wide`}
+        >
           {char}
         </span>
       );
@@ -238,7 +267,7 @@ export const ChallengePractice: React.FC<{ onBack?: () => void }> = ({ onBack })
   const currentWpm = Math.round((rawTypedText.length / 5) / ((elapsedTime || 1) / 60));
 
   return (
-    <div className={`transition-all duration-500 ${isZenMode ? 'w-full h-screen max-h-screen overflow-hidden flex flex-col justify-center mx-auto px-6 md:px-16 lg:px-24 pb-0' : 'space-y-6 max-w-5xl mx-auto pb-10'}`}>
+    <div className={`transition-all duration-500 ${isZenMode ? 'w-full h-screen max-h-screen overflow-hidden flex flex-col justify-center mx-auto px-6 md:px-16 lg:px-24 pb-0' : 'space-y-4 w-full pb-2'}`}>
       {/* 1. Header Navigation */}
       {!isZenMode && (
         <div className="glass-card p-5 rounded-2xl flex items-center justify-between">
@@ -306,6 +335,7 @@ export const ChallengePractice: React.FC<{ onBack?: () => void }> = ({ onBack })
 
             {/* Text Highlights Box */}
             <div 
+              ref={containerRef}
               onClick={() => { if (textInputRef.current) textInputRef.current.focus(); }}
               className={`w-full transition-all duration-500 select-none cursor-text overflow-hidden relative whitespace-pre-wrap ${
                 isZenMode 

@@ -64,6 +64,32 @@ export const MultiplayerBattle: React.FC = () => {
     };
   }, []);
 
+  useEffect(() => {
+    const activeEl = activeCharRef.current;
+    const container = containerRef.current;
+    if (activeEl && container) {
+      const activeRect = activeEl.getBoundingClientRect();
+      const containerRect = container.getBoundingClientRect();
+      const activeTop = activeRect.top - containerRect.top + container.scrollTop;
+      
+      if (activeTop !== lastActiveTopRef.current) {
+        lastActiveTopRef.current = activeTop;
+        const containerHeight = container.clientHeight;
+        const activeHeight = activeRect.height;
+        const targetScrollTop = activeTop - (containerHeight / 2) + (activeHeight / 2);
+        
+        container.scrollTo({
+          top: Math.max(0, targetScrollTop),
+          behavior: rawTypedText.length <= 1 ? 'auto' : 'smooth'
+        });
+      }
+    }
+  }, [rawTypedText]);
+
+  const containerRef = useRef<HTMLDivElement | null>(null);
+  const activeCharRef = useRef<HTMLSpanElement | null>(null);
+  const lastActiveTopRef = useRef<number>(0);
+
   // ----------------- ROOM ACTIONS -----------------
 
   const handleCreateRoom = () => {
@@ -382,7 +408,11 @@ export const MultiplayerBattle: React.FC = () => {
 
       const isActive = index === rawTypedText.length;
       return (
-        <span key={index} className={`${charClass} ${isActive ? 'typing-caret-active animate-caret' : ''} font-mono tracking-wide`}>
+        <span 
+          key={index} 
+          ref={isActive ? activeCharRef : undefined}
+          className={`${charClass} ${isActive ? 'typing-caret-active animate-caret' : ''} font-mono tracking-wide`}
+        >
           {char}
         </span>
       );
@@ -608,8 +638,9 @@ export const MultiplayerBattle: React.FC = () => {
 
                 {/* Display Text block */}
                 <div 
+                  ref={containerRef}
                   onClick={() => { if (textInputRef.current) textInputRef.current.focus(); }}
-                  className="w-full border border-white/10 rounded-2xl bg-slate-950/50 p-8 min-h-24 text-base leading-relaxed select-none cursor-text relative overflow-hidden"
+                  className="w-full border border-white/10 rounded-2xl bg-slate-950/50 p-8 min-h-24 max-h-64 overflow-y-auto text-base leading-relaxed select-none cursor-text relative"
                 >
                   {renderTextHighlights()}
                 </div>

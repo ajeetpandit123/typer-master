@@ -140,10 +140,35 @@ export const IntermediatePractice: React.FC<{ onBack?: () => void }> = ({ onBack
   useEffect(() => {
     rawTypedTextRef.current = rawTypedText;
   }, [rawTypedText]);
+
+  useEffect(() => {
+    const activeEl = activeCharRef.current;
+    const container = containerRef.current;
+    if (activeEl && container) {
+      const activeRect = activeEl.getBoundingClientRect();
+      const containerRect = container.getBoundingClientRect();
+      const activeTop = activeRect.top - containerRect.top + container.scrollTop;
+      
+      if (activeTop !== lastActiveTopRef.current) {
+        lastActiveTopRef.current = activeTop;
+        const containerHeight = container.clientHeight;
+        const activeHeight = activeRect.height;
+        const targetScrollTop = activeTop - (containerHeight / 2) + (activeHeight / 2);
+        
+        container.scrollTo({
+          top: Math.max(0, targetScrollTop),
+          behavior: rawTypedText.length <= 1 ? 'auto' : 'smooth'
+        });
+      }
+    }
+  }, [rawTypedText]);
   
   // Refs
   const timerRef = useRef<NodeJS.Timeout | null>(null);
   const textInputRef = useRef<HTMLTextAreaElement | null>(null);
+  const containerRef = useRef<HTMLDivElement | null>(null);
+  const activeCharRef = useRef<HTMLSpanElement | null>(null);
+  const lastActiveTopRef = useRef<number>(0);
 
   // Generate lowercase text
   const generateText = (currentDuration?: number, customLessonIdx?: number) => {
@@ -412,8 +437,14 @@ export const IntermediatePractice: React.FC<{ onBack?: () => void }> = ({ onBack
         charClass = 'text-[var(--color-text-muted)]';
       }
 
+      const isActive = index === rawTypedText.length;
+
       return (
-        <span key={index} className={`${charClass} transition-all duration-100 font-mono tracking-wide`}>
+        <span 
+          key={index} 
+          ref={isActive ? activeCharRef : undefined}
+          className={`${charClass} transition-all duration-100 font-mono tracking-wide`}
+        >
           {char}
         </span>
       );
@@ -429,10 +460,10 @@ export const IntermediatePractice: React.FC<{ onBack?: () => void }> = ({ onBack
   const currentWpm = calculateLiveWpm(rawTypedText.length, elapsedTime);
 
   return (
-    <div className={`transition-all duration-500 ${isZenMode ? `w-full h-screen max-h-screen overflow-hidden flex flex-col justify-center mx-auto pb-0 ${isPlaying || showResults ? 'px-6 md:px-16 lg:px-24' : 'px-0'}` : 'space-y-6 max-w-5xl mx-auto pb-10'}`}>
+    <div className={`transition-all duration-500 ${isZenMode ? `w-full h-screen max-h-screen overflow-hidden flex flex-col justify-center mx-auto pb-0 ${isPlaying || showResults ? 'px-6 md:px-16 lg:px-24' : 'px-0'}` : 'space-y-4 w-full pb-2'}`}>
       {/* 1. Configuration & Controls Bar */}
       {!isZenMode && (
-        <div className="glass-card p-5 rounded-2xl flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div className="glass-card p-3 rounded-xl flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-xl bg-purple-500/10 border border-purple-500/30 flex items-center justify-center text-purple-400">
               <Zap size={20} />
@@ -630,18 +661,18 @@ export const IntermediatePractice: React.FC<{ onBack?: () => void }> = ({ onBack
       )}
 
       {/* 2. Main Typing Canvas */}
-      <div className={`relative overflow-hidden flex flex-col transition-all duration-500 ${isZenMode ? 'border-0 bg-transparent shadow-none p-0 w-full' : 'glass-card p-6 rounded-2xl'}`}>
+      <div className={`relative overflow-hidden flex flex-col transition-all duration-500 ${isZenMode ? 'border-0 bg-transparent shadow-none p-0 w-full' : 'glass-card p-4 rounded-xl'}`}>
         {!isPlaying ? (
           /* Upgraded Premium Landing Screen */
           <div className={`w-full mx-auto flex flex-col md:flex-row transition-all duration-500 animate-fade-in ${
             isZenMode 
               ? 'h-screen w-screen border-none rounded-none overflow-hidden' 
-              : 'max-w-none rounded-3xl overflow-hidden border shadow-[0_20px_50px_rgba(0,0,0,0.45)]'
+              : 'max-w-none rounded-2xl overflow-hidden border shadow-[0_15px_35px_rgba(0,0,0,0.35)]'
           }`}
                style={{ backgroundColor: 'var(--surface)', borderColor: 'var(--border)' }}>
             
             {/* Left Content Area */}
-            <div className="p-8 md:p-12 flex-1 flex flex-col justify-between space-y-8">
+            <div className="p-5 md:p-6 flex-1 flex flex-col justify-between space-y-4">
               
               {/* Top Header Row */}
               <div className="flex items-center justify-between">
@@ -678,7 +709,7 @@ export const IntermediatePractice: React.FC<{ onBack?: () => void }> = ({ onBack
               </div>
 
               {/* Central Information */}
-              <div className="space-y-4">
+              <div className="space-y-2.5">
                 <div className="flex items-center gap-1.5 text-[9px] font-bold tracking-widest uppercase" style={{ color: 'var(--accent)' }}>
                   <span className="inline-block w-1.5 h-1.5 rotate-45 bg-accent" />
                   Intermediate Assessment
@@ -704,7 +735,7 @@ export const IntermediatePractice: React.FC<{ onBack?: () => void }> = ({ onBack
               </div>
 
               {/* Three Value Props Rows */}
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-6 border-t" style={{ borderColor: 'var(--border)' }}>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-3.5 border-t" style={{ borderColor: 'var(--border)' }}>
                 <button 
                   onClick={() => setShowAccuracyModal(true)}
                   className="flex items-center gap-2.5 hover:bg-selection/45 p-2 rounded-xl transition cursor-pointer text-left focus:outline-none"
@@ -746,8 +777,8 @@ export const IntermediatePractice: React.FC<{ onBack?: () => void }> = ({ onBack
               </div>
 
               {/* Bottom HUD bar */}
-              <div className="space-y-3">
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 p-4 rounded-2xl border"
+              <div className="space-y-2">
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 p-2.5 rounded-xl border"
                      style={{ backgroundColor: 'var(--surface-2)', borderColor: 'var(--border)' }}>
                   
                   <div 
@@ -844,6 +875,7 @@ export const IntermediatePractice: React.FC<{ onBack?: () => void }> = ({ onBack
               )}
 
               <div 
+                ref={containerRef}
                 onClick={() => { if (textInputRef.current) textInputRef.current.focus(); }}
                 className={`w-full transition-all duration-500 select-none cursor-text overflow-hidden relative whitespace-pre-wrap font-mono ${
                   isFocused ? 'outline outline-2 outline-[var(--color-brand)] outline-offset-2' : ''

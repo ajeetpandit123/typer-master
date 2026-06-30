@@ -93,6 +93,32 @@ export const MyWords: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
     rawTypedTextRef.current = rawTypedText;
   }, [rawTypedText]);
 
+  useEffect(() => {
+    const activeEl = activeCharRef.current;
+    const container = containerRef.current;
+    if (activeEl && container) {
+      const activeRect = activeEl.getBoundingClientRect();
+      const containerRect = container.getBoundingClientRect();
+      const activeTop = activeRect.top - containerRect.top + container.scrollTop;
+      
+      if (activeTop !== lastActiveTopRef.current) {
+        lastActiveTopRef.current = activeTop;
+        const containerHeight = container.clientHeight;
+        const activeHeight = activeRect.height;
+        const targetScrollTop = activeTop - (containerHeight / 2) + (activeHeight / 2);
+        
+        container.scrollTo({
+          top: Math.max(0, targetScrollTop),
+          behavior: rawTypedText.length <= 1 ? 'auto' : 'smooth'
+        });
+      }
+    }
+  }, [rawTypedText]);
+
+  const containerRef = useRef<HTMLDivElement | null>(null);
+  const activeCharRef = useRef<HTMLSpanElement | null>(null);
+  const lastActiveTopRef = useRef<number>(0);
+
   // Sync Zen Mode with screen status
   useEffect(() => {
     if (isPlaying && screen === 'typing') {
@@ -324,13 +350,21 @@ export const MyWords: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
 
       if (char === '\n') {
         spans.push(
-          <span key={i} className={`${charClass} ${activeClass} font-mono ${fontSizeClass}`}>
+          <span 
+            key={i} 
+            ref={isActive ? activeCharRef : undefined}
+            className={`${charClass} ${activeClass} font-mono ${fontSizeClass}`}
+          >
             ↵<br />
           </span>
         );
       } else {
         spans.push(
-          <span key={i} className={`${charClass} ${activeClass} font-mono ${fontSizeClass} whitespace-pre-wrap transition-colors duration-75`}>
+          <span 
+            key={i} 
+            ref={isActive ? activeCharRef : undefined}
+            className={`${charClass} ${activeClass} font-mono ${fontSizeClass} whitespace-pre-wrap transition-colors duration-75`}
+          >
             {char}
           </span>
         );
@@ -357,7 +391,7 @@ export const MyWords: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
   const progressPercentage = Math.round((rawTypedText.length / (customText.length || 1)) * 100);
 
   return (
-    <div className={`transition-all duration-500 ${isZenMode ? 'w-full h-screen max-h-screen overflow-hidden flex flex-col justify-center mx-auto px-6 md:px-16 lg:px-24 pb-0 pt-0' : 'space-y-6 max-w-5xl mx-auto pb-10'}`}>
+    <div className={`transition-all duration-500 ${isZenMode ? 'w-full h-screen max-h-screen overflow-hidden flex flex-col justify-center mx-auto px-6 md:px-16 lg:px-24 pb-0 pt-0' : 'space-y-4 w-full pb-2'}`}>
       
       {/* HUD Header Banner */}
       {!isZenMode && (
@@ -704,6 +738,7 @@ export const MyWords: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
 
             {/* Main Interactive Typing Window */}
             <div 
+              ref={containerRef}
               onClick={() => { if (textInputRef.current) textInputRef.current.focus(); }}
               className={`w-full transition-all duration-500 select-none cursor-text overflow-hidden relative whitespace-pre-wrap ${
                 isZenMode 
